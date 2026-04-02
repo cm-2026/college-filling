@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手机测试连接检测</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .test-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+        .status-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .info-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .info-box h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .info-box p {
+            font-size: 14px;
+            color: #666;
+            margin: 8px 0;
+        }
+        .info-box strong {
+            color: #007bff;
+        }
+        .test-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .test-btn:hover {
+            transform: translateY(-2px);
+        }
+        .test-btn:active {
+            transform: translateY(0);
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>📱 手机连接测试</h1>
+        
+        <div id="testResults">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>正在检测连接状态...</p>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h3>📋 连接信息</h3>
+            <p>当前设备: <strong id="deviceType">检测中...</strong></p>
+            <p>访问地址: <strong id="currentUrl">-</strong></p>
+            <p>后端地址: <strong id="apiUrl">-</strong></p>
+        </div>
+        
+        <button class="test-btn" onclick="testBackend()">🔄 重新测试后端连接</button>
+    </div>
+
+    <script>
+        // 检测设备类型
+        function detectDevice() {
+            const ua = navigator.userAgent;
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
+                return '📱 移动设备';
+            }
+            return '💻 桌面设备';
+        }
+
+        // 显示测试结果
+        function showResults() {
+            const deviceType = detectDevice();
+            const currentUrl = window.location.href;
+            const apiUrl = `http://${window.location.hostname}:3000/api`;
+            
+            document.getElementById('deviceType').textContent = deviceType;
+            document.getElementById('currentUrl').textContent = currentUrl;
+            document.getElementById('apiUrl').textContent = apiUrl;
+        }
+
+        // 测试后端连接
+        async function testBackend() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在测试后端连接...</p>
+                </div>
+            `;
+
+            const apiBase = `http://${window.location.hostname}:3000/api`;
+            
+            try {
+                // 测试后端连接
+                const response = await fetch(`${apiBase}/test-connection`, {
+                    signal: AbortSignal.timeout(5000)
+                });
+                
+                if (response.ok) {
+                    resultsDiv.innerHTML = `
+                        <div class="status-item status-success">✅ 后端连接成功</div>
+                        <div class="status-item status-success">✅ API地址: ${apiBase}</div>
+                        <div class="status-item status-info">ℹ️ 可以正常使用所有功能</div>
+                    `;
+                } else {
+                    throw new Error('连接失败');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="status-item status-error">❌ 后端连接失败</div>
+                    <div class="status-item status-error">❌ 错误: ${error.message}</div>
+                    <div class="status-item status-info">ℹ️ 请确保后端服务已启动</div>
+                    <div class="status-item status-info">ℹ️ 命令: cd e:\\xm\\backend && node server.js</div>
+                `;
+            }
+        }
+
+        // 页面加载时执行测试
+        window.addEventListener('DOMContentLoaded', () => {
+            showResults();
+            testBackend();
+        });
+    </script>
+</body>
+</html>

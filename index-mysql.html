@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高考志愿智能推荐系统</title>
+    <script>
+        // 登录验证 - 未登录跳转到登录页
+        (function() {
+            var userId = localStorage.getItem('qd_userId');
+            if (!userId) {
+                window.location.href = 'login.html';
+            }
+        })();
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            --card-bg: rgba(20, 20, 40, 0.6);
+            --card-border: rgba(100, 100, 255, 0.15);
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0d0;
+            --accent-cyan: #00d4ff;
+            --accent-purple: #a855f7;
+            --accent-pink: #f472b6;
+            --glow-cyan: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            color: var(--text-primary);
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ========== 全局通用 ========== */
+        .welcome-user {
+            position: fixed;
+            top: 20px; right: 20px;
+            z-index: 1000;
+            width: auto; height: 42px;
+            padding: 0 18px;
+            display: none;
+            align-items: center;
+            border-radius: 12px;
+            font-weight: 600; font-size: 0.88rem;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            background: rgba(20, 20, 40, 0.7);
+            color: var(--accent-cyan);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 74px; right: 20px;
+            z-index: 1000;
+            width: auto; height: 42px;
+            padding: 0 18px;
+            display: flex;
+            align-items: center;
+            border-radius: 12px;
+            font-weight: 600; font-size: 0.88rem;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            background: rgba(20, 20, 40, 0.7);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .connection-status.connected  { color: #10b981; border-color: rgba(16, 185, 129, 0.4); }
+        .connection-status.disconnected { color: #ef4444; border-color: rgba(239, 68, 68, 0.4); }
+
+        /* ========== 视图容器 ========== */
+        #viewForm   { display: block; }
+        #viewResult { display: none; }
+
+        /* ========== 表单视图 ========== */
+        .form-view-wrap {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .main-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            margin: 80px 0 0 0;
+            padding: 40px;
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .header-title {
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 34px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        .section-card {
+            background: rgba(30, 30, 50, 0.4);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .section-card:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-title {
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid transparent;
+            border-image: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple)) 1;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        .form-label { font-weight: 600; color: var(--text-primary); margin-bottom: 10px; font-size: 14px; }
+
+        .form-control, .form-select {
+            background: rgba(30, 30, 50, 0.5);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            height: 34px;
+            padding: 4px 18px;
+            font-size: 14px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--text-primary);
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1), var(--glow-cyan);
+            background: rgba(30, 30, 50, 0.7);
+            color: var(--text-primary);
+        }
+        .form-control::placeholder { color: var(--text-secondary); }
+
+        .btn {
+            border-radius: 12px;
+            padding: 0 32px;
+            height: 44px;
+            line-height: 44px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            margin: 6px;
+            border: none;
+            position: relative;
+            overflow: hidden;
+            font-size: 16px;
+            min-width: 120px;
+        }
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .btn:hover::before { left: 100%; }
+
+        /* 统一按钮样式：深紫到浅紫渐变（加深版） */
+        .btn-primary, .btn-warning, .btn-college, .btn-secondary {
+            background: linear-gradient(135deg, #2e1065 0%, #5b21b6 50%, #7c3aed 100%) !important;
+            color: white !important;
+            border: none !important;
+            box-shadow: 0 4px 15px rgba(91, 33, 182, 0.4);
+        }
+        .btn-primary:hover, .btn-warning:hover, .btn-college:hover, .btn-secondary:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #3b157a 0%, #6d28d9 50%, #8b5cf6 100%) !important;
+            box-shadow: 0 6px 20px rgba(91, 33, 182, 0.5);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .spinner-border { width: 3.5rem; height: 3.5rem; color: var(--accent-cyan); filter: drop-shadow(0 0 10px rgba(59,159,232,0.5)); }
+        .loading h4 { color: var(--text-primary); margin-top: 20px; font-weight: 600; }
+
+        /* 选科标签 */
+        .subject-tags { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+        .subject-tag {
+            padding: 0 20px;
+            height: 34px;
+            font-size: 14px;
+            border: 2px solid var(--card-border);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            background: rgba(10,30,80,0.6);
+            font-weight: 600;
+            user-select: none;
+            color: var(--text-primary);
+            backdrop-filter: blur(5px);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .subject-tag:hover { border-color: var(--accent-cyan); box-shadow: 0 0 15px rgba(59,159,232,0.45); }
+        .subject-tag.selected { background: linear-gradient(135deg, var(--accent-cyan), #0099cc); color: white; border-color: var(--accent-cyan); box-shadow: 0 5px 20px rgba(59,159,232,0.4); }
+        .subject-tag.disabled { opacity: 0.4; cursor: not-allowed; background: rgba(10,30,80,0.3); }
+        .subject-tag.disabled:hover { border-color: var(--card-border); box-shadow: none; }
+
+        .form-text { color: var(--text-secondary) !important; font-size: 0.9rem; }
+        .invalid-feedback { color: #ef4444; font-weight: 600; }
+
+        /* 地区 Combobox */
+        .region-combobox { position: relative; }
+        .region-combobox .form-control { padding-right: 36px; cursor: text; }
+        .region-combobox::after { content: '▾'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; font-size: 0.85rem; }
+        .region-dropdown {
+            display: none; position: absolute;
+            top: calc(100% + 4px); left: 0; right: 0;
+            background: rgba(20, 20, 40, 0.98);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            max-height: 240px; overflow-y: auto;
+            z-index: 9999;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        .region-dropdown.open { display: block; }
+        .region-dropdown::-webkit-scrollbar { width: 4px; }
+        .region-dropdown::-webkit-scrollbar-thumb { background: var(--accent-cyan); border-radius: 2px; }
+        .region-option { padding: 9px 16px; cursor: pointer; color: var(--text-primary); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; transition: background 0.15s; }
+        .region-option:hover, .region-option.highlighted { background: rgba(0, 212, 255, 0.1); }
+        .region-option .mode-tag { font-size: 0.7rem; padding: 1px 7px; border-radius: 10px; background: rgba(0, 212, 255, 0.1); color: var(--accent-cyan); border: 1px solid rgba(0, 212, 255, 0.25); flex-shrink: 0; }
+        .region-option .mode-tag.gold { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border-color: rgba(245, 158, 11, 0.25); }
+        .region-option .mode-tag.gray { background: rgba(168, 168, 168, 0.1); color: #aaa; border-color: rgba(168, 168, 168, 0.2); }
+        .region-option .match-highlight { color: var(--accent-cyan); font-weight: 700; }
+        .region-group-label { padding: 6px 16px 3px; font-size: 0.72rem; color: var(--text-secondary); letter-spacing: 0.05em; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 2px; }
+        .region-group-label:first-child { border-top: none; }
+        .region-no-result { padding: 12px 16px; color: var(--text-secondary); font-size: 0.9rem; text-align: center; }
+
+        /* Toast */
+        .toast { background: rgba(20, 20, 40, 0.95); backdrop-filter: blur(20px); border: 1px solid var(--card-border); border-radius: 16px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); }
+        .toast-header { background: rgba(30, 30, 50, 0.9); border-bottom: 1px solid var(--card-border); color: var(--text-primary); border-radius: 16px 16px 0 0; }
+        .toast-body { background: transparent; color: var(--text-primary); padding: 20px; }
+        .text-success { color: #10b981 !important; }
+        .text-danger  { color: #ef4444 !important; }
+        .text-warning { color: #f59e0b !important; }
+        .text-info    { color: var(--accent-cyan) !important; }
+        .text-muted   { color: var(--text-secondary) !important; }
+
+        /* alert */
+        .alert { border-radius: 16px; border: 1px solid var(--card-border); backdrop-filter: blur(10px); }
+        .alert-info    { background: rgba(0, 212, 255, 0.08);  border-color: rgba(0, 212, 255, 0.25);  color: var(--text-primary); }
+        .alert-warning { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.25); color: var(--text-primary); }
+        .alert h5 { color: var(--text-primary); font-weight: 700; }
+        .alert p, .alert ul { color: var(--text-secondary); }
+
+        /* ========== 结果视图 ========== */
+        .result-view-wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px 24px 48px;
+            max-height: 100vh;
+        }
+
+        /* 返回按钮 */
+        .back-btn {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.25);
+            color: var(--accent-cyan);
+            border-radius: 10px;
+            padding: 7px 18px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            transition: all 0.2s ease;
+        }
+        .back-btn:hover { background: rgba(0, 212, 255, 0.15); color: var(--accent-cyan); transform: translateY(-1px); }
+
+        /* 页面标题（结果页） */
+        .page-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 15px;
+        }
+        .page-title span { font-size: 1rem; font-weight: 400; color: var(--text-secondary); }
+
+        /* 信息栏 */
+        .info-bar {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
+        }
+        .info-tag { display: flex; align-items: center; gap: 6px; font-size: 0.92rem; color: var(--text-secondary); }
+        .info-tag strong { color: var(--accent-cyan); font-size: 1.05rem; }
+
+        /* 筛选栏 */
+        .filter-bar {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+        }
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px 16px;
+            margin-bottom: 12px;
+        }
+        .filter-item { display: flex; flex-direction: column; gap: 4px; }
+        .filter-item label { color: var(--text-secondary); font-size: 0.8rem; white-space: nowrap; }
+        .filter-item select, .filter-item input {
+            background: rgba(10,30,80,0.8);
+            border: 1px solid rgba(59,159,232,0.3);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 0.86rem;
+            width: 100%;
+            height: 34px;
+        }
+        .filter-item select:focus, .filter-item input:focus { outline: none; border-color: var(--accent-cyan); box-shadow: 0 0 0 2px rgba(59,159,232,0.2); }
+        .filter-item select option { background: #0d2566; }
+        .filter-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding-top: 4px; border-top: 1px solid rgba(59,159,232,0.1); }
+        .result-count { color: var(--text-secondary); font-size: 0.86rem; margin-right: auto; }
+        .result-count strong { color: var(--accent-cyan); }
+        .reset-btn { padding: 6px 20px; border-radius: 8px; border: 1px solid rgba(59,159,232,0.4); background: rgba(59,159,232,0.08); color: var(--accent-cyan); font-size: 0.86rem; cursor: pointer; transition: background 0.15s; height: 34px; white-space: nowrap; }
+        .reset-btn:hover { background: rgba(59,159,232,0.2); border-color: rgba(59,159,232,0.7); }
+
+        /* 排序工具栏 */
+        .sort-bar { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+        .sort-bar-label { color: var(--text-secondary); font-size: 0.82rem; white-space: nowrap; }
+        .sort-btn { padding: 0 16px; height: 32px; line-height: 32px; border-radius: 8px; border: 1px solid rgba(59,159,232,0.25); background: rgba(59,159,232,0.07); color: var(--text-secondary); font-size: 0.82rem; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+        .sort-btn:hover { background: rgba(59,159,232,0.18); color: var(--accent-cyan); }
+        .sort-btn.active { background: rgba(59,159,232,0.22); color: var(--accent-cyan); border-color: rgba(59,159,232,0.6); }
+        .sort-btn .sort-arrow { margin-left: 3px; font-size: 0.7rem; }
+
+        /* 院校卡片 */
+        .cards-wrapper { display: flex; flex-direction: column; gap: 0; }
+        .school-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; margin-bottom: 14px; overflow: hidden; transition: border-color 0.2s; }
+        .school-card:hover { border-color: rgba(59,159,232,0.45); }
+
+        .school-header { padding: 14px 20px; border-bottom: 1px solid rgba(59,159,232,0.12); display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+        .school-header:hover { background: rgba(59,159,232,0.05); }
+        .collapse-arrow { color: var(--text-secondary); font-size: 0.75rem; margin-left: auto; padding-top: 4px; transition: transform 0.2s; white-space: nowrap; }
+        .school-card.collapsed .collapse-arrow { transform: rotate(-90deg); }
+        .major-body { overflow: hidden; transition: max-height 0.25s ease, opacity 0.2s; max-height: 2000px; opacity: 1; }
+        .school-card.collapsed .major-body { max-height: 0; opacity: 0; }
+
+        .school-header-left { flex: 1; min-width: 0; display: flex; align-items: center; gap: 0; }
+        .school-name-row { display: flex; align-items: center; min-width: 280px; width: 280px; overflow: hidden; gap: 12px; }
+        .school-col-level  { min-width: 80px;  width: 80px; }
+        .school-col-code   { min-width: 70px;  width: 70px; color: var(--text-secondary); font-size: 0.78rem; }
+        .school-col-province { min-width: 60px; width: 60px; color: var(--text-secondary); font-size: 0.82rem; }
+        .school-col-city-province { min-width: 60px; width: 60px; color: var(--text-secondary); font-size: 0.82rem; }
+        .school-col-batch  { min-width: 90px;  width: 90px; }
+        .school-col-remark { min-width: 80px;  width: 80px; }
+        .school-link { color: var(--accent-cyan); text-decoration: none; font-weight: 700; font-size: 1.05rem; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; display: inline-block; }
+        .school-link:hover { text-decoration: underline; color: #7dc8f0; }
+        .school-major-count { font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; padding-top: 4px; flex-shrink: 0; }
+        .school-major-count strong { color: var(--accent-cyan); font-size: 1rem; }
+        .school-major-count.desktop-only { margin-left: auto; padding-left: 20px; }
+
+        /* 批次/层次 标签 */
+        .batch-tag { font-size: 0.72rem; padding: 2px 7px; border-radius: 5px; background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.3); color: var(--accent-pink); white-space: nowrap; }
+        .college-level-tag { display: inline-block; font-size: 0.7rem; padding: 2px 7px; border-radius: 5px; background: rgba(120,200,120,0.15); color: #7ec87e; border: 1px solid rgba(120,200,120,0.3); white-space: nowrap; font-weight: 600; }
+        .college-level-tag.level-211 { background: rgba(59,159,232,0.15); color: #7dc8f0; border-color: rgba(59,159,232,0.3); }
+        .college-level-tag.level-985 { background: rgba(255,180,0,0.15); color: #ffcc44; border-color: rgba(255,180,0,0.3); }
+        .college-level-tag.level-syl { background: rgba(200,100,255,0.15); color: #cc88ff; border-color: rgba(200,100,255,0.3); }
+
+        /* 专业列表头/行 */
+        .major-list-header {
+            display: grid;
+            grid-template-columns: 2fr 75px 90px 75px 85px 85px 95px 110px 60px;
+            padding: 7px 16px;
+            background: rgba(59,159,232,0.06);
+            border-bottom: 1px solid rgba(59,159,232,0.1);
+            font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.02em;
+        }
+        .major-list-header span { text-align: center; }
+        .major-list-header span:first-child { text-align: left; }
+        .major-list-header span:last-child { text-align: center; padding-right: 0; }
+        .major-row {
+            display: grid;
+            grid-template-columns: 2fr 75px 90px 75px 85px 85px 95px 110px 60px;
+            padding: 11px 16px;
+            border-bottom: 1px solid rgba(59,159,232,0.06);
+            align-items: center;
+            transition: background 0.12s;
+        }
+        .major-row:last-child { border-bottom: none; }
+        .major-row:hover { background: rgba(59,159,232,0.06); }
+        .major-row-left { display: flex; flex-direction: row; align-items: center; gap: 8px; flex-wrap: nowrap; }
+        .major-row-cell { text-align: center; font-size: 0.88rem; }
+        .major-row-cell:last-child { text-align: center; }
+        .score-val { color: var(--accent-cyan); font-weight: 700; font-size: 1rem; }
+        .rank-val  { color: var(--text-secondary); font-size: 0.85rem; }
+
+        .major-name-result {
+            font-size: 0.9rem; color: var(--text-primary); font-weight: 500;
+            cursor: pointer;
+            border-bottom: 1px dashed rgba(59,159,232,0.4);
+            transition: color 0.15s;
+        }
+        .major-name-result:hover { color: #7dc8f0; }
+        .major-remark-text {
+            font-size: 0.72rem;
+            color: var(--accent-pink);
+            margin-left: 8px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: rgba(240,165,0,0.1);
+            border: 1px solid rgba(240,165,0,0.25);
+            white-space: nowrap;
+        }
+
+        .major-group-tag { font-size: 0.7rem; padding: 1px 6px; border-radius: 4px; background: rgba(30,91,191,0.2); border: 1px solid rgba(30,91,191,0.4); color: #88aaee; white-space: nowrap; }
+        .major-category-text { font-size: 0.72rem; color: var(--text-secondary); }
+        .subject-badge { display: inline-block; font-size: 0.72rem; padding: 2px 7px; border-radius: 7px; background: rgba(59,159,232,0.12); border: 1px solid rgba(59,159,232,0.3); color: var(--text-secondary); white-space: nowrap; }
+        .subject-badge.unlimited { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: #6ee7b7; }
+        .prob-badge { display: inline-block; font-size: 0.78rem; font-weight: 600; padding: 3px 10px; border-radius: 8px; white-space: nowrap; }
+        .prob-badge.rush   { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .prob-badge.stable { background: rgba(234,179,8,0.15);  color: #fbbf24; border: 1px solid rgba(234,179,8,0.3); }
+        .prob-badge.safe   { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+
+        /* 分组选项卡 */
+        .group-tabs {
+            display: flex; flex-wrap: wrap; gap: 6px;
+            padding: 10px 20px 0;
+            border-bottom: 1px solid rgba(59,159,232,0.12);
+            background: rgba(10,25,70,0.4);
+        }
+        .group-tab { padding: 2px 10px; border-radius: 8px 8px 0 0; border: 1px solid rgba(59,159,232,0.25); border-bottom: none; background: rgba(10,30,80,0.5); color: var(--text-secondary); font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.18s; user-select: none; white-space: nowrap; }
+        .group-tab:hover { background: rgba(59,159,232,0.12); color: var(--accent-cyan); }
+        .group-tab.active { padding: 6px 16px; background: rgba(59,159,232,0.18); color: var(--accent-cyan); border-color: rgba(59,159,232,0.5); }
+        .group-tab .tab-count { display: inline-block; background: rgba(59,159,232,0.2); color: var(--accent-cyan); border-radius: 10px; font-size: 0.72rem; padding: 0 6px; margin-left: 5px; line-height: 1.6; }
+        .group-tab .tab-stats { display: none; }
+        .group-tab.active .tab-stats { display: block; margin-top: 4px; }
+        .group-tab .tab-stat { display: inline-block; color: rgba(59,159,232,0.85); background: rgba(59,159,232,0.1); border-radius: 6px; font-size: 0.70rem; padding: 0 5px; margin-left: 4px; line-height: 1.6; border: 1px solid rgba(59,159,232,0.25); }
+        .group-panel { display: none; }
+        .group-panel.active { display: block; }
+
+        /* 空状态 */
+        .empty-state { text-align: center; padding: 60px 24px; color: var(--text-secondary); }
+
+        /* 分页 */
+        .pagination-bar { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 18px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; margin-top: 4px; }
+        .page-btn { background: rgba(59,159,232,0.1); border: 1px solid rgba(59,159,232,0.25); color: var(--accent-cyan); border-radius: 7px; padding: 0 14px; height: 32px; line-height: 32px; cursor: pointer; font-size: 0.86rem; transition: background 0.15s; }
+        .page-btn:hover, .page-btn.active { background: rgba(59,159,232,0.25); }
+        .page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* 专业介绍 tooltip（结果页） */
+        #majorTooltip {
+            position: fixed; z-index: 9999;
+            width: 500px;
+            background: rgba(5,20,60,0.97);
+            border: 1px solid rgba(59,159,232,0.4);
+            border-radius: 10px;
+            padding: 14px 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            display: none;
+            backdrop-filter: blur(8px);
+        }
+        #majorTooltip.visible { display: block; }
+        .tooltip-title { font-size: 0.92rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 8px; border-bottom: 1px solid rgba(59,159,232,0.2); padding-bottom: 6px; }
+        .tooltip-section { margin-bottom: 7px; }
+        .tooltip-section-label { font-size: 0.7rem; color: var(--accent-pink); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+        .tooltip-section-body { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.55; }
+        .tooltip-loading { font-size: 0.8rem; color: var(--text-secondary); text-align: center; padding: 8px 0; }
+        .tooltip-none { font-size: 0.8rem; color: rgba(168,204,240,0.5); text-align: center; padding: 8px 0; }
+
+        /* 结果页加载遮罩 */
+        #resultLoading { text-align: center; padding: 60px 0; }
+        #resultLoading .spinner-border { width: 3rem; height: 3rem; color: var(--accent-cyan); }
+
+        @media (max-width: 768px) {
+            .major-list-header, .major-row { grid-template-columns: 2fr 65px 55px 60px; }
+            .major-list-header span:nth-child(n+5), .major-row .major-row-cell:nth-child(n+5) { display: none; }
+            .major-list-header span:last-child { text-align: center; padding-right: 0; }
+        }
+        
+        /* ========== 移动端响应式优化 ========== */
+        
+        /* 小屏幕优化 (768px以下) */
+        @media (max-width: 767.98px) {
+            /* 表单视图优化 */
+            .form-view-wrap {
+                height: auto;
+                min-height: 100vh;
+                padding: 20px 0;
+                overflow: visible;
+            }
+            
+            .main-container {
+                margin: 20px auto;
+                padding: 25px 20px;
+                border-radius: 20px;
+                width: calc(100% - 30px);
+                max-width: 600px;
+            }
+            
+            .header-title {
+                font-size: 28px;
+                margin-bottom: 30px;
+            }
+            
+            .section-card {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .section-title {
+                font-size: 1.4rem;
+                margin-bottom: 18px;
+                padding-bottom: 12px;
+            }
+            
+            .form-label {
+                font-size: 15px;
+            }
+            
+            .form-control, .form-select {
+                height: 46px;
+                font-size: 15px;
+            }
+            
+            /* 按钮优化 - 触摸友好 */
+            .btn {
+                width: 100%;
+                margin: 6px 0;
+                height: 50px;
+                line-height: 50px;
+                font-size: 16px;
+                padding: 0 24px;
+            }
+            
+            /* 选科标签优化 */
+            .subject-tags {
+                gap: 10px;
+                justify-content: flex-start;
+            }
+            
+            .subject-tag {
+                padding: 0;
+                height: 44px;
+                font-size: 15px;
+                flex: none;
+                width: calc(50% - 5px);
+                text-align: center;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 1;
+            }
+            
+            /* 结果视图优化 */
+            .result-view-wrap {
+                padding: 15px;
+                max-height: none;
+            }
+            
+            .page-title {
+                font-size: 1.3rem;
+                flex-wrap: nowrap;
+                gap: 8px;
+                white-space: nowrap;
+            }
+            
+            .page-title span {
+                font-size: 0.75rem;
+                width: auto;
+            }
+            
+            /* 信息栏优化 */
+            .info-bar {
+                padding: 12px 15px;
+                gap: 8px;
+                font-size: 0.8rem;
+                flex-wrap: wrap;
+            }
+            
+            .info-tag {
+                white-space: nowrap;
+            }
+            
+            .info-tag strong {
+                font-size: 0.9rem;
+            }
+            
+            .info-tag .label {
+                display: none;
+            }
+            
+            .info-tag:first-child,
+            .info-tag:nth-child(2),
+            .info-tag:nth-child(3) {
+                width: auto;
+            }
+            
+            .info-tag:last-child {
+                width: 100%;
+                text-align: center;
+                margin-top: 4px;
+                padding-top: 8px;
+                border-top: 1px solid rgba(59,159,232,0.15);
+            }
+            
+            /* 筛选栏优化 */
+            .filter-bar {
+                padding: 12px 15px;
+            }
+            
+            .filter-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px 12px;
+            }
+            
+            .filter-item {
+                min-width: 0;
+            }
+            
+            .filter-item label {
+                font-size: 0.75rem;
+            }
+            
+            .filter-item select, .filter-item input {
+                height: 36px;
+                font-size: 0.8rem;
+                padding: 4px 8px;
+            }
+            
+            .filter-item input::placeholder {
+                font-size: 0.75rem;
+            }
+            
+            /* 排序栏优化 */
+            .sort-bar {
+                padding: 8px 10px;
+                gap: 6px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+            }
+            
+            .sort-bar-label {
+                white-space: nowrap;
+                font-size: 0.75rem;
+            }
+            
+            .sort-btn {
+                padding: 0 8px;
+                height: 30px;
+                line-height: 30px;
+                font-size: 0.7rem;
+                white-space: nowrap;
+                flex: none;
+            }
+            
+            /* 院校卡片优化 - 内容显示为两行 */
+            .school-header {
+                padding: 12px 15px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                position: relative;
+            }
+            
+            .school-header-left {
+                flex-wrap: wrap;
+                gap: 6px 8px;
+                width: 100%;
+            }
+            
+            /* 第一行：院校名称 + 专业数量 */
+            .school-name-row {
+                min-width: auto;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            
+            .school-link {
+                font-size: 1rem;
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            
+            .school-major-count {
+                font-size: 0.75rem;
+                white-space: nowrap;
+                margin-left: 8px;
+                color: var(--text-secondary);
+                flex-shrink: 0;
+            }
+
+            .school-major-count.desktop-only {
+                display: none;
+            }
+
+            .school-major-count strong {
+                color: var(--accent-cyan);
+            }
+
+            .school-name-row .school-major-count {
+                margin-left: auto;
+                padding-left: 8px;
+            }
+            
+            /* 第二行：代码、省份、层次、批次等信息 */
+            .school-header-left > .school-col-code,
+            .school-header-left > .school-col-province,
+            .school-header-left > .school-col-city-province,
+            .school-header-left > .school-col-level,
+            .school-header-left > .school-col-batch,
+            .school-header-left > .school-col-remark {
+                min-width: auto;
+                width: auto;
+                font-size: 0.72rem;
+                color: var(--text-secondary);
+            }
+            
+            .school-col-level .college-level-tag,
+            .school-col-batch .batch-tag,
+            .school-col-remark .batch-tag {
+                font-size: 0.65rem;
+                padding: 2px 6px;
+                border-radius: 4px;
+            }
+            
+
+            
+            /* 专业列表优化 - 只显示4列：专业名称、专业编号、专业门类、专业最低分 */
+            .major-list-header, .major-row {
+                grid-template-columns: 2fr 65px 65px 50px;
+                padding: 10px 12px;
+                gap: 6px;
+            }
+            
+            .major-list-header span:nth-child(n+5) { 
+                display: none; 
+            }
+            
+            .major-row .major-row-cell:nth-child(n+5) { 
+                display: none; 
+            }
+            
+            .major-list-header span:last-child { 
+                text-align: center; 
+                padding-right: 0;
+            }
+            
+            .major-name-result {
+                font-size: 0.85rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 120px;
+                display: inline-block;
+            }
+            
+            .major-row-left {
+                flex-wrap: nowrap;
+                overflow: hidden;
+            }
+            
+            .major-remark-text {
+                display: none;
+            }
+            
+            .major-row-cell {
+                font-size: 0.8rem;
+            }
+            
+            /* 分组选项卡 - 手机端改为垂直手风琴式 */
+            .group-tabs {
+                padding: 12px;
+                gap: 8px;
+                flex-direction: column;
+                background: transparent;
+                border-bottom: none;
+            }
+            
+            .group-tab {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+                border-radius: 10px;
+                border: 1px solid rgba(59,159,232,0.25);
+                background: rgba(10,30,80,0.4);
+                width: 100%;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 6px;
+            }
+            
+            .group-tab.active {
+                background: rgba(59,159,232,0.2);
+                border-color: rgba(59,159,232,0.5);
+            }
+            
+            /* 未选中状态：简洁显示 */
+            .group-tab .tab-label {
+                font-weight: 600;
+                color: #fff;
+            }
+            
+            .group-tab .tab-count {
+                font-size: 0.75rem;
+                padding: 2px 8px;
+                background: rgba(59,159,232,0.25);
+                border-radius: 10px;
+                margin-left: auto;
+            }
+            
+            /* 统计信息默认隐藏 */
+            .group-tab .tab-stats {
+                display: none;
+                width: 100%;
+                margin-top: 8px;
+                padding-top: 8px;
+                border-top: 1px solid rgba(59,159,232,0.15);
+            }
+            
+            /* 选中状态才显示统计信息 */
+            .group-tab.active .tab-stats {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            
+            .group-tab .tab-stat {
+                font-size: 0.7rem;
+                padding: 3px 8px;
+                border-radius: 6px;
+                background: rgba(255,255,255,0.1);
+                color: rgba(255,255,255,0.8);
+            }
+            
+            .group-tab .tab-stat.stat-admit {
+                background: rgba(16,185,129,0.15);
+                color: #6ee7b7;
+            }
+            
+            .group-tab .tab-stat.stat-score {
+                background: rgba(59,159,232,0.15);
+                color: #60a5fa;
+            }
+            
+            .group-tab .tab-stat.stat-rank {
+                background: rgba(245,158,11,0.15);
+                color: #fbbf24;
+            }
+            
+            /* 分页优化 */
+            .pagination-bar {
+                padding: 10px 12px;
+                flex-wrap: nowrap;
+                gap: 6px;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .page-btn {
+                padding: 0;
+                height: 36px;
+                line-height: 36px;
+                font-size: 0.8rem;
+                flex: 1;
+                min-width: 36px;
+                max-width: 60px;
+                text-align: center;
+            }
+            
+            .pagination-info {
+                font-size: 0.8rem;
+                white-space: nowrap;
+                flex: 2;
+                text-align: center;
+                min-width: 80px;
+            }
+            
+            .page-size-select {
+                height: 36px;
+                font-size: 0.75rem;
+                padding: 0 4px;
+                flex: 1;
+                min-width: 50px;
+                max-width: 70px;
+            }
+            
+            /* 状态徽章优化 */
+            .welcome-user, .connection-status {
+                width: auto;
+                min-width: 120px;
+                padding: 0 10px;
+                font-size: 0.75rem;
+                height: 36px;
+                top: 10px;
+                right: 10px;
+            }
+            
+            .connection-status {
+                display: none;
+            }
+            
+            /* Tooltip优化 */
+            #majorTooltip {
+                width: 90vw;
+                max-width: 350px;
+                left: 5vw !important;
+            }
+        }
+        
+        /* 超小屏幕优化 (576px以下) */
+        @media (max-width: 575.98px) {
+            .main-container {
+                margin: 15px auto;
+                padding: 20px 15px;
+                border-radius: 16px;
+                width: calc(100% - 20px);
+                max-width: 100%;
+            }
+            
+            .header-title {
+                font-size: 24px;
+                margin-bottom: 25px;
+            }
+            
+            .section-title {
+                font-size: 1.25rem;
+            }
+            
+            .form-label {
+                font-size: 14px;
+            }
+            
+            .form-control, .form-select {
+                height: 44px;
+                font-size: 14px;
+            }
+            
+            .btn {
+                height: 48px;
+                line-height: 48px;
+                font-size: 15px;
+            }
+            
+            .filter-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px 10px;
+            }
+            
+            .filter-item label {
+                font-size: 0.7rem;
+            }
+            
+            .filter-item select, .filter-item input {
+                height: 34px;
+                font-size: 0.75rem;
+            }
+            
+            .subject-tag {
+                min-width: 70px;
+                height: 40px;
+                font-size: 14px;
+                padding: 0 16px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 1;
+            }
+            
+            .major-list-header, .major-row {
+                grid-template-columns: 2fr 55px 55px 45px;
+                padding: 8px 12px;
+            }
+            
+            .major-list-header span:last-child { 
+                text-align: center; 
+                padding-right: 0;
+            }
+        }
+        
+        /* 触摸设备优化 */
+        @media (hover: none) and (pointer: coarse) {
+            .btn, .subject-tag, .sort-btn, .page-btn, 
+            .school-header, .group-tab, .reset-btn {
+                min-height: 44px;
+            }
+            
+            .subject-tag {
+                padding: 0 16px;
+            }
+            
+            /* 禁用悬停效果，使用点击效果 */
+            .btn:hover::before,
+            .subject-tag:hover,
+            .school-header:hover {
+                transform: none;
+            }
+            
+            .btn:active,
+            .subject-tag:active,
+            .sort-btn:active,
+            .page-btn:active {
+                transform: scale(0.98);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 欢迎语 -->
+    <div id="welcomeUser" class="welcome-user"></div>
+    <!-- 连接状态 -->
+    <div id="connectionStatus" class="connection-status disconnected">🔴 未连接到后端</div>
+
+    <!-- ====== 表单视图 ====== -->
+    <div id="viewForm" class="form-view-wrap">
+        <div class="container">
+            <div class="main-container">
+                <h1 class="header-title">⚡高考志愿辅助系统⚡</h1>
+
+                <div class="section-card">
+                    <h2 class="section-title">🎯 志愿信息</h2>
+                    <form id="recommendationForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">地区选择 *</label>
+                                <div class="region-combobox" id="regionCombobox">
+                                    <input type="text" class="form-control" id="regionInput" placeholder="输入或选择省份…" autocomplete="off" value="河南">
+                                    <input type="hidden" id="region" value="河南">
+                                    <div class="region-dropdown" id="regionDropdown"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">高考分数 *</label>
+                                <input type="number" class="form-control" id="score" placeholder="请输入高考分数" min="0" max="750" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">选科组合 *</label>
+                                <div id="subjectSelection">
+                                    <input type="hidden" id="subjectCombination" required>
+                                    <div class="invalid-feedback" id="subjectError" style="display: none;">请选择选科组合</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center" style="margin-top:5px;">
+                            <button type="submit" class="btn btn-primary">开始推荐</button>
+                            <button type="button" class="btn btn-warning" onclick="resetForm()">重置</button>
+                            <button type="button" class="btn btn-college" onclick="openCollegeList()">院校名录</button>
+                            <button type="button" class="btn btn-secondary" onclick="window.open('major-list.html','_blank')">专业名录</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner-border" role="status"><span class="visually-hidden">加载中...</span></div>
+                    <h4 class="mt-3">正在为您智能推荐合适的院校...</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== 结果视图 ====== -->
+    <div id="viewResult" class="result-view-wrap">
+
+        <!-- 返回按钮 -->
+        <button class="back-btn" onclick="showFormView()">← 返回重新查询</button>
+
+        <!-- 页面标题 -->
+        <div class="page-title">
+            🌟 智能推荐结果
+            <span id="generateTimeText"></span>
+        </div>
+
+        <!-- 基本信息栏 -->
+        <div class="info-bar" id="infoBar">
+            <div class="info-tag"><span class="label">生源地：</span><strong id="infoRegion">-</strong></div>
+            <div class="info-tag"><span class="label">分数：</span><strong id="infoScore">-</strong></div>
+            <div class="info-tag"><span class="label">选科：</span><strong id="infoSubject">-</strong></div>
+            <div class="info-tag" style="margin-left:auto;">
+                共找到 <strong id="infoTotal" style="color:var(--accent-cyan);">0</strong> 所院校，
+                <strong id="infoMajorTotal" style="color:var(--accent-cyan);">0</strong> 条专业数据
+            </div>
+        </div>
+
+        <!-- 筛选栏 -->
+        <div class="filter-bar">
+            <div class="filter-grid">
+                <div class="filter-item"><label>院校名称</label><input type="text" id="filterSchool" placeholder="搜索学校名..." oninput="applyFilter()"></div>
+                <div class="filter-item"><label>专业名称</label><input type="text" id="filterMajor" placeholder="搜索专业名..." oninput="applyFilter()"></div>
+                <div class="filter-item"><label>省份</label><select id="filterProvince" onchange="onProvinceChange()"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>城市</label><select id="filterCity" onchange="applyFilter()"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>院校层次</label><select id="filterCollegeLevel" onchange="applyFilter()"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>批次</label><select id="filterBatch" onchange="onBatchChange()"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>招生类别</label><select id="filterBatchRemark" onchange="applyFilter()"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>选科要求</label><select id="filterSubjectRequire" onchange="applyFilter()"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>学科大类</label><select id="filterCategory" onchange="onCategoryChange()"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>专业类</label><select id="filterMajorCategory" onchange="applyFilter()"><option value="">全部</option></select></div>
+            </div>
+            <div class="filter-actions">
+                <span class="result-count">筛选结果：<strong id="filteredCount">0</strong> 条</span>
+                <button class="reset-btn" onclick="resetFilter()">重置筛选</button>
+            </div>
+        </div>
+
+        <!-- 排序工具栏 -->
+        <div class="sort-bar">
+            <span class="sort-bar-label">排序：</span>
+            <button class="sort-btn active" id="sortBtn_score"       onclick="sortTable('score')">最低分 <span class="sort-arrow">▼</span></button>
+            <button class="sort-btn"        id="sortBtn_rank"        onclick="sortTable('rank')">最低位次 <span class="sort-arrow">⇅</span></button>
+            <button class="sort-btn"        id="sortBtn_name"        onclick="sortTable('name')">院校名称 <span class="sort-arrow">⇅</span></button>
+            <button class="sort-btn"        id="sortBtn_major"       onclick="sortTable('major')">专业名称 <span class="sort-arrow">⇅</span></button>
+            <button class="sort-btn"        id="sortBtn_probability" onclick="sortTable('probability')">录取概率 <span class="sort-arrow">⇅</span></button>
+        </div>
+
+        <!-- 结果加载提示 -->
+        <div id="resultLoading" style="display:none;">
+            <div class="spinner-border" role="status"></div>
+            <p style="color:var(--text-secondary);margin-top:16px;">正在查询数据，请稍候...</p>
+        </div>
+
+        <!-- 卡片列表 -->
+        <div class="cards-wrapper" id="resultBody"></div>
+
+        <!-- 分页 -->
+        <div class="pagination-bar" id="paginationBar" style="display:none;">
+            <button class="page-btn" id="btnFirst" onclick="goPage(1)">«</button>
+            <button class="page-btn" id="btnPrev" onclick="goPage(currentPage - 1)">‹</button>
+            <span id="pageInfo" class="pagination-info"></span>
+            <button class="page-btn" id="btnNext" onclick="goPage(currentPage + 1)">›</button>
+            <button class="page-btn" id="btnLast" onclick="goPage(totalPages)">»</button>
+            <select id="pageSizeSelect" class="page-btn page-size-select" onchange="changePageSize()">
+                <option value="3" selected>3所/页</option>
+                <option value="5">5所/页</option>
+                <option value="10">10所/页</option>
+                <option value="20">20所/页</option>
+                <option value="50">50所/页</option>
+                <option value="0">全部</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 专业介绍 Tooltip -->
+    <div id="majorTooltip">
+        <div class="tooltip-title" id="ttTitle"></div>
+        <div id="ttBody"></div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="liveToast" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto" id="toastTitle">系统提示</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastMessage"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // ====================================================
+    // 公共配置
+    // ====================================================
+    const API_BASE = `http://${window.location.hostname || 'localhost'}:3000/api`;
+    let isBackendConnected = false;
+
+    // ====================================================
+    // 视图切换
+    // ====================================================
+    function showFormView() {
+        document.getElementById('viewForm').style.display = 'block';
+        document.getElementById('viewResult').style.display = 'none';
+    }
+
+    function showResultView() {
+        document.getElementById('viewForm').style.display = 'none';
+        document.getElementById('viewResult').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ====================================================
+    // 页面初始化
+    // ====================================================
+    document.addEventListener('DOMContentLoaded', async () => {
+        // 欢迎语
+        const savedUsername = localStorage.getItem('qd_username');
+        if (savedUsername) {
+            const el = document.getElementById('welcomeUser');
+            el.textContent = `👋 欢迎，${savedUsername}`;
+            el.style.display = 'flex';
+        }
+
+        // 测试后端连接
+        try {
+            const res = await fetch(API_BASE + '/test-connection', { signal: AbortSignal.timeout(3000) });
+            isBackendConnected = res.ok;
+        } catch { isBackendConnected = false; }
+        updateConnectionStatus(isBackendConnected);
+        if (!isBackendConnected) showToast('无法连接到后端服务器，请确保后端服务已启动', 'error');
+
+        // 初始化选科标签
+        initSubjectTags();
+    });
+
+    function updateConnectionStatus(connected) {
+        const el = document.getElementById('connectionStatus');
+        el.className = 'connection-status ' + (connected ? 'connected' : 'disconnected');
+        el.textContent = connected ? '🟢 已连接到后端' : '🔴 未连接到后端';
+    }
+
+    // ====================================================
+    // 高考模式 & 省份
+    // ====================================================
+    const gaokaoModes = {
+        mode312: ['广东','江苏','河北','福建','湖北','湖南','辽宁','重庆','吉林','黑龙江','安徽','江西','广西','贵州','甘肃','河南','山西','陕西','内蒙古','宁夏','青海','四川','云南'],
+        mode33: ['北京','天津','上海','山东','浙江','海南'],
+        modeTraditional: ['西藏','新疆']
+    };
+    const PROVINCES = [
+        {name:'河南',mode:'3+1+2'},{name:'广东',mode:'3+1+2'},{name:'江苏',mode:'3+1+2'},{name:'河北',mode:'3+1+2'},{name:'福建',mode:'3+1+2'},
+        {name:'湖北',mode:'3+1+2'},{name:'湖南',mode:'3+1+2'},{name:'辽宁',mode:'3+1+2'},{name:'重庆',mode:'3+1+2'},{name:'吉林',mode:'3+1+2'},
+        {name:'黑龙江',mode:'3+1+2'},{name:'安徽',mode:'3+1+2'},{name:'江西',mode:'3+1+2'},{name:'广西',mode:'3+1+2'},{name:'贵州',mode:'3+1+2'},
+        {name:'甘肃',mode:'3+1+2'},{name:'山西',mode:'3+1+2'},{name:'陕西',mode:'3+1+2'},{name:'内蒙古',mode:'3+1+2'},{name:'宁夏',mode:'3+1+2'},
+        {name:'青海',mode:'3+1+2'},{name:'四川',mode:'3+1+2'},{name:'云南',mode:'3+1+2'},
+        {name:'北京',mode:'3+3'},{name:'天津',mode:'3+3'},{name:'上海',mode:'3+3'},{name:'山东',mode:'3+3'},{name:'浙江',mode:'3+3'},{name:'海南',mode:'3+3'},
+        {name:'西藏',mode:'文理'},{name:'新疆',mode:'文理'}
+    ];
+    const PINYIN_MAP = {'河南':'hn','广东':'gd','江苏':'js','河北':'hb','福建':'fj','湖北':'hb','湖南':'hn','辽宁':'ln','重庆':'cq','吉林':'jl','黑龙江':'hlj','安徽':'ah','江西':'jx','广西':'gx','贵州':'gz','甘肃':'gs','山西':'sx','陕西':'sx','内蒙古':'nmg','宁夏':'nx','青海':'qh','四川':'sc','云南':'yn','北京':'bj','天津':'tj','上海':'sh','山东':'sd','浙江':'zj','海南':'hi','西藏':'xz','新疆':'xj'};
+
+    // ====================================================
+    // 地区 Combobox
+    // ====================================================
+    function initRegionCombobox() {
+        const input    = document.getElementById('regionInput');
+        const hidden   = document.getElementById('region');
+        const dropdown = document.getElementById('regionDropdown');
+        let highlightIdx = -1, filtered = [];
+
+        function renderDropdown(kw) {
+            kw = (kw || '').trim().toLowerCase();
+            filtered = kw ? PROVINCES.filter(p => p.name.includes(kw) || (PINYIN_MAP[p.name]||'').startsWith(kw)) : PROVINCES;
+            if (!filtered.length) { dropdown.innerHTML = '<div class="region-no-result">未找到匹配省份</div>'; }
+            else {
+                const groups = [
+                    {label:'3+1+2 新高考',tag:'blue', items:filtered.filter(p=>p.mode==='3+1+2')},
+                    {label:'3+3 新高考',  tag:'gold', items:filtered.filter(p=>p.mode==='3+3')},
+                    {label:'传统文理分科',tag:'gray', items:filtered.filter(p=>p.mode==='文理')},
+                ];
+                let html='', gi=0;
+                groups.forEach(g=>{
+                    if(!g.items.length) return;
+                    if(!kw) html+=`<div class="region-group-label">${g.label}</div>`;
+                    g.items.forEach(p=>{
+                        const tc=g.tag==='gold'?'gold':g.tag==='gray'?'gray':'';
+                        let dn=p.name;
+                        if(kw){const idx=p.name.indexOf(kw);if(idx>=0)dn=p.name.substring(0,idx)+`<span class="match-highlight">${p.name.substring(idx,idx+kw.length)}</span>`+p.name.substring(idx+kw.length);}
+                        html+=`<div class="region-option" data-value="${p.name}" data-idx="${gi}"><span>${dn}</span><span class="mode-tag ${tc}">${p.mode}</span></div>`;
+                        gi++;
+                    });
+                });
+                dropdown.innerHTML=html;
+            }
+            highlightIdx=-1;
+            dropdown.querySelectorAll('.region-option').forEach(el=>{el.addEventListener('mousedown',e=>{e.preventDefault();selectProvince(el.dataset.value);});});
+        }
+        function selectProvince(name){hidden.value=name;input.value=name;closeDropdown();hidden.dispatchEvent(new Event('change'));}
+        function openDropdown(kw){renderDropdown(kw);dropdown.classList.add('open');}
+        function closeDropdown(){dropdown.classList.remove('open');highlightIdx=-1;}
+        function moveHighlight(dir){
+            const opts=dropdown.querySelectorAll('.region-option');
+            if(!opts.length)return;
+            opts.forEach(o=>o.classList.remove('highlighted'));
+            highlightIdx=(highlightIdx+dir+opts.length)%opts.length;
+            const cur=opts[highlightIdx];cur.classList.add('highlighted');cur.scrollIntoView({block:'nearest'});
+        }
+        input.addEventListener('focus',()=>openDropdown(input.value===hidden.value?'':input.value));
+        input.addEventListener('input',()=>{openDropdown(input.value);hidden.value='';});
+        input.addEventListener('keydown',e=>{
+            if(!dropdown.classList.contains('open')){openDropdown('');return;}
+            if(e.key==='ArrowDown'){e.preventDefault();moveHighlight(1);}
+            else if(e.key==='ArrowUp'){e.preventDefault();moveHighlight(-1);}
+            else if(e.key==='Enter'){e.preventDefault();const opts=dropdown.querySelectorAll('.region-option');if(highlightIdx>=0&&opts[highlightIdx])selectProvince(opts[highlightIdx].dataset.value);else if(filtered.length===1)selectProvince(filtered[0].name);}
+            else if(e.key==='Escape')closeDropdown();
+        });
+        input.addEventListener('blur',()=>{
+            setTimeout(()=>{
+                const match=PROVINCES.find(p=>p.name===input.value.trim());
+                if(match){hidden.value=match.name;}
+                else if(hidden.value){input.value=hidden.value;}
+                else{input.value='河南';hidden.value='河南';}
+                closeDropdown();
+            },150);
+        });
+        document.addEventListener('click',e=>{if(!document.getElementById('regionCombobox').contains(e.target))closeDropdown();});
+    }
+
+    // ====================================================
+    // 选科标签
+    // ====================================================
+    function initSubjectTags() {
+        initRegionCombobox();
+        renderSubjectSelection();
+        document.getElementById('region').addEventListener('change',()=>{
+            document.getElementById('subjectCombination').value='';
+            renderSubjectSelection();
+            showToast('选科模式已根据地区自动切换','info');
+        });
+    }
+
+    function renderSubjectSelection() {
+        const container = document.getElementById('subjectSelection');
+        const region = document.getElementById('region').value;
+        let mode = gaokaoModes.mode312.includes(region)?'mode312':gaokaoModes.mode33.includes(region)?'mode33':gaokaoModes.modeTraditional.includes(region)?'modeTraditional':'mode312';
+        let html='';
+        if(mode==='mode312'){
+            html=`<input type="hidden" id="subjectCombination" required>
+            <div class="invalid-feedback" id="subjectError" style="display:none;">请选择必选科目（1门）和再选科目（2门）</div>
+            <div class="mb-3"><label class="form-label">必选科目（物理/历史二选一，100分）</label>
+            <div class="subject-tags"><div class="subject-tag" data-type="required" data-value="物理">物理</div><div class="subject-tag" data-type="required" data-value="历史">历史</div></div></div>
+            <div><label class="form-label">再选科目（政治、地理、化学、生物中选2门，各100分）</label>
+            <div class="subject-tags"><div class="subject-tag" data-type="optional" data-value="化学">化学</div><div class="subject-tag" data-type="optional" data-value="生物">生物</div><div class="subject-tag" data-type="optional" data-value="政治">政治</div><div class="subject-tag" data-type="optional" data-value="地理">地理</div></div></div>`;
+        } else if(mode==='mode33'){
+            html=`<input type="hidden" id="subjectCombination" required>
+            <div class="invalid-feedback" id="subjectError" style="display:none;">请选择选科组合</div>
+            <div><label class="form-label">选考科目（6选3，各100分）</label>
+            <div class="subject-tags"><div class="subject-tag" data-type="mode33" data-value="物理">物理</div><div class="subject-tag" data-type="mode33" data-value="化学">化学</div><div class="subject-tag" data-type="mode33" data-value="生物">生物</div><div class="subject-tag" data-type="mode33" data-value="政治">政治</div><div class="subject-tag" data-type="mode33" data-value="历史">历史</div><div class="subject-tag" data-type="mode33" data-value="地理">地理</div></div></div>`;
+        } else {
+            html=`<input type="hidden" id="subjectCombination" required>
+            <div class="invalid-feedback" id="subjectError" style="display:none;">请选择文理分科</div>
+            <div><label class="form-label">文理分科（文综/理综，300分）</label>
+            <div class="subject-tags"><div class="subject-tag" data-type="traditional" data-value="理科">理科（理综）</div><div class="subject-tag" data-type="traditional" data-value="文科">文科（文综）</div></div></div>`;
+        }
+        container.innerHTML=html;
+        setupSubjectTagEvents(mode);
+    }
+
+    function setupSubjectTagEvents(mode) {
+        const tags=document.querySelectorAll('.subject-tag');
+        const hiddenInput=document.getElementById('subjectCombination');
+        const errorDiv=document.getElementById('subjectError');
+        if(!hiddenInput||!errorDiv)return;
+
+        tags.forEach(tag=>{
+            tag.addEventListener('click',function(){
+                const type=this.dataset.type, value=this.dataset.value;
+                if(type==='required'){
+                    document.querySelectorAll('[data-type="required"]').forEach(t=>t.classList.remove('selected'));
+                    this.classList.add('selected');updateCombo();
+                } else if(type==='optional'){
+                    const sel=document.querySelectorAll('[data-type="optional"].selected');
+                    if(this.classList.contains('selected')){this.classList.remove('selected');}
+                    else if(sel.length<2){this.classList.add('selected');}
+                    else{showToast('再选科目最多选择2门！','warning');return;}
+                    updateCombo();
+                } else if(type==='mode33'){
+                    const sel=document.querySelectorAll('[data-type="mode33"].selected');
+                    if(this.classList.contains('selected')){this.classList.remove('selected');}
+                    else if(sel.length<3){this.classList.add('selected');}
+                    else{showToast('选考科目最多选择3门！','warning');return;}
+                    updateCombo();
+                } else if(type==='traditional'){
+                    document.querySelectorAll('[data-type="traditional"]').forEach(t=>t.classList.remove('selected'));
+                    this.classList.add('selected');
+                    hiddenInput.value=value;errorDiv.style.display='none';return;
+                }
+                validateSubject();
+            });
+        });
+
+        function updateCombo(){
+            let subjects=[];
+            if(mode==='mode312'){
+                const req=document.querySelector('[data-type="required"].selected');
+                const opt=document.querySelectorAll('[data-type="optional"].selected');
+                if(req&&opt.length===2){subjects=[req.dataset.value,opt[0].dataset.value,opt[1].dataset.value];hiddenInput.value=subjects.join(',');errorDiv.style.display='none';}
+                else hiddenInput.value='';
+            } else if(mode==='mode33'){
+                const sel=document.querySelectorAll('[data-type="mode33"].selected');
+                if(sel.length===3){sel.forEach(t=>subjects.push(t.dataset.value));hiddenInput.value=subjects.join(',');errorDiv.style.display='none';}
+                else hiddenInput.value='';
+            }
+        }
+        function validateSubject(){
+            let ok=false;
+            if(mode==='mode312'){const req=document.querySelector('[data-type="required"].selected');const opt=document.querySelectorAll('[data-type="optional"].selected');ok=req&&opt.length===2;}
+            else if(mode==='mode33'){ok=document.querySelectorAll('[data-type="mode33"].selected').length===3;}
+            else{ok=!!document.querySelector('[data-type="traditional"].selected');}
+            errorDiv.style.display=ok?'none':'block';
+            return ok;
+        }
+    }
+
+    // ====================================================
+    // 表单提交
+    // ====================================================
+    document.getElementById('recommendationForm').addEventListener('submit', async function(e){
+        e.preventDefault();
+        if(!isBackendConnected){showToast('请先启动后端服务器！','warning');return;}
+        const score=document.getElementById('score').value;
+        const subjectCombination=document.getElementById('subjectCombination').value;
+        const region=document.getElementById('region').value;
+        if(!region){document.getElementById('regionInput').focus();showToast('请选择有效的地区省份！','warning');return;}
+        if(!score||!subjectCombination){if(!subjectCombination)document.getElementById('subjectError').style.display='block';showToast('请填写所有必填项！','warning');return;}
+        if(score<0||score>750){showToast('分数必须在0-750之间！','warning');return;}
+
+        document.getElementById('loading').style.display='block';
+        setTimeout(async ()=>{
+            await doQueryAndShowResult(region, score, subjectCombination);
+            document.getElementById('loading').style.display='none';
+        }, 800);
+    });
+
+    async function doQueryAndShowResult(region, score, subjectCombination) {
+        // 填写信息栏
+        document.getElementById('infoRegion').textContent = region;
+        document.getElementById('infoScore').textContent = score;
+        document.getElementById('infoSubject').textContent = subjectCombination;
+        const now=new Date();
+        document.getElementById('generateTimeText').textContent=`（${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} 生成）`;
+
+        // 切换到结果视图，先显示加载中
+        showResultView();
+        document.getElementById('resultBody').innerHTML='';
+        document.getElementById('resultLoading').style.display='block';
+        document.getElementById('paginationBar').style.display='none';
+
+        try {
+            const resp = await fetch(`${API_BASE}/recommend-from-db`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({score:Number(score), subjectCombination, region})
+            });
+            const result = await resp.json();
+            if(!result.success) throw new Error(result.error||'接口返回失败');
+
+            allData = result.data || [];
+            document.getElementById('infoTotal').textContent = new Set(allData.map(r=>r.name)).size;
+            document.getElementById('infoMajorTotal').textContent = allData.length;
+
+            document.getElementById('resultLoading').style.display='none';
+
+            if(allData.length===0){
+                document.getElementById('resultBody').innerHTML=`<div class="empty-state"><div style="font-size:2rem;margin-bottom:12px;">🔍</div><div>未找到符合条件的推荐数据，请尝试调整分数或选科</div></div>`;
+                return;
+            }
+
+            // 重置筛选下拉（清空旧数据）
+            ['filterProvince','filterCollegeLevel','filterBatch','filterBatchRemark','filterSubjectRequire'].forEach(id=>{
+                const el=document.getElementById(id);
+                el.innerHTML='<option value="">全部</option>';
+            });
+            document.getElementById('filterCity').innerHTML='<option value="">全部</option>';
+            document.getElementById('filterSchool').value='';
+            document.getElementById('filterMajor').value='';
+            batchRemarkMap={}; provinceCity={};
+            sortKey='score'; sortAsc=false;
+            currentPage=1; pageSize=3;
+            document.getElementById('pageSizeSelect').value='3';
+            // 重置排序按钮
+            document.querySelectorAll('.sort-btn').forEach(btn=>{btn.classList.remove('active');const a=btn.querySelector('.sort-arrow');if(a)a.textContent='⇅';});
+            const sb=document.getElementById('sortBtn_score');if(sb){sb.classList.add('active');const a=sb.querySelector('.sort-arrow');if(a)a.textContent='▼';}
+
+            initFilterOptions();
+            filteredData=[...allData];
+            document.getElementById('filteredCount').textContent=filteredData.length;
+            sortAndRender();
+
+        } catch(err) {
+            document.getElementById('resultLoading').style.display='none';
+            document.getElementById('resultBody').innerHTML=`<div class="empty-state"><div style="font-size:2rem;margin-bottom:12px;">❌</div><div>查询失败：${err.message}<br><small>请确认后端服务已启动（http://localhost:3000）</small></div></div>`;
+        }
+    }
+
+    // ====================================================
+    // 辅助函数
+    // ====================================================
+    function resetForm() {
+        document.getElementById('recommendationForm').reset();
+        document.getElementById('region').value='河南';
+        document.getElementById('regionInput').value='河南';
+        showToast('表单已重置！','info');
+    }
+    function openCollegeList(){ window.open('college-list.html','_blank'); }
+
+    function showToast(message, type='info') {
+        const toastEl=document.getElementById('liveToast');
+        const msgEl=document.getElementById('toastMessage');
+        const titleEl=document.getElementById('toastTitle');
+        const types={success:{header:'✅ 成功',cls:'text-success',border:'rgba(16,185,129,0.4)'},error:{header:'❌ 错误',cls:'text-danger',border:'rgba(239,68,68,0.4)'},warning:{header:'⚠️ 警告',cls:'text-warning',border:'rgba(245,158,11,0.4)'},info:{header:'ℹ️ 提示',cls:'text-info',border:'rgba(59,159,232,0.4)'}};
+        const s=types[type]||types.info;
+        titleEl.textContent=s.header; msgEl.className=`toast-body ${s.cls}`; msgEl.textContent=message; toastEl.style.borderColor=s.border;
+        new bootstrap.Toast(toastEl).show();
+    }
+
+    // ====================================================
+    // 结果页：数据、筛选、排序、渲染
+    // ====================================================
+    let allData=[], filteredData=[];
+    let sortKey='score', sortAsc=false;
+    let currentPage=1, pageSize=3, totalPages=1;
+    let batchRemarkMap={}, majorCategoryMap={}, provinceCity={};
+
+    function initFilterOptions() {
+        const lvSel=document.getElementById('filterCollegeLevel');
+        const bSel=document.getElementById('filterBatch');
+        const sSel=document.getElementById('filterSubjectRequire');
+        const pSel=document.getElementById('filterProvince');
+
+        // 构建 province→city 映射
+        allData.forEach(r=>{
+            if(!r.province)return;
+            if(!provinceCity[r.province])provinceCity[r.province]=new Set();
+            if(r.college_city)provinceCity[r.province].add(r.college_city);
+        });
+        Object.keys(provinceCity).sort().forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;pSel.appendChild(o);});
+
+        // batch→remark 映射
+        allData.forEach(r=>{if(!r.batch)return;if(!batchRemarkMap[r.batch])batchRemarkMap[r.batch]=new Set();if(r.batch_remark)batchRemarkMap[r.batch].add(r.batch_remark);});
+
+        [...new Set(allData.map(r=>r.college_level).filter(Boolean))].sort().forEach(lv=>{const o=document.createElement('option');o.value=lv;o.textContent=lv;lvSel.appendChild(o);});
+        [...new Set(allData.map(r=>r.batch).filter(Boolean))].sort().forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;bSel.appendChild(o);});
+        [...new Set(allData.map(r=>r.subject_require).filter(Boolean))].sort().forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sSel.appendChild(o);});
+
+        refreshCategoryOptions(allData);
+    }
+
+    function onProvinceChange(){
+        const province=document.getElementById('filterProvince').value;
+        const citySel=document.getElementById('filterCity');
+        citySel.innerHTML='<option value="">全部</option>';
+        if(province&&provinceCity[province]){[...provinceCity[province]].filter(Boolean).sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;citySel.appendChild(o);});}
+        applyFilter();
+    }
+    function onBatchChange(){
+        const batch=document.getElementById('filterBatch').value;
+        const brSel=document.getElementById('filterBatchRemark');
+        brSel.innerHTML='<option value="">全部</option>';
+        if(batch&&batchRemarkMap[batch]){[...batchRemarkMap[batch]].sort().forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;brSel.appendChild(o);});}
+        applyFilter();
+    }
+    function onCategoryChange(){
+        const cat=document.getElementById('filterCategory').value;
+        const mcSel=document.getElementById('filterMajorCategory');
+        mcSel.innerHTML='<option value="">全部</option>';
+        if(cat&&majorCategoryMap[cat]){[...majorCategoryMap[cat]].sort().forEach(mc=>{const o=document.createElement('option');o.value=mc;o.textContent=mc;mcSel.appendChild(o);});}
+        applyFilter();
+    }
+    function refreshCategoryOptions(ds){
+        const prevCat=document.getElementById('filterCategory').value;
+        const prevMC=document.getElementById('filterMajorCategory').value;
+        const nm={};ds.forEach(r=>{if(!r.category)return;if(!nm[r.category])nm[r.category]=new Set();if(r.major_category)nm[r.category].add(r.major_category);});
+        majorCategoryMap=nm;
+        const cSel=document.getElementById('filterCategory');
+        const cats=Object.keys(nm).sort();
+        cSel.innerHTML='<option value="">全部</option>';
+        cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;if(c===prevCat)o.selected=true;cSel.appendChild(o);});
+        const curCat=cats.includes(prevCat)?prevCat:'';
+        if(!curCat)cSel.value='';
+        const mcSel=document.getElementById('filterMajorCategory');
+        mcSel.innerHTML='<option value="">全部</option>';
+        if(curCat&&nm[curCat]){[...nm[curCat]].sort().forEach(mc=>{const o=document.createElement('option');o.value=mc;o.textContent=mc;if(mc===prevMC)o.selected=true;mcSel.appendChild(o);});if(![...nm[curCat]].includes(prevMC))mcSel.value='';}
+    }
+    function resetFilter(){
+        document.getElementById('filterSchool').value='';document.getElementById('filterMajor').value='';
+        document.getElementById('filterProvince').value='';document.getElementById('filterCity').innerHTML='<option value="">全部</option>';
+        document.getElementById('filterCollegeLevel').value='';document.getElementById('filterBatch').value='';
+        document.getElementById('filterBatchRemark').innerHTML='<option value="">全部</option>';
+        document.getElementById('filterSubjectRequire').value='';
+        document.getElementById('filterMajorCategory').innerHTML='<option value="">全部</option>';
+        refreshCategoryOptions(allData);document.getElementById('filterCategory').value='';
+        applyFilter();
+    }
+    function applyFilter(){
+        const school=document.getElementById('filterSchool').value.trim().toLowerCase();
+        const major=document.getElementById('filterMajor').value.trim().toLowerCase();
+        const province=document.getElementById('filterProvince').value;
+        const city=document.getElementById('filterCity').value;
+        const cl=document.getElementById('filterCollegeLevel').value;
+        const batch=document.getElementById('filterBatch').value;
+        const br=document.getElementById('filterBatchRemark').value;
+        const subj=document.getElementById('filterSubjectRequire').value;
+        const pre=allData.filter(r=>{
+            if(school&&!(r.name||'').toLowerCase().includes(school))return false;
+            if(major&&!(r.major||'').toLowerCase().includes(major))return false;
+            if(province&&r.province!==province)return false;
+            if(city&&r.college_city!==city)return false;
+            if(cl&&r.college_level!==cl)return false;
+            if(batch&&r.batch!==batch)return false;
+            if(br&&r.batch_remark!==br)return false;
+            if(subj&&r.subject_require!==subj)return false;
+            return true;
+        });
+        refreshCategoryOptions(pre);
+        const cat=document.getElementById('filterCategory').value;
+        const mc=document.getElementById('filterMajorCategory').value;
+        filteredData=pre.filter(r=>{if(cat&&r.category!==cat)return false;if(mc&&r.major_category!==mc)return false;return true;});
+        document.getElementById('filteredCount').textContent=filteredData.length;
+        currentPage=1;sortAndRender();
+    }
+
+    function changePageSize(){pageSize=parseInt(document.getElementById('pageSizeSelect').value);currentPage=1;sortAndRender();}
+    function goPage(p){if(p<1||p>totalPages)return;currentPage=p;sortAndRender();}
+
+    function sortTable(key){
+        if(sortKey===key){sortAsc=!sortAsc;}else{sortKey=key;sortAsc=(key==='name'||key==='major');}
+        document.querySelectorAll('.sort-btn').forEach(btn=>{btn.classList.remove('active');const a=btn.querySelector('.sort-arrow');if(a)a.textContent='⇅';});
+        const ab=document.getElementById('sortBtn_'+key);if(ab){ab.classList.add('active');const a=ab.querySelector('.sort-arrow');if(a)a.textContent=sortAsc?'▲':'▼';}
+        currentPage=1;sortAndRender();
+    }
+    function sortAndRender(){
+        const sorted=[...filteredData].sort((a,b)=>{
+            let va=a[sortKey],vb=b[sortKey];
+            if(va==null)va='';if(vb==null)vb='';
+            if(typeof va==='number'||!isNaN(Number(va))){va=Number(va)||0;vb=Number(vb)||0;return sortAsc?va-vb:vb-va;}
+            if(sortKey==='probability'){va=parseFloat(String(va))||0;vb=parseFloat(String(vb))||0;return sortAsc?va-vb:vb-va;}
+            va=String(va);vb=String(vb);return sortAsc?va.localeCompare(vb,'zh'):vb.localeCompare(va,'zh');
+        });
+        renderTable(sorted);
+    }
+
+    function escHtml(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+    function renderTable(data){
+        const container=document.getElementById('resultBody');
+        if(!data.length){
+            container.innerHTML=`<div class="empty-state"><div style="font-size:2rem;margin-bottom:12px;">🔍</div><div>没有符合筛选条件的数据</div></div>`;
+            document.getElementById('paginationBar').style.display='none';return;
+        }
+        const schoolMap=new Map();
+        data.forEach(row=>{const key=(row.school_code||'')+'|'+(row.name||'');if(!schoolMap.has(key))schoolMap.set(key,[]);schoolMap.get(key).push(row);});
+
+        function getLvPrio(lv){if(!lv)return 99;if(lv==='985'||lv.includes('985'))return 1;if(lv==='211'||lv.includes('211'))return 2;if(lv.includes('双一流')||lv.includes('一流'))return 3;if(lv.includes('公办'))return 4;if(lv.includes('民办'))return 5;return 99;}
+        const groups=[...schoolMap.values()].sort((ga,gb)=>getLvPrio(ga[0].college_level||'')-getLvPrio(gb[0].college_level||''));
+
+        const ps=pageSize===0?groups.length:pageSize;
+        totalPages=pageSize===0?1:Math.ceil(groups.length/ps);
+        if(currentPage>totalPages)currentPage=Math.max(1,totalPages);
+        const start=(currentPage-1)*ps;
+        const pageGroups=groups.slice(start,start+ps);
+
+        let html='';
+        pageGroups.forEach(majors=>{
+            const school=majors[0];
+            const lv=school.college_level||'';
+            let lvClass='';
+            if(lv.includes('985'))lvClass='level-985';
+            else if(lv.includes('双一流')||lv.includes('一流'))lvClass='level-syl';
+            else if(lv.includes('211'))lvClass='level-211';
+            const lvTag=lv?`<span class="college-level-tag ${lvClass}">${escHtml(lv)}</span>`:'';
+
+            // 检测是否为移动端
+            const isMobileHeader = window.innerWidth <= 768;
+
+            html+=`
+            <div class="school-card collapsed">
+                <div class="school-header" onclick="this.closest('.school-card').classList.toggle('collapsed')">
+                    <div class="school-header-left">
+                        <div class="school-name-row">
+                            <a class="school-link" onclick="event.stopPropagation();window.open('school-detail.html?schoolName=${encodeURIComponent(school.name)}','_blank')" href="#">${escHtml(school.name||'-')}</a>
+                            ${isMobileHeader ? `<span class="school-major-count">共 <strong>${majors.length}</strong> 个专业</span>` : ''}
+                        </div>
+                        <span class="school-col-code">${escHtml(school.school_code||'-')}</span>
+                        <span class="school-col-city-province">${escHtml(school.province||'-')}</span>
+                        <span class="school-col-province">${escHtml(school.college_city||'-')}</span>
+                        <span class="school-col-level">${lvTag}</span>
+                        <span class="school-col-batch">${school.batch?`<span class="batch-tag">${escHtml(school.batch)}</span>`:''}</span>
+                        <span class="school-col-remark">${school.batch_remark?`<span class="batch-tag" style="background:rgba(59,159,232,0.1);border-color:rgba(59,159,232,0.3);color:#7dc8f0;">${escHtml(school.batch_remark)}</span>`:''}</span>
+                    </div>
+                    ${!isMobileHeader ? `<span class="school-major-count desktop-only">共 <strong>${majors.length}</strong> 个专业</span>` : ''}
+                </div>
+                <div class="major-body">`;
+
+            // 分组
+            const groupMap=new Map();
+            majors.forEach(row=>{const gk=row.major_group_code!=null?String(row.major_group_code):'__nogroup__';if(!groupMap.has(gk))groupMap.set(gk,[]);groupMap.get(gk).push(row);});
+            const groupKeys=[...groupMap.keys()].sort((a,b)=>{if(a==='__nogroup__')return 1;if(b==='__nogroup__')return -1;return Number(a)-Number(b);});
+            const hasGroups=groupKeys.length>1||(groupKeys.length===1&&groupKeys[0]!=='__nogroup__');
+
+            if(hasGroups){
+                html+=`<div class="group-tabs">`;
+                groupKeys.forEach((gk,i)=>{
+                    const label=gk==='__nogroup__'?'未分组':`第 ${gk} 组`;
+                    const cnt=groupMap.get(gk).length;
+                    const fr=groupMap.get(gk)[0]||{};
+                    const gA=fr.group_admit_count_1!=null?fr.group_admit_count_1:null;
+                    const gS=fr.group_min_score_1!=null?fr.group_min_score_1:null;
+                    const gR=fr.group_min_rank_1!=null?fr.group_min_rank_1:null;
+                    // 手机端：未选中只显示组名+数量，选中才显示统计信息
+                    const stats=[gA!=null?`<span class="tab-stat stat-admit">录取${gA}人</span>`:'',gS!=null?`<span class="tab-stat stat-score">最低${gS}分</span>`:'',gR!=null?`<span class="tab-stat stat-rank">位次${Number(gR).toLocaleString()}</span>`:'' ].join('');
+                    const statsHtml = stats ? `<div class="tab-stats">${stats}</div>` : '';
+                    html+=`<div class="group-tab${i===0?' active':''}" onclick="switchGroupTab(this)" data-stats="${escHtml(stats)}"><span class="tab-label">${escHtml(label)}</span><span class="tab-count">${cnt}个专业</span>${statsHtml}</div>`;
+                });
+                html+=`</div>`;
+            }
+
+            groupKeys.forEach((gk,gi)=>{
+                const groupRows=groupMap.get(gk);
+                html+=`<div class="group-panel${!hasGroups||gi===0?' active':''}">`;
+                // 检测是否为移动端
+                const isMobile = window.innerWidth <= 768;
+                if (isMobile) {
+                    html+=`<div class="major-list-header"><span>专业名称</span><span>编号</span><span>最低分</span><span>概率</span></div>`;
+                } else {
+                    html+=`<div class="major-list-header"><span>专业名称</span><span>专业编号</span><span>专业门类</span><span>最低分</span><span>最低位次</span><span>选科要求</span><span>招生计划</span><span>录取概率</span></div>`;
+                }
+                const isMobileView = window.innerWidth <= 768;
+                groupRows.forEach(row=>{
+                    const sc=row.subject_require==='不限'?'unlimited':'';
+                    const pc=row.adjustedType==='冲'?'rush':(row.adjustedType==='保'?'safe':'stable');
+                    // 限制备注最多显示10个字
+                    let remarkText = row.major_remark || '';
+                    const displayRemark = remarkText.length > 10 ? remarkText.substring(0, 10) + '...' : remarkText;
+                    const remark=remarkText?`<span class="major-remark-text" title="${escHtml(remarkText)}">${escHtml(displayRemark)}</span>`:'';
+                    
+                    if (isMobileView) {
+                        // 移动端只显示4列：专业名称、专业编号、最低分、录取概率
+                        html+=`
+                        <div class="major-row">
+                            <div class="major-row-left">
+                                <span class="major-name-result" data-major="${(row.major||'').replace(/"/g,'&quot;')}">${escHtml(row.major||'-')}</span>
+                                ${remark}
+                            </div>
+                            <div class="major-row-cell"><span style="color:var(--text-secondary);font-size:0.78rem;">${escHtml(row.major_code||'-')}</span></div>
+                            <div class="major-row-cell"><span style="color:var(--accent-cyan);font-size:0.78rem;font-weight:600;">${row.min_score!=null?row.min_score:'-'}</span></div>
+                            <div class="major-row-cell"><span style="font-size:0.78rem;">${escHtml(row.probability||'-')}</span></div>
+                        </div>`;
+                    } else {
+                        // 桌面端显示全部列
+                        html+=`
+                        <div class="major-row">
+                            <div class="major-row-left">
+                                <span class="major-name-result" data-major="${(row.major||'').replace(/"/g,'&quot;')}">${escHtml(row.major||'-')}</span>
+                                ${remark}
+                            </div>
+                            <div class="major-row-cell"><span style="color:var(--text-secondary);font-size:0.78rem;">${escHtml(row.major_code||'-')}</span></div>
+                            <div class="major-row-cell"><span class="major-category-text">${escHtml(row.major_category||'-')}</span></div>
+                            <div class="major-row-cell"><span class="score-val">${row.min_score!=null?row.min_score:'-'}</span></div>
+                            <div class="major-row-cell"><span class="rank-val">${row.rank!=null?Number(row.rank).toLocaleString():'-'}</span></div>
+                            <div class="major-row-cell"><span class="subject-badge ${sc}">${escHtml(row.subject_require||'-')}</span></div>
+                            <div class="major-row-cell"><span style="color:var(--text-secondary);font-size:0.85rem;">${row.admit_count!=null?row.admit_count+'人':'-'}</span></div>
+                            <div class="major-row-cell"><span class="prob-badge ${pc}">${escHtml(row.probability||'-')}</span></div>
+                        </div>`;
+                    }
+                });
+                html+=`</div>`;
+            });
+            html+=`</div></div>`;
+        });
+
+        container.innerHTML=html;
+
+        const pBar=document.getElementById('paginationBar');
+        if(totalPages>1||pageSize===0){
+            pBar.style.display='flex';
+            document.getElementById('pageInfo').textContent = `第 ${currentPage} / ${totalPages} 页`;
+            document.getElementById('btnFirst').disabled=currentPage===1;
+            document.getElementById('btnPrev').disabled=currentPage===1;
+            document.getElementById('btnNext').disabled=currentPage===totalPages;
+            document.getElementById('btnLast').disabled=currentPage===totalPages;
+        } else {pBar.style.display='none';}
+    }
+
+    function switchGroupTab(tabEl){
+        const majorBody=tabEl.closest('.group-tabs').parentElement;
+        const panels=majorBody.querySelectorAll('.group-panel');
+        const tabs=tabEl.closest('.group-tabs').querySelectorAll('.group-tab');
+        const idx=[...tabs].indexOf(tabEl);
+        tabs.forEach(t=>{
+            t.classList.remove('active');
+            // 电脑端：隐藏统计信息
+            const statsDiv = t.querySelector('.tab-stats');
+            if(statsDiv) statsDiv.style.display = 'none';
+        });
+        panels.forEach(p=>p.classList.remove('active'));
+        tabEl.classList.add('active');
+        if(panels[idx])panels[idx].classList.add('active');
+        
+        // 电脑端：显示选中选项卡的统计信息
+        const isMobile = window.innerWidth <= 768;
+        if(!isMobile){
+            const statsDiv = tabEl.querySelector('.tab-stats');
+            if(statsDiv) statsDiv.style.display = 'block';
+        }
+    }
+
+    // ====================================================
+    // 专业介绍 Tooltip（结果页）
+    // ====================================================
+    const tooltip=document.getElementById('majorTooltip');
+    const ttTitle=document.getElementById('ttTitle');
+    const ttBody=document.getElementById('ttBody');
+    const majorCache={};
+    let hideTimer=null, pendingMajor='';
+
+    function showTooltipMajor(e, majorName){
+        clearTimeout(hideTimer);pendingMajor=majorName;
+        ttTitle.textContent=majorName;positionTooltip(e);tooltip.classList.add('visible');
+        if(majorCache[majorName]!==undefined){renderTooltipContent(majorCache[majorName]);return;}
+        ttBody.innerHTML='<div class="tooltip-loading">加载中…</div>';
+        fetch(`${API_BASE}/major-info?major_name=${encodeURIComponent(majorName)}`)
+            .then(r=>r.json())
+            .then(res=>{
+                if(res.success&&res.data)majorCache[majorName]=res.data;
+                if(pendingMajor===majorName){renderTooltipContent(res.success?res.data:null);tooltip.classList.add('visible');}
+            })
+            .catch(err=>{if(pendingMajor===majorName)ttBody.innerHTML=`<div class="tooltip-none">加载失败</div>`;});
+    }
+    function renderTooltipContent(data){
+        if(!data){ttBody.innerHTML='<div class="tooltip-none">暂无专业介绍</div>';return;}
+        let h='';
+        if(data.introduction)h+=`<div class="tooltip-section"><div class="tooltip-section-label">专业介绍</div><div class="tooltip-section-body">${escHtml(data.introduction)}</div></div>`;
+        if(data.career_path)h+=`<div class="tooltip-section"><div class="tooltip-section-label">就业方向</div><div class="tooltip-section-body">${escHtml(data.career_path)}</div></div>`;
+        if(data.courses)h+=`<div class="tooltip-section"><div class="tooltip-section-label">主要课程</div><div class="tooltip-section-body">${escHtml(data.courses)}</div></div>`;
+        if(!h)h='<div class="tooltip-none">暂无专业介绍</div>';
+        ttBody.innerHTML=h;
+    }
+    function positionTooltip(e){
+        const tw=320,th=200,m=12;
+        let x=e.clientX+m,y=e.clientY+m;
+        if(x+tw>window.innerWidth)x=e.clientX-tw-m;
+        if(y+th>window.innerHeight)y=e.clientY-th-m;
+        tooltip.style.left=x+'px';tooltip.style.top=y+'px';
+    }
+    function hideTooltip(){hideTimer=setTimeout(()=>tooltip.classList.remove('visible'),300);}
+    tooltip.addEventListener('mouseenter',()=>clearTimeout(hideTimer));
+    tooltip.addEventListener('mouseleave',()=>hideTooltip());
+    document.addEventListener('mouseover',e=>{const el=e.target.closest('.major-name-result');if(el)showTooltipMajor(e,el.dataset.major||el.textContent.trim());});
+    document.addEventListener('mousemove',e=>{if(tooltip.classList.contains('visible'))positionTooltip(e);});
+    document.addEventListener('mouseout',e=>{if(e.target.closest('.major-name-result'))hideTooltip();});
+    </script>
+</body>
+</html>

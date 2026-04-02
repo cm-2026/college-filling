@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 / 注册 - 高考志愿智能推荐系统</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(150deg, #020e2e 0%, #0d2566 55%, #061540 100%);
+            --card-bg: rgba(10, 30, 80, 0.65);
+            --card-border: rgba(59, 159, 232, 0.2);
+            --text-primary: #ffffff;
+            --text-secondary: #a8ccf0;
+            --accent-cyan: #3b9fe8;
+            --accent-purple: #1e5bbf;
+            --accent-pink: #f0a500;
+            --input-bg: rgba(5, 15, 50, 0.7);
+            --input-border: rgba(59, 159, 232, 0.25);
+            --input-focus: rgba(59, 159, 232, 0.6);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 背景光晕 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(59, 159, 232, 0.13) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(30, 91, 191, 0.13) 0%, transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(125, 200, 240, 0.07) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 浮动光点装饰 */
+        .bg-dots {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .dot {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(59, 159, 232, 0.15);
+            animation: floatDot linear infinite;
+        }
+
+        @keyframes floatDot {
+            0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translateY(-20px) scale(1); opacity: 0; }
+        }
+
+        /* 主容器 */
+        .auth-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 460px;
+            padding: 24px;
+        }
+
+        /* Logo区 */
+        .logo-area {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .logo-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 6px;
+            transform: translateX(-5px);
+        }
+        .logo-img {
+            width: 95px;
+            height: 95px;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+        .logo-title {
+            font-size: 53px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), #a0d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            line-height: 1;
+        }
+        .logo-sub {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* 卡片 */
+        .auth-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 36px 36px 32px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(59,159,232,0.05);
+        }
+
+        /* Tab 切换 */
+        .tab-bar {
+            display: flex;
+            background: rgba(5, 15, 50, 0.5);
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 28px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 9px 0;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.22s ease;
+            font-family: inherit;
+            letter-spacing: 0.5px;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(59, 159, 232, 0.3), rgba(30, 91, 191, 0.3));
+            color: #ffffff;
+            box-shadow: 0 2px 12px rgba(59, 159, 232, 0.25);
+        }
+        .tab-btn:hover:not(.active) {
+            color: #c8dff5;
+            background: rgba(59, 159, 232, 0.07);
+        }
+
+        /* 表单区域 */
+        .form-section {
+            display: none;
+        }
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.22s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 表单组 */
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-bottom: 7px;
+            letter-spacing: 0.3px;
+        }
+        .form-input-wrap {
+            position: relative;
+        }
+        .form-input-wrap .icon {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 17px;
+            height: 17px;
+            opacity: 0.45;
+            pointer-events: none;
+        }
+        .form-input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            padding: 11px 14px 11px 38px;
+            color: var(--text-primary);
+            font-size: 0.92rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .form-input::placeholder {
+            color: rgba(168, 204, 240, 0.35);
+        }
+        .form-input:focus {
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px rgba(59, 159, 232, 0.12);
+        }
+        /* 密码显示切换 */
+        .pwd-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            color: rgba(168, 204, 240, 0.5);
+            transition: color 0.15s;
+        }
+        .pwd-toggle:hover { color: var(--accent-cyan); }
+        .pwd-toggle svg { width: 17px; height: 17px; display: block; }
+
+        /* 忘记密码 */
+        .form-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 22px;
+            margin-top: -6px;
+        }
+        .remember-label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+        .remember-label input[type="checkbox"] {
+            accent-color: var(--accent-cyan);
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+        .forgot-link {
+            font-size: 0.82rem;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            transition: opacity 0.15s;
+        }
+        .forgot-link:hover { opacity: 0.75; }
+
+        /* 主按钮 */
+        .btn-primary {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-purple) 100%);
+            border: none;
+            border-radius: 11px;
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+            box-shadow: 0 6px 20px rgba(59, 159, 232, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent);
+            pointer-events: none;
+        }
+        .btn-primary:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 28px rgba(59, 159, 232, 0.4);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .btn-primary.loading {
+            pointer-events: none;
+            opacity: 0.75;
+        }
+        .btn-primary .spinner {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* 分隔线 */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(59, 159, 232, 0.15);
+        }
+        .divider span {
+            font-size: 0.75rem;
+            color: rgba(168, 204, 240, 0.4);
+            white-space: nowrap;
+        }
+
+        /* 注册协议 */
+        .agreement {
+            font-size: 0.78rem;
+            color: rgba(168, 204, 240, 0.5);
+            text-align: center;
+            margin-top: 16px;
+            line-height: 1.7;
+        }
+        .agreement a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+        .agreement a:hover { text-decoration: underline; }
+
+        /* 消息提示 */
+        .msg-box {
+            padding: 10px 14px;
+            border-radius: 9px;
+            font-size: 0.83rem;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+        .msg-box.show { display: flex; animation: fadeIn 0.2s ease; }
+        .msg-box.error {
+            background: rgba(220, 50, 50, 0.12);
+            border: 1px solid rgba(220, 50, 50, 0.3);
+            color: #f99;
+        }
+        .msg-box.success {
+            background: rgba(30, 180, 100, 0.12);
+            border: 1px solid rgba(30, 180, 100, 0.3);
+            color: #6ee7b7;
+        }
+
+        /* 底部链接 */
+        .bottom-tip {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 0.83rem;
+            color: var(--text-secondary);
+        }
+        .switch-link {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .switch-link:hover { opacity: 0.75; }
+
+        /* 密码强度 */
+        .pwd-strength {
+            margin-top: 7px;
+            display: none;
+        }
+        .pwd-strength.show { display: block; }
+        .strength-bar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+        .strength-seg {
+            flex: 1;
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.08);
+            transition: background 0.3s;
+        }
+        .strength-seg.weak   { background: #f55; }
+        .strength-seg.fair   { background: #fa0; }
+        .strength-seg.good   { background: #3be; }
+        .strength-seg.strong { background: #3c9; }
+        .strength-label {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+        }
+
+        /* 校验错误提示 */
+        .field-error {
+            font-size: 0.75rem;
+            color: #f99;
+            margin-top: 5px;
+            display: none;
+        }
+        .field-error.show { display: block; }
+        .form-input.invalid {
+            border-color: rgba(220, 80, 80, 0.55);
+        }
+    </style>
+</head>
+<body>
+
+<!-- 浮动光点背景 -->
+<div class="bg-dots" id="bgDots"></div>
+
+<div class="auth-wrapper">
+
+    <!-- Logo 区 -->
+    <div class="logo-area">
+        <div class="logo-row">
+            <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'">
+            <div class="logo-title">权鼎教育</div>
+        </div>
+        <div class="logo-sub">高考志愿智能推荐系统</div>
+    </div>
+
+    <!-- 主卡片 -->
+    <div class="auth-card">
+
+        <!-- Tab 切换 -->
+        <div class="tab-bar">
+            <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">登 录</button>
+            <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">注 册</button>
+        </div>
+
+        <!-- 消息提示 -->
+        <div class="msg-box" id="msgBox">
+            <svg id="msgIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="msgText"></span>
+        </div>
+
+        <!-- 登录表单 -->
+        <div class="form-section active" id="loginForm">
+            <form onsubmit="return handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">手机号 / 用户名</label>
+                    <div class="form-input-wrap">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <input type="text" class="form-input" id="loginUsername" placeholder="请输入手机号或用户名" autocomplete="username">
+                    </div>
+                    <div class="field-error" id="loginUsernameErr">请输入手机号或用户名</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">密 码</label>
+                    <div class="form-input-wrap">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" autocomplete="current-password" style="padding-right:42px;">
+                        <button type="button" class="pwd-toggle" onclick="togglePwd('loginPassword', this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="eye-off">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="field-error" id="loginPasswordErr">请输入密码</div>
+                </div>
+
+                <div class="form-meta">
+                    <label class="remember-label">
+                        <input type="checkbox" id="rememberMe"> 记住我
+                    </label>
+                    <a href="#" class="forgot-link" onclick="showForgot()">忘记密码？</a>
+                </div>
+
+                <button type="submit" class="btn-primary" id="loginBtn">
+                    登 录
+                </button>
+            </form>
+
+            <div class="divider"><span>还没有账号？</span></div>
+
+            <div class="bottom-tip">
+                <a class="switch-link" onclick="switchTab('register')">立即免费注册</a>
+            </div>
+        </div>
+
+        <!-- 注册表单 -->
+        <div class="form-section" id="registerForm">
+            <form onsubmit="return handleRegister(event)">
+                <div class="form-group">
+                    <label class="form-label">手机号</label>
+                    <div class="form-input-wrap">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 11.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+                        </svg>
+                        <input type="tel" class="form-input" id="regPhone" placeholder="请输入手机号" autocomplete="tel" maxlength="11">
+                    </div>
+                    <div class="field-error" id="regPhoneErr">请输入正确的11位手机号</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">用户名</label>
+                    <div class="form-input-wrap">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <input type="text" class="form-input" id="regUsername" placeholder="请设置用户名（2-16位）" autocomplete="username" maxlength="16">
+                    </div>
+                    <div class="field-error" id="regUsernameErr">用户名为2-16位字母、数字或汉字</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">设置密码</label>
+                    <div class="form-input-wrap">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <input type="password" class="form-input" id="regPassword" placeholder="6-20位，含字母和数字" oninput="checkStrength(this.value)" style="padding-right:42px;">
+                        <button type="button" class="pwd-toggle" onclick="togglePwd('regPassword', this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="eye-off">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="field-error" id="regPasswordErr">密码需6-20位，包含字母和数字</div>
+                    <div class="pwd-strength" id="pwdStrength">
+                        <div class="strength-bar">
+                            <div class="strength-seg" id="seg1"></div>
+                            <div class="strength-seg" id="seg2"></div>
+                            <div class="strength-seg" id="seg3"></div>
+                            <div class="strength-seg" id="seg4"></div>
+                        </div>
+                        <div class="strength-label" id="strengthLabel">密码强度：-</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">确认密码</label>
+                    <div class="form-input-wrap">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0 1 12 2.944a11.955 11.955 0 0 1-8.618 3.04A12.02 12.02 0 0 0 3 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                        <input type="password" class="form-input" id="regConfirm" placeholder="请再次输入密码" style="padding-right:42px;">
+                        <button type="button" class="pwd-toggle" onclick="togglePwd('regConfirm', this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="eye-off">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="field-error" id="regConfirmErr">两次输入的密码不一致</div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="registerBtn">
+                    立即注册
+                </button>
+
+                <div class="agreement">
+                    注册即表示同意
+                    <a href="#">《用户服务协议》</a>
+                    和
+                    <a href="#">《隐私政策》</a>
+                </div>
+            </form>
+
+            <div class="bottom-tip" style="margin-top:16px;">
+                已有账号？<a class="switch-link" onclick="switchTab('login')">立即登录</a>
+            </div>
+        </div>
+
+    </div><!-- /auth-card -->
+
+</div><!-- /auth-wrapper -->
+
+<script>
+// ===== 背景浮点 =====
+(function createDots() {
+    const container = document.getElementById('bgDots');
+    for (let i = 0; i < 14; i++) {
+        const d = document.createElement('div');
+        d.className = 'dot';
+        const size = 4 + Math.random() * 8;
+        d.style.cssText = `
+            width:${size}px; height:${size}px;
+            left:${Math.random() * 100}%;
+            animation-duration:${10 + Math.random() * 18}s;
+            animation-delay:${-Math.random() * 20}s;
+            opacity:${0.3 + Math.random() * 0.5};
+        `;
+        container.appendChild(d);
+    }
+})();
+
+// ===== Tab 切换 =====
+function switchTab(tab) {
+    clearMsg();
+    document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+    document.getElementById('registerForm').classList.toggle('active', tab === 'register');
+    document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+    document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+}
+
+// ===== 消息提示 =====
+function showMsg(text, type) {
+    const box = document.getElementById('msgBox');
+    box.className = 'msg-box show ' + type;
+    document.getElementById('msgText').textContent = text;
+}
+function clearMsg() {
+    document.getElementById('msgBox').className = 'msg-box';
+}
+
+// 显示页面选择对话框（管理员/root）
+function showPageChoice(role) {
+    const roleLabel = role === 'admin' ? '管理员' : 'root';
+    
+    // 创建遮罩层
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    // 创建选择框
+    overlay.innerHTML = `
+        <div style="
+            background: linear-gradient(135deg, #1a2332 0%, #0f172a 100%);
+            border: 1px solid rgba(59, 159, 232, 0.3);
+            border-radius: 16px;
+            padding: 30px 40px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            position: relative;
+        ">
+            <button onclick="closePageChoice()" style="
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                width: 28px;
+                height: 28px;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 50%;
+                color: #9ca3af;
+                font-size: 18px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+            " onmouseover="this.style.background='rgba(239, 68, 68, 0.3)';this.style.color='#f87171'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)';this.style.color='#9ca3af'">×</button>
+            <div style="
+                font-size: 20px;
+                font-weight: 600;
+                color: #3b9fe8;
+                margin-bottom: 10px;
+            ">欢迎，${roleLabel}</div>
+            <div style="
+                font-size: 14px;
+                color: #9ca3af;
+                margin-bottom: 25px;
+            ">请选择要进入的页面</div>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button onclick="goToPage('index-mysql.html')" style="
+                    flex: 1;
+                    padding: 12px 24px;
+                    background: rgba(59, 159, 232, 0.15);
+                    border: 1px solid rgba(59, 159, 232, 0.4);
+                    color: #3b9fe8;
+                    border-radius: 8px;
+                    font-size: 15px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                " onmouseover="this.style.background='rgba(59, 159, 232, 0.25)'" onmouseout="this.style.background='rgba(59, 159, 232, 0.15)'">
+                    🏠 首页
+                </button>
+                <button onclick="goToPage('admin.html')" style="
+                    flex: 1;
+                    padding: 12px 24px;
+                    background: rgba(239, 68, 68, 0.15);
+                    border: 1px solid rgba(239, 68, 68, 0.4);
+                    color: #f87171;
+                    border-radius: 8px;
+                    font-size: 15px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                " onmouseover="this.style.background='rgba(239, 68, 68, 0.25)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'">
+                    ⚙️ 后台
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+}
+
+function closePageChoice() {
+    const overlay = document.querySelector('div[style*="z-index: 9999"]');
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+function goToPage(page) {
+    window.location.href = page;
+}
+
+// ===== 字段校验辅助 =====
+function setFieldError(inputId, errId, msg, hasError) {
+    const input = document.getElementById(inputId);
+    const err = document.getElementById(errId);
+    if (hasError) {
+        input.classList.add('invalid');
+        if (msg) err.textContent = msg;
+        err.classList.add('show');
+    } else {
+        input.classList.remove('invalid');
+        err.classList.remove('show');
+    }
+    return !hasError;
+}
+
+// ===== 密码显示切换 =====
+function togglePwd(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const isText = input.type === 'text';
+    input.type = isText ? 'password' : 'text';
+    btn.innerHTML = isText
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="eye-off">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+           </svg>`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+           </svg>`;
+}
+
+// ===== 密码强度检测 =====
+function checkStrength(pwd) {
+    const el = document.getElementById('pwdStrength');
+    const segs = [document.getElementById('seg1'), document.getElementById('seg2'),
+                  document.getElementById('seg3'), document.getElementById('seg4')];
+    const label = document.getElementById('strengthLabel');
+
+    if (!pwd) { el.classList.remove('show'); return; }
+    el.classList.add('show');
+
+    let score = 0;
+    if (pwd.length >= 6) score++;
+    if (pwd.length >= 10) score++;
+    if (/[a-zA-Z]/.test(pwd) && /\d/.test(pwd)) score++;
+    if (/[^a-zA-Z0-9]/.test(pwd)) score++;
+
+    const levels = ['', 'weak', 'fair', 'good', 'strong'];
+    const names  = ['', '弱', '一般', '较强', '强'];
+    segs.forEach((s, i) => {
+        s.className = 'strength-seg' + (i < score ? ' ' + levels[score] : '');
+    });
+    label.textContent = '密码强度：' + (names[score] || '弱');
+}
+
+
+const API_BASE = `http://${window.location.hostname || 'localhost'}:3000`;
+
+// ===== 登录逻辑 =====
+async function handleLogin(e) {
+    e.preventDefault();
+    clearMsg();
+    const account  = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    let ok = true;
+    ok = setFieldError('loginUsername', 'loginUsernameErr', '请输入手机号或用户名', !account) && ok;
+    ok = setFieldError('loginPassword', 'loginPasswordErr', '请输入密码', !password) && ok;
+    if (!ok) return false;
+
+    const btn = document.getElementById('loginBtn');
+    btn.classList.add('loading');
+    btn.innerHTML = '<span class="spinner"></span>登录中...';
+
+    try {
+        const resp = await fetch(`${API_BASE}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ account, password })
+        });
+        const data = await resp.json();
+        if (data.success) {
+            showMsg(`登录成功，欢迎回来 ${data.username}！`, 'success');
+            localStorage.setItem('qd_userId', data.userId);
+            localStorage.setItem('qd_username', data.username);
+            localStorage.setItem('qd_role', data.role || 'user');
+            
+            // 根据角色跳转
+            const role = data.role || 'user';
+            if (role === 'user') {
+                // 普通用户直接跳转首页
+                setTimeout(() => { window.location.href = 'index-mysql.html'; }, 800);
+            } else {
+                // 管理员或root显示选择框
+                showPageChoice(role);
+            }
+        } else {
+            showMsg(data.message || '登录失败，请重试', 'error');
+        }
+    } catch (err) {
+        showMsg('无法连接服务器，请检查后端是否启动', 'error');
+    } finally {
+        btn.classList.remove('loading');
+        btn.innerHTML = '登 录';
+    }
+
+    return false;
+}
+
+// ===== 注册逻辑 =====
+async function handleRegister(e) {
+    e.preventDefault();
+    clearMsg();
+    const phone    = document.getElementById('regPhone').value.trim();
+    const username = document.getElementById('regUsername').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const confirm  = document.getElementById('regConfirm').value;
+    let ok = true;
+
+    ok = setFieldError('regPhone', 'regPhoneErr', '请输入正确的11位手机号', !/^1[3-9]\d{9}$/.test(phone)) && ok;
+    ok = setFieldError('regUsername', 'regUsernameErr', '用户名为2-16位字母、数字或汉字', username.length < 2 || username.length > 16) && ok;
+    ok = setFieldError('regPassword', 'regPasswordErr', '密码需6-20位，包含字母和数字',
+        !/^(?=.*[a-zA-Z])(?=.*\d).{6,20}$/.test(password)) && ok;
+    ok = setFieldError('regConfirm', 'regConfirmErr', '两次输入的密码不一致', password !== confirm) && ok;
+
+    if (!ok) return false;
+
+    const btn = document.getElementById('registerBtn');
+    btn.classList.add('loading');
+    btn.innerHTML = '<span class="spinner"></span>注册中...';
+
+    try {
+        const resp = await fetch(`${API_BASE}/api/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, username, password })
+        });
+        const data = await resp.json();
+        if (data.success) {
+            showMsg('注册成功！请使用新账号登录', 'success');
+            // 自动填入用户名并切换到登录页
+            setTimeout(() => {
+                switchTab('login');
+                document.getElementById('loginUsername').value = username;
+            }, 1200);
+        } else {
+            showMsg(data.message || '注册失败，请重试', 'error');
+        }
+    } catch (err) {
+        showMsg('无法连接服务器，请检查后端是否启动', 'error');
+    } finally {
+        btn.classList.remove('loading');
+        btn.innerHTML = '立即注册';
+    }
+
+    return false;
+}
+
+// ===== 忘记密码 =====
+function showForgot() {
+    showMsg('请联系管理员重置密码', 'error');
+}
+
+// ===== 清除字段错误（输入时） =====
+document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('form-input')) {
+        e.target.classList.remove('invalid');
+        const errId = e.target.id + 'Err';
+        const errEl = document.getElementById(errId);
+        if (errEl) errEl.classList.remove('show');
+    }
+});
+</script>
+</body>
+</html>

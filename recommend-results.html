@@ -731,9 +731,9 @@
                     <option value="">全部</option>
                 </select>
             </div>
-            <div class="filter-item">
+                <div class="filter-item">
                 <label>学科大类</label>
-                <select id="filterCategory" onchange="onCategoryChange()">
+                <select id="filterCategory" onchange="applyFilter()">
                     <option value="">全部</option>
                 </select>
             </div>
@@ -878,8 +878,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 // ============ 筛选下拉初始化 ============
 // 一级批次 → 二级招生类别 映射表
 let batchRemarkMap = {};  // { '本科一批': Set(['普通类','艺术类',...]), ... }
-// 一级学科大类 → 二级专业类 映射表
-let majorCategoryMap = {}; // { '理学': Set(['数学类','物理学类',...]), ... }
 // 省份 → 城市集合 映射表
 let provinceCity = {};
 
@@ -935,8 +933,8 @@ function initFilterOptions() {
         sSel.appendChild(o);
     });
 
-    // 学科大类/专业类使用动态刷新函数，初始时基于全量数据
-    refreshCategoryOptions(allData);
+    // 初始化学科大类/专业类选项
+    initCategoryOptions();
 }
 
 // 省份切换时，刷新城市下拉并触发筛选
@@ -975,72 +973,117 @@ function onBatchChange() {
     applyFilter();
 }
 
-// 一级学科大类切换时，刷新二级专业类并触发筛选
-function onCategoryChange() {
-    const cat = document.getElementById('filterCategory').value;
-    const mcSel = document.getElementById('filterMajorCategory');
+// ============ 初始化学科大类/专业类选项 ============
+// 根据数据判断是否显示学科大类筛选
+function initCategoryOptions() {
+    // 检查是否有学科大类数据
+    const hasCategory = allData.some(r => r.category && r.category.trim() !== '');
 
-    // 清空二级
-    mcSel.innerHTML = '<option value="">全部</option>';
+    const categoryWrapper = document.getElementById('filterCategory').closest('.filter-item');
+    const majorCategoryWrapper = document.getElementById('filterMajorCategory').closest('.filter-item');
 
-    if (cat && majorCategoryMap[cat]) {
-        const majorCats = [...majorCategoryMap[cat]].sort();
-        majorCats.forEach(mc => {
-            const o = document.createElement('option');
-            o.value = mc; o.textContent = mc;
-            mcSel.appendChild(o);
-        });
+    if (!hasCategory) {
+        // 没有学科大类数据：隐藏学科大类筛选，只显示专业类
+        categoryWrapper.style.display = 'none';
+        majorCategoryWrapper.style.display = 'block';
+
+        // 只构建专业类选项
+        buildMajorCategoryOptions(allData);
+    } else {
+        // 有学科大类数据：显示学科大类，联动专业类
+        categoryWrapper.style.display = 'block';
+        majorCategoryWrapper.style.display = 'block';
+
+        // 构建学科大类选项
+        buildCategoryOptions();
+
+        // 构建映射表：学科大类 -> 专业类集合
+        buildCategoryMajorMap();
+
+        // 初始化专业类为全部（等待用户选择学科大类后再联动）
+        buildMajorCategoryOptions(allData);
+
+        // 绑定学科大类联动事件
+        document.getElementById('filterCategory').onchange = onCategoryChange;
     }
-
-    applyFilter();
 }
 
-
-// ============ 动态刷新学科大类/专业类选项 ============
-// 根据传入的数据集重建 filterCategory 和 filterMajorCategory 的选项
-// 保留当前已选中的值（如果新选项里还有的话）
-function refreshCategoryOptions(dataSet) {
-    const prevCat = document.getElementById('filterCategory').value;
-    const prevMajCat = document.getElementById('filterMajorCategory').value;
-
-    // 重建映射
-    const newMap = {};
-    dataSet.forEach(r => {
-        if (!r.category) return;
-        if (!newMap[r.category]) newMap[r.category] = new Set();
-        if (r.major_category) newMap[r.category].add(r.major_category);
+// 构建学科大类选项
+function buildCategoryOptions() {
+    const allCategories = new Set();
+    allData.forEach(r => {
+        if (r.category && r.category.trim()) allCategories.add(r.category);
     });
-    majorCategoryMap = newMap;
 
-    // 重建一级学科大类
     const cSel = document.getElementById('filterCategory');
-    const cats = Object.keys(newMap).sort();
+    const cats = [...allCategories].sort();
     cSel.innerHTML = '<option value="">全部</option>';
     cats.forEach(c => {
         const o = document.createElement('option');
         o.value = c; o.textContent = c;
-        if (c === prevCat) o.selected = true;
         cSel.appendChild(o);
     });
+}
 
-    // 如果之前选中的大类已不在新选项里，清空
-    const currentCat = cats.includes(prevCat) ? prevCat : '';
-    if (!currentCat) cSel.value = '';
+// 构建学科大类 -> 专业类 映射表
+let categoryMajorMap = {};
+function buildCategoryMajorMap() {
+    categoryMajorMap = {};
+    allData.forEach(r => {
+        if (r.category && r.category.trim() && r.major_category) {
+            if (!categoryMajorMap[r.category]) {
+                categoryMajorMap[r.category] = new Set();
+            }
+            categoryMajorMap[r.category].add(r.major_category);
+        }
+    });
+}
 
-    // 重建二级专业类
+// 构建专业类选项
+function buildMajorCategoryOptions(dataSet) {
+    const allMajorCategories = new Set();
+    dataSet.forEach(r => {
+        if (r.major_category) allMajorCategories.add(r.major_category);
+    });
+
     const mcSel = document.getElementById('filterMajorCategory');
+    const majorCats = [...allMajorCategories].sort();
     mcSel.innerHTML = '<option value="">全部</option>';
-    if (currentCat && newMap[currentCat]) {
-        const majorCats = [...newMap[currentCat]].sort();
+    majorCats.forEach(mc => {
+        const o = document.createElement('option');
+        o.value = mc; o.textContent = mc;
+        mcSel.appendChild(o);
+    });
+}
+
+// 学科大类切换时，联动专业类
+function onCategoryChange() {
+    const cat = document.getElementById('filterCategory').value;
+    const mcSel = document.getElementById('filterMajorCategory');
+    const prevMajCat = mcSel.value;
+
+    // 清空专业类
+    mcSel.innerHTML = '<option value="">全部</option>';
+
+    if (cat && categoryMajorMap[cat]) {
+        // 根据学科大类联动专业类
+        const majorCats = [...categoryMajorMap[cat]].sort();
         majorCats.forEach(mc => {
             const o = document.createElement('option');
             o.value = mc; o.textContent = mc;
-            if (mc === prevMajCat) o.selected = true;
             mcSel.appendChild(o);
         });
-        // 如果之前选中的专业类已不在新选项里，清空
-        if (![...newMap[currentCat]].includes(prevMajCat)) mcSel.value = '';
+    } else {
+        // 选择"全部"时，显示所有专业类
+        buildMajorCategoryOptions(allData);
     }
+
+    // 尝试保留之前选中的专业类（如果还在选项中）
+    if (prevMajCat && [...mcSel.options].some(o => o.value === prevMajCat)) {
+        mcSel.value = prevMajCat;
+    }
+
+    applyFilter();
 }
 
 // ============ 重置筛选 ============
@@ -1054,10 +1097,11 @@ function resetFilter() {
     // 重置批次后清空二级招生类别
     document.getElementById('filterBatchRemark').innerHTML = '<option value="">全部</option>';
     document.getElementById('filterSubjectRequire').value = '';
-    // 重置学科大类后清空二级专业类，并用全量数据重建选项
-    document.getElementById('filterMajorCategory').innerHTML = '<option value="">全部</option>';
-    refreshCategoryOptions(allData);
+    // 重置学科大类和专业类
     document.getElementById('filterCategory').value = '';
+    // 重置专业类为显示全部
+    buildMajorCategoryOptions(allData);
+    document.getElementById('filterMajorCategory').value = '';
     applyFilter();
 }
 
@@ -1071,9 +1115,11 @@ function applyFilter() {
     const batch = document.getElementById('filterBatch').value;
     const batchRemark = document.getElementById('filterBatchRemark').value;
     const subject = document.getElementById('filterSubjectRequire').value;
+    const category = document.getElementById('filterCategory').value;
+    const majorCategory = document.getElementById('filterMajorCategory').value;
 
-    // 第一步：按除学科大类/专业类之外的条件筛选，得到中间结果
-    const preFiltered = allData.filter(r => {
+    // 一次性按所有条件筛选
+    filteredData = allData.filter(r => {
         if (school && !(r.name || '').toLowerCase().includes(school)) return false;
         if (major && !(r.major || '').toLowerCase().includes(major)) return false;
         if (province && r.province !== province) return false;
@@ -1082,17 +1128,6 @@ function applyFilter() {
         if (batch && r.batch !== batch) return false;
         if (batchRemark && r.batch_remark !== batchRemark) return false;
         if (subject && r.subject_require !== subject) return false;
-        return true;
-    });
-
-    // 第二步：用中间结果动态刷新学科大类/专业类选项
-    refreshCategoryOptions(preFiltered);
-
-    // 第三步：再按学科大类/专业类二次过滤
-    const category = document.getElementById('filterCategory').value;
-    const majorCategory = document.getElementById('filterMajorCategory').value;
-
-    filteredData = preFiltered.filter(r => {
         if (category && r.category !== category) return false;
         if (majorCategory && r.major_category !== majorCategory) return false;
         return true;

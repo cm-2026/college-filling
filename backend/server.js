@@ -319,8 +319,22 @@ app.post('/api/recommend-from-db', async (req, res) => {
 
     if (is33Mode) {
       // ===== 3+3 模式查询 =====
-      // 用户选了3门，subject_require 格式：单科名、"A和B"、"B和A"、"不限"、空值
-      // 优先级：满足2门(priority=1) > 满足1门(priority=2) > 不限/空值(priority=3)
+      // 用户选了3门，subject_require 格式：单科名、"A和B"、"A和B和C"、"不限"、空值
+      // 优先级：满足3门(priority=0) > 满足2门(priority=1) > 满足1门(priority=2) > 不限/空值(priority=3)
+
+      // 生成所有可能的"3门"组合（6种排列，只用"和"连接）
+      const triples3 = [];
+      if (subjects.length >= 3) {
+        for (let i = 0; i < subjects.length; i++) {
+          for (let j = 0; j < subjects.length; j++) {
+            for (let k = 0; k < subjects.length; k++) {
+              if (i !== j && i !== k && j !== k) {
+                triples3.push(`${subjects[i]}和${subjects[j]}和${subjects[k]}`);
+              }
+            }
+          }
+        }
+      }
 
       // 生成所有可能的"2门"组合（两种排列）
       const pairs2 = [];
@@ -346,9 +360,14 @@ app.post('/api/recommend-from-db', async (req, res) => {
         recommend_reason`;
 
       // 优化：使用CASE WHEN替代UNION ALL，减少表扫描次数
+      const hasTriples = triples3.length > 0;
+      const tripleCondition = hasTriples ? `subject_require IN (${triples3.map(() => '?').join(',')})` : '1=0';
+      const triplePriority = hasTriples ? `WHEN subject_require IN (${triples3.map(() => '?').join(',')}) THEN 0` : '';
+
       query = `
         SELECT ${SELECT_COLS},
           CASE
+            ${triplePriority}
             WHEN subject_require IN (${pairs2.map(() => '?').join(',')}) THEN 1
             WHEN subject_require IN (${singles.map(() => '?').join(',')}) THEN 2
             WHEN subject_require = '不限' OR subject_require IS NULL OR subject_require = '' THEN 3
@@ -360,7 +379,8 @@ app.post('/api/recommend-from-db', async (req, res) => {
           AND COALESCE(group_min_score_1, min_score_1) >= ?
           AND COALESCE(group_min_score_1, min_score_1) <= ?
           AND (
-            subject_require IN (${pairs2.map(() => '?').join(',')})
+            ${tripleCondition}
+            OR subject_require IN (${pairs2.map(() => '?').join(',')})
             OR subject_require IN (${singles.map(() => '?').join(',')})
             OR subject_require = '不限'
             OR subject_require IS NULL
@@ -370,11 +390,13 @@ app.post('/api/recommend-from-db', async (req, res) => {
       `;
 
       queryParams = [
-        // CASE WHEN 参数
+        // CASE WHEN 参数（三科 + 两科 + 单科）
+        ...(hasTriples ? triples3 : []),
         ...pairs2, ...singles,
         // WHERE 参数
         sourceProvince, score - 20, score + 10,
-        // OR 条件参数
+        // OR 条件参数（三科 + 两科 + 单科）
+        ...(hasTriples ? triples3 : []),
         ...pairs2, ...singles
       ];
 
@@ -382,9 +404,12 @@ app.post('/api/recommend-from-db', async (req, res) => {
         sourceProvince,
         选科: subjects,
         分数范围: `${score - 20} ~ ${score + 10}`,
-        两门组合: pairs2,
+        三门组合数: triples3.length,
+        三门组合示例: triples3.slice(0, 3),
+        两门组合数: pairs2.length,
         单科: singles
       });
+      console.log('🔍 [3+3] SQL参数数量:', queryParams.length, '参数:', queryParams.slice(0, 20));
 
     } else if (isTraditionalMode) {
       // ===== 传统文理分科模式查询 =====
@@ -442,24 +467,38 @@ app.post('/api/recommend-from-db', async (req, res) => {
       if (requiredSubject === '物理') subjectType = '物理';
       else if (requiredSubject === '历史') subjectType = '历史';
 
-      // 构建再选科目的 subject_require 匹配条件（OR 连接三种情形）
+      // 构建再选科目的 subject_require 匹配条件（OR 连接四种情形）
       const subjectRequireConditions = [];
       const subjectRequireParams = [];
 
-      // 情形a：subject_require 含2门，用户再选都包含（两种排列）
+      // 情形a：subject_require 含3门（物理和化学和生物），必选+再选都匹配
+      if (optional1 && optional2) {
+        // 三科组合：必选科目 + 两个再选科目（6种排列，只用"和"连接）
+        const threeSubjects1 = `${requiredSubject}和${optional1}和${optional2}`;
+        const threeSubjects2 = `${requiredSubject}和${optional2}和${optional1}`;
+        const threeSubjects3 = `${optional1}和${requiredSubject}和${optional2}`;
+        const threeSubjects4 = `${optional2}和${requiredSubject}和${optional1}`;
+        const threeSubjects5 = `${optional1}和${optional2}和${requiredSubject}`;
+        const threeSubjects6 = `${optional2}和${optional1}和${requiredSubject}`;
+
+        subjectRequireConditions.push(`subject_require IN (?, ?, ?, ?, ?, ?)`);
+        subjectRequireParams.push(threeSubjects1, threeSubjects2, threeSubjects3, threeSubjects4, threeSubjects5, threeSubjects6);
+      }
+
+      // 情形b：subject_require 含2门，用户再选都包含（两种排列）
       if (optional1 && optional2) {
         subjectRequireConditions.push(`subject_require IN (?, ?)`);
         subjectRequireParams.push(`${optional1}和${optional2}`, `${optional2}和${optional1}`);
       }
 
-      // 情形b：subject_require 是1门单科，用户再选中包含
+      // 情形c：subject_require 是1门单科，用户再选中包含
       const optionals = [optional1, optional2].filter(s => s);
       if (optionals.length > 0) {
         subjectRequireConditions.push(`subject_require IN (${optionals.map(() => '?').join(',')})`);
         subjectRequireParams.push(...optionals);
       }
 
-      // 情形c：不限（只要必选符合，再选随意）
+      // 情形d：不限（只要必选符合，再选随意）
       subjectRequireConditions.push(`subject_require = '不限'`);
 
       // 组合成 AND (...OR...OR...) 子句

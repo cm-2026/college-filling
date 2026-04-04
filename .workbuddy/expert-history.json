@@ -34,6 +34,15 @@
     ],
     "7c26c00b74d54a67b22f09fa8071a2b9": [
       {
+        "expertId": "SeniorDeveloper",
+        "name": "Will",
+        "profession": "高级开发工程师",
+        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/02-Engineering/SeniorDeveloper/SeniorDeveloper.png",
+        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/SeniorDeveloper/SeniorDeveloper_zh.md",
+        "usedAt": 1775264756787,
+        "industryId": "all"
+      },
+      {
         "expertId": "MigraQExpert",
         "name": "MigraQ",
         "profession": "腾讯云迁移服务专家",
@@ -41,15 +50,6 @@
         "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/MigraQExpert/MigraQExpert_zh.md",
         "usedAt": 1775096539985,
         "industryId": "02-Engineering"
-      },
-      {
-        "expertId": "SeniorDeveloper",
-        "name": "Will",
-        "profession": "高级开发工程师",
-        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/02-Engineering/SeniorDeveloper/SeniorDeveloper.png",
-        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/SeniorDeveloper/SeniorDeveloper_zh.md",
-        "usedAt": 1775095693189,
-        "industryId": "all"
       }
     ],
     "efe57a05adc049b2802a2672c860a759": [
@@ -59,10 +59,19 @@
         "profession": "数据库优化专家",
         "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/02-Engineering/DatabaseOptimizationExpert/DatabaseOptimizationExpert.png",
         "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/DatabaseOptimizationExpert/DatabaseOptimizationExpert_zh.md",
-        "usedAt": 1775008803423,
+        "usedAt": 1775269197615,
         "industryId": "02-Engineering"
+      },
+      {
+        "expertId": "SeniorDeveloper",
+        "name": "Will",
+        "profession": "高级开发工程师",
+        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/02-Engineering/SeniorDeveloper/SeniorDeveloper.png",
+        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/SeniorDeveloper/SeniorDeveloper_zh.md",
+        "usedAt": 1775264756787,
+        "industryId": "all"
       }
     ]
   },
-  "lastUpdated": 1775096539986
+  "lastUpdated": 1775269867741
 }

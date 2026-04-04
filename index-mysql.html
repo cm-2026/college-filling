@@ -1141,16 +1141,16 @@
         <!-- 筛选栏 -->
         <div class="filter-bar">
             <div class="filter-grid">
-                <div class="filter-item"><label>院校名称</label><input type="text" id="filterSchool" placeholder="搜索学校名..." oninput="applyFilter()"></div>
-                <div class="filter-item"><label>专业名称</label><input type="text" id="filterMajor" placeholder="搜索专业名..." oninput="applyFilter()"></div>
-                <div class="filter-item"><label>省份</label><select id="filterProvince" onchange="onProvinceChange()"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>城市</label><select id="filterCity" onchange="applyFilter()"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>院校层次</label><select id="filterCollegeLevel" onchange="applyFilter()"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>批次</label><select id="filterBatch" onchange="onBatchChange()"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>招生类别</label><select id="filterBatchRemark" onchange="applyFilter()"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>选科要求</label><select id="filterSubjectRequire" onchange="applyFilter()"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>学科大类</label><select id="filterCategory" onchange="onCategoryChange()"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>专业类</label><select id="filterMajorCategory" onchange="applyFilter()"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>院校名称</label><input type="text" id="filterSchool" placeholder="搜索学校名..." oninput="onFilterChange()"></div>
+                <div class="filter-item"><label>专业名称</label><input type="text" id="filterMajor" placeholder="搜索专业名..." oninput="onFilterChange()"></div>
+                <div class="filter-item"><label>省份</label><select id="filterProvince" onchange="onFilterChange('province')"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>城市</label><select id="filterCity" onchange="onFilterChange('college_city')"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>选科要求</label><select id="filterSubjectRequire" onchange="onFilterChange('subject_require')"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>门类</label><select id="filterCategory" onchange="onFilterChange('category')"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>专业类</label><select id="filterMajorCategory" onchange="onFilterChange('major_category')"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>批次</label><select id="filterBatch" onchange="onFilterChange('batch')"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>批次备注</label><select id="filterBatchRemark" onchange="onFilterChange('batch_remark')"><option value="">全部</option></select></div>
+                <div class="filter-item"><label>院校层次</label><select id="filterCollegeLevel" onchange="onFilterChange('college_level')"><option value="">全部</option></select></div>
             </div>
             <div class="filter-actions">
                 <span class="result-count">筛选结果：<strong id="filteredCount">0</strong> 条</span>
@@ -1329,7 +1329,8 @@
             highlightIdx=(highlightIdx+dir+opts.length)%opts.length;
             const cur=opts[highlightIdx];cur.classList.add('highlighted');cur.scrollIntoView({block:'nearest'});
         }
-        input.addEventListener('focus',()=>openDropdown(input.value===hidden.value?'':input.value));
+        input.addEventListener('focus',()=>openDropdown(''));
+        input.addEventListener('click',()=>openDropdown(''));
         input.addEventListener('input',()=>{openDropdown(input.value);hidden.value='';});
         input.addEventListener('keydown',e=>{
             if(!dropdown.classList.contains('open')){openDropdown('');return;}
@@ -1376,10 +1377,14 @@
             <div><label class="form-label">再选科目（政治、地理、化学、生物中选2门，各100分）</label>
             <div class="subject-tags"><div class="subject-tag" data-type="optional" data-value="化学">化学</div><div class="subject-tag" data-type="optional" data-value="生物">生物</div><div class="subject-tag" data-type="optional" data-value="政治">政治</div><div class="subject-tag" data-type="optional" data-value="地理">地理</div></div></div>`;
         } else if(mode==='mode33'){
+            const region = document.getElementById('region').value;
+            const hasTech = (region === '浙江'); // 只有浙江有技术科目
+            const subjectCount = hasTech ? '7选3' : '6选3';
+            const techTag = hasTech ? '<div class="subject-tag" data-type="mode33" data-value="技术">技术</div>' : '';
             html=`<input type="hidden" id="subjectCombination" required>
             <div class="invalid-feedback" id="subjectError" style="display:none;">请选择选科组合</div>
-            <div><label class="form-label">选考科目（6选3，各100分）</label>
-            <div class="subject-tags"><div class="subject-tag" data-type="mode33" data-value="物理">物理</div><div class="subject-tag" data-type="mode33" data-value="化学">化学</div><div class="subject-tag" data-type="mode33" data-value="生物">生物</div><div class="subject-tag" data-type="mode33" data-value="政治">政治</div><div class="subject-tag" data-type="mode33" data-value="历史">历史</div><div class="subject-tag" data-type="mode33" data-value="地理">地理</div></div></div>`;
+            <div><label class="form-label">选考科目（${subjectCount}，各100分）</label>
+            <div class="subject-tags"><div class="subject-tag" data-type="mode33" data-value="物理">物理</div><div class="subject-tag" data-type="mode33" data-value="化学">化学</div><div class="subject-tag" data-type="mode33" data-value="生物">生物</div><div class="subject-tag" data-type="mode33" data-value="政治">政治</div><div class="subject-tag" data-type="mode33" data-value="历史">历史</div><div class="subject-tag" data-type="mode33" data-value="地理">地理</div>${techTag}</div></div>`;
         } else {
             html=`<input type="hidden" id="subjectCombination" required>
             <div class="invalid-feedback" id="subjectError" style="display:none;">请选择文理分科</div>
@@ -1501,14 +1506,12 @@
             }
 
             // 重置筛选下拉（清空旧数据）
-            ['filterProvince','filterCollegeLevel','filterBatch','filterBatchRemark','filterSubjectRequire'].forEach(id=>{
+            ['filterProvince','filterCity','filterCategory','filterMajorCategory','filterBatch','filterBatchRemark','filterCollegeLevel','filterSubjectRequire'].forEach(id=>{
                 const el=document.getElementById(id);
                 el.innerHTML='<option value="">全部</option>';
             });
-            document.getElementById('filterCity').innerHTML='<option value="">全部</option>';
             document.getElementById('filterSchool').value='';
             document.getElementById('filterMajor').value='';
-            batchRemarkMap={}; provinceCity={};
             sortKey='score'; sortAsc=false;
             currentPage=1; pageSize=3;
             document.getElementById('pageSizeSelect').value='3';
@@ -1554,104 +1557,117 @@
     let allData=[], filteredData=[];
     let sortKey='score', sortAsc=false;
     let currentPage=1, pageSize=3, totalPages=1;
-    let batchRemarkMap={}, majorCategoryMap={}, provinceCity={};
 
     function initFilterOptions() {
-        const lvSel=document.getElementById('filterCollegeLevel');
-        const bSel=document.getElementById('filterBatch');
-        const sSel=document.getElementById('filterSubjectRequire');
         const pSel=document.getElementById('filterProvince');
-
-        // 构建 province→city 映射
-        allData.forEach(r=>{
-            if(!r.province)return;
-            if(!provinceCity[r.province])provinceCity[r.province]=new Set();
-            if(r.college_city)provinceCity[r.province].add(r.college_city);
-        });
-        Object.keys(provinceCity).sort().forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;pSel.appendChild(o);});
-
-        // batch→remark 映射
-        allData.forEach(r=>{if(!r.batch)return;if(!batchRemarkMap[r.batch])batchRemarkMap[r.batch]=new Set();if(r.batch_remark)batchRemarkMap[r.batch].add(r.batch_remark);});
-
-        [...new Set(allData.map(r=>r.college_level).filter(Boolean))].sort().forEach(lv=>{const o=document.createElement('option');o.value=lv;o.textContent=lv;lvSel.appendChild(o);});
-        [...new Set(allData.map(r=>r.batch).filter(Boolean))].sort().forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;bSel.appendChild(o);});
-        [...new Set(allData.map(r=>r.subject_require).filter(Boolean))].sort().forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sSel.appendChild(o);});
-
-        refreshCategoryOptions(allData);
-    }
-
-    function onProvinceChange(){
-        const province=document.getElementById('filterProvince').value;
-        const citySel=document.getElementById('filterCity');
-        citySel.innerHTML='<option value="">全部</option>';
-        if(province&&provinceCity[province]){[...provinceCity[province]].filter(Boolean).sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;citySel.appendChild(o);});}
-        applyFilter();
-    }
-    function onBatchChange(){
-        const batch=document.getElementById('filterBatch').value;
+        const cSel=document.getElementById('filterCity');
+        const catSel=document.getElementById('filterCategory');
+        const mcSel=document.getElementById('filterMajorCategory');
+        const bSel=document.getElementById('filterBatch');
         const brSel=document.getElementById('filterBatchRemark');
-        brSel.innerHTML='<option value="">全部</option>';
-        if(batch&&batchRemarkMap[batch]){[...batchRemarkMap[batch]].sort().forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;brSel.appendChild(o);});}
-        applyFilter();
-    }
-    function onCategoryChange(){
-        const cat=document.getElementById('filterCategory').value;
-        const mcSel=document.getElementById('filterMajorCategory');
-        mcSel.innerHTML='<option value="">全部</option>';
-        if(cat&&majorCategoryMap[cat]){[...majorCategoryMap[cat]].sort().forEach(mc=>{const o=document.createElement('option');o.value=mc;o.textContent=mc;mcSel.appendChild(o);});}
-        applyFilter();
-    }
-    function refreshCategoryOptions(ds){
-        const prevCat=document.getElementById('filterCategory').value;
-        const prevMC=document.getElementById('filterMajorCategory').value;
-        const nm={};ds.forEach(r=>{if(!r.category)return;if(!nm[r.category])nm[r.category]=new Set();if(r.major_category)nm[r.category].add(r.major_category);});
-        majorCategoryMap=nm;
-        const cSel=document.getElementById('filterCategory');
-        const cats=Object.keys(nm).sort();
+        const lvSel=document.getElementById('filterCollegeLevel');
+        const sSel=document.getElementById('filterSubjectRequire');
+
+        pSel.innerHTML='<option value="">全部</option>';
         cSel.innerHTML='<option value="">全部</option>';
-        cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;if(c===prevCat)o.selected=true;cSel.appendChild(o);});
-        const curCat=cats.includes(prevCat)?prevCat:'';
-        if(!curCat)cSel.value='';
-        const mcSel=document.getElementById('filterMajorCategory');
+        catSel.innerHTML='<option value="">全部</option>';
         mcSel.innerHTML='<option value="">全部</option>';
-        if(curCat&&nm[curCat]){[...nm[curCat]].sort().forEach(mc=>{const o=document.createElement('option');o.value=mc;o.textContent=mc;if(mc===prevMC)o.selected=true;mcSel.appendChild(o);});if(![...nm[curCat]].includes(prevMC))mcSel.value='';}
+        bSel.innerHTML='<option value="">全部</option>';
+        brSel.innerHTML='<option value="">全部</option>';
+        lvSel.innerHTML='<option value="">全部</option>';
+        sSel.innerHTML='<option value="">全部</option>';
+
+        [...new Set(allData.map(r=>r.province).filter(Boolean))].sort().forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;pSel.appendChild(o);});
+        [...new Set(allData.map(r=>r.college_city).filter(Boolean))].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;cSel.appendChild(o);});
+        [...new Set(allData.map(r=>r.category).filter(Boolean))].sort().forEach(cat=>{const o=document.createElement('option');o.value=cat;o.textContent=cat;catSel.appendChild(o);});
+        [...new Set(allData.map(r=>r.major_category).filter(Boolean))].sort().forEach(mc=>{const o=document.createElement('option');o.value=mc;o.textContent=mc;mcSel.appendChild(o);});
+        [...new Set(allData.map(r=>r.batch).filter(Boolean))].sort().forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;bSel.appendChild(o);});
+        [...new Set(allData.map(r=>r.batch_remark).filter(Boolean))].sort().forEach(br=>{const o=document.createElement('option');o.value=br;o.textContent=br;brSel.appendChild(o);});
+        [...new Set(allData.map(r=>r.college_level).filter(Boolean))].sort().forEach(lv=>{const o=document.createElement('option');o.value=lv;o.textContent=lv;lvSel.appendChild(o);});
+        [...new Set(allData.map(r=>r.subject_require).filter(Boolean))].sort().forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sSel.appendChild(o);});
     }
+
+    // 联动筛选：更新其他下拉框选项
+    function updateFilterOptions(excludeField) {
+        const fieldMap = {
+            province: 'filterProvince',
+            college_city: 'filterCity',
+            category: 'filterCategory',
+            major_category: 'filterMajorCategory',
+            batch: 'filterBatch',
+            batch_remark: 'filterBatchRemark',
+            college_level: 'filterCollegeLevel',
+            subject_require: 'filterSubjectRequire'
+        };
+
+        for (const [field, selectId] of Object.entries(fieldMap)) {
+            if (field === excludeField) continue;
+            const sel = document.getElementById(selectId);
+            const currentVal = sel.value;
+            const options = [...new Set(filteredData.map(r => r[field]).filter(Boolean))].sort();
+            sel.innerHTML = '<option value="">全部</option>';
+            options.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt;
+                o.textContent = opt;
+                sel.appendChild(o);
+            });
+            if (currentVal && options.includes(currentVal)) {
+                sel.value = currentVal;
+            }
+        }
+    }
+
     function resetFilter(){
-        document.getElementById('filterSchool').value='';document.getElementById('filterMajor').value='';
-        document.getElementById('filterProvince').value='';document.getElementById('filterCity').innerHTML='<option value="">全部</option>';
-        document.getElementById('filterCollegeLevel').value='';document.getElementById('filterBatch').value='';
-        document.getElementById('filterBatchRemark').innerHTML='<option value="">全部</option>';
+        document.getElementById('filterSchool').value='';
+        document.getElementById('filterMajor').value='';
+        document.getElementById('filterProvince').value='';
+        document.getElementById('filterCity').value='';
+        document.getElementById('filterCategory').value='';
+        document.getElementById('filterMajorCategory').value='';
+        document.getElementById('filterBatch').value='';
+        document.getElementById('filterBatchRemark').value='';
+        document.getElementById('filterCollegeLevel').value='';
         document.getElementById('filterSubjectRequire').value='';
-        document.getElementById('filterMajorCategory').innerHTML='<option value="">全部</option>';
-        refreshCategoryOptions(allData);document.getElementById('filterCategory').value='';
+        initFilterOptions();
         applyFilter();
     }
-    function applyFilter(){
+    function applyFilter(excludeField){
         const school=document.getElementById('filterSchool').value.trim().toLowerCase();
         const major=document.getElementById('filterMajor').value.trim().toLowerCase();
         const province=document.getElementById('filterProvince').value;
         const city=document.getElementById('filterCity').value;
-        const cl=document.getElementById('filterCollegeLevel').value;
+        const category=document.getElementById('filterCategory').value;
+        const majorCategory=document.getElementById('filterMajorCategory').value;
         const batch=document.getElementById('filterBatch').value;
-        const br=document.getElementById('filterBatchRemark').value;
+        const batchRemark=document.getElementById('filterBatchRemark').value;
+        const cl=document.getElementById('filterCollegeLevel').value;
         const subj=document.getElementById('filterSubjectRequire').value;
-        const pre=allData.filter(r=>{
+        filteredData=allData.filter(r=>{
             if(school&&!(r.name||'').toLowerCase().includes(school))return false;
             if(major&&!(r.major||'').toLowerCase().includes(major))return false;
             if(province&&r.province!==province)return false;
             if(city&&r.college_city!==city)return false;
-            if(cl&&r.college_level!==cl)return false;
+            if(category&&r.category!==category)return false;
+            if(majorCategory&&r.major_category!==majorCategory)return false;
             if(batch&&r.batch!==batch)return false;
-            if(br&&r.batch_remark!==br)return false;
+            if(batchRemark&&r.batch_remark!==batchRemark)return false;
+            if(cl&&r.college_level!==cl)return false;
             if(subj&&r.subject_require!==subj)return false;
             return true;
         });
-        refreshCategoryOptions(pre);
-        const cat=document.getElementById('filterCategory').value;
-        const mc=document.getElementById('filterMajorCategory').value;
-        filteredData=pre.filter(r=>{if(cat&&r.category!==cat)return false;if(mc&&r.major_category!==mc)return false;return true;});
         document.getElementById('filteredCount').textContent=filteredData.length;
         currentPage=1;sortAndRender();
+
+        // 联动更新其他下拉框选项
+        if (excludeField) {
+            updateFilterOptions(excludeField);
+        }
+    }
+
+    // 各下拉框联动筛选触发函数
+    function onFilterChange(field) {
+        applyFilter(field);
     }
 
     function changePageSize(){pageSize=parseInt(document.getElementById('pageSizeSelect').value);currentPage=1;sortAndRender();}

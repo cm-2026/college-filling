@@ -12,7 +12,7 @@ const PORT = 3000;
 const dbConfig = {
   host: 'localhost',
   user: 'root',           // MySQL用户名
-  password: 'cm1990131',  // MySQL密码
+  password: process.env.DB_PASSWORD || 'cm1990131',  // MySQL密码(优先使用环境变量)
   database: 'gaokao' // 数据库名称
 };
 

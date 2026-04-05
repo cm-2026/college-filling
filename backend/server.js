@@ -874,6 +874,63 @@ app.get('/api/major-detail', async (req, res) => {
   }
 });
 
+// 获取学校专业组的全部专业
+app.get('/api/school-group-majors', async (req, res) => {
+  try {
+    const { schoolCode, groupCode, region } = req.query;
+    
+    if (!schoolCode || !groupCode) {
+      return res.status(400).json({ success: false, error: '缺少必要参数' });
+    }
+
+    console.log(`📋 获取学校专业组专业: schoolCode=${schoolCode}, groupCode=${groupCode}, region=${region}`);
+
+    // 查询该学校该专业组的全部专业
+    // 字段名参照 /api/recommend-from-db 中的实际字段
+    let sql = `
+      SELECT 
+        id,
+        college_code AS school_code,
+        college_name AS school_name,
+        major_name AS major,
+        major_code,
+        major_category,
+        major_group_code,
+        major_group_name,
+        subject_require,
+        min_score_1 AS min_score,
+        min_rank_1 AS rank,
+        admit_count_1 AS admit_count,
+        batch,
+        batch_remark,
+        college_province,
+        college_city,
+        recommend_reason
+      FROM admission_plan
+      WHERE college_code = ? AND major_group_code = ?
+    `;
+    const params = [schoolCode, groupCode];
+
+    // 如果有地区参数，添加地区筛选
+    if (region) {
+      sql += ` AND source_province = ?`;
+      params.push(region);
+    }
+
+    sql += ` ORDER BY min_score_1 ASC`;
+
+    const [rows] = await pool.execute(sql, params);
+
+    res.json({
+      success: true,
+      data: rows
+    });
+  } catch (error) {
+    console.error('获取专业组专业失败:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // 测试数据库连接
 app.get('/api/test-connection', async (req, res) => {
   try {

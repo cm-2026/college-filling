@@ -54,41 +54,63 @@
         }
 
         /* ========== 全局通用 ========== */
-        .welcome-user {
+        /* 统一状态按钮样式 - 玻璃拟态胶囊 */
+        .status-pill {
             position: fixed;
-            top: 20px; right: 20px;
+            right: 16px;
             z-index: 1000;
-            width: auto; height: 42px;
-            padding: 0 18px;
-            display: none;
+            height: 36px;
+            padding: 0 16px;
+            display: flex;
             align-items: center;
-            border-radius: 12px;
-            font-weight: 600; font-size: 0.88rem;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            background: rgba(20, 20, 40, 0.7);
-            color: var(--accent-cyan);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            gap: 6px;
+            border-radius: 18px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .status-pill:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .welcome-user {
+            top: 20px;
+            display: none;
+        }
+        .welcome-user::before {
+            content: "👋";
+            font-size: 0.9rem;
         }
 
         .connection-status {
-            position: fixed;
-            top: 74px; right: 20px;
-            z-index: 1000;
-            width: auto; height: 42px;
-            padding: 0 18px;
-            display: flex;
-            align-items: center;
-            border-radius: 12px;
-            font-weight: 600; font-size: 0.88rem;
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--card-border);
-            background: rgba(20, 20, 40, 0.7);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
+            top: 64px;
         }
-        .connection-status.connected  { color: #10b981; border-color: rgba(16, 185, 129, 0.4); }
-        .connection-status.disconnected { color: #ef4444; border-color: rgba(239, 68, 68, 0.4); }
+        .connection-status.connected {
+            color: #6ee7b7;
+            border-color: rgba(110, 231, 183, 0.4);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        .connection-status.disconnected {
+            color: #fca5a5;
+            border-color: rgba(252, 165, 165, 0.4);
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .connection-status::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 8px currentColor;
+        }
 
         /* ========== 视图容器 ========== */
         #viewForm   { display: block; }
@@ -308,17 +330,60 @@
             background: rgba(0, 212, 255, 0.1);
             border: 1px solid rgba(0, 212, 255, 0.25);
             color: var(--accent-cyan);
-            border-radius: 10px;
-            padding: 7px 18px;
+            border-radius: 8px;
+            padding: 5px 12px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            margin-bottom: 20px;
+            gap: 4px;
             transition: all 0.2s ease;
+            white-space: nowrap;
         }
         .back-btn:hover { background: rgba(0, 212, 255, 0.15); color: var(--accent-cyan); transform: translateY(-1px); }
+
+        /* 筛选按钮 - 与状态按钮统一风格 */
+        .filter-toggle-btn {
+            position: fixed;
+            top: 108px;
+            right: 16px;
+            z-index: 999;
+            height: 36px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 18px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .filter-toggle-btn svg {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.3s ease;
+        }
+        .filter-toggle-btn:hover { 
+            background: rgba(255, 255, 255, 0.15); 
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+        .filter-toggle-btn.active { 
+            background: rgba(0, 212, 255, 0.2); 
+            border-color: rgba(0, 212, 255, 0.5); 
+            color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        .filter-toggle-btn.active svg {
+            transform: rotate(180deg);
+        }
 
         /* 页面标题（结果页） */
         .page-title {
@@ -335,9 +400,10 @@
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 14px;
-            padding: 16px 24px;
+            padding: 12px 20px;
             margin-bottom: 24px;
-            display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
+            display: flex; flex-wrap: nowrap; gap: 16px; align-items: center;
+            overflow-x: auto;
         }
         .info-tag { display: flex; align-items: center; gap: 6px; font-size: 0.92rem; color: var(--text-secondary); }
         .info-tag strong { color: var(--accent-cyan); font-size: 1.05rem; }
@@ -349,7 +415,19 @@
             border-radius: 14px;
             padding: 16px 20px;
             margin-bottom: 20px;
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 1200px;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
         }
+        .filter-bar.show { display: block !important; }
         .filter-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -377,7 +455,7 @@
         .reset-btn:hover { background: rgba(59,159,232,0.2); border-color: rgba(59,159,232,0.7); }
 
         /* 排序工具栏 */
-        .sort-bar { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+        .sort-bar { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; margin-bottom: 14px; flex-wrap: wrap; margin-top: -3px; }
         .sort-bar-label { color: var(--text-secondary); font-size: 0.82rem; white-space: nowrap; }
         .sort-btn { padding: 0 16px; height: 32px; line-height: 32px; border-radius: 8px; border: 1px solid rgba(59,159,232,0.25); background: rgba(59,159,232,0.07); color: var(--text-secondary); font-size: 0.82rem; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
         .sort-btn:hover { background: rgba(59,159,232,0.18); color: var(--accent-cyan); }
@@ -397,14 +475,16 @@
         .school-card.collapsed .major-body { max-height: 0; opacity: 0; }
 
         .school-header-left { flex: 1; min-width: 0; display: flex; align-items: center; gap: 0; }
-        .school-name-row { display: flex; align-items: center; min-width: 280px; width: 280px; overflow: hidden; gap: 12px; }
+        .school-name-row { display: flex; align-items: center; flex: 1; min-width: 0; overflow: hidden; gap: 12px; }
+        .school-name-wrapper { display: flex; align-items: center; gap: 8px; min-width: 225px; width: 225px; flex-shrink: 0; }
+        .college-level-tag { flex-shrink: 0; }
         .school-col-level  { min-width: 80px;  width: 80px; }
         .school-col-code   { min-width: 70px;  width: 70px; color: var(--text-secondary); font-size: 0.78rem; }
         .school-col-province { min-width: 60px; width: 60px; color: var(--text-secondary); font-size: 0.82rem; }
         .school-col-city-province { min-width: 60px; width: 60px; color: var(--text-secondary); font-size: 0.82rem; }
         .school-col-batch  { min-width: 90px;  width: 90px; }
         .school-col-remark { min-width: 80px;  width: 80px; }
-        .school-link { color: var(--accent-cyan); text-decoration: none; font-weight: 700; font-size: 1.05rem; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; display: inline-block; }
+        .school-link { color: var(--accent-cyan); text-decoration: none; font-weight: 700; font-size: 1.05rem; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; display: inline-block; }
         .school-link:hover { text-decoration: underline; color: #7dc8f0; }
         .school-major-count { font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; padding-top: 4px; flex-shrink: 0; }
         .school-major-count strong { color: var(--accent-cyan); font-size: 1rem; }
@@ -444,6 +524,70 @@
         .major-row-cell:last-child { text-align: center; }
         .score-val { color: var(--accent-cyan); font-weight: 700; font-size: 1rem; }
         .rank-val  { color: var(--text-secondary); font-size: 0.85rem; }
+        
+        /* 模态框专业列表样式 */
+        .modal-major-list {
+            width: 100%;
+        }
+        .modal-major-header {
+            display: grid;
+            grid-template-columns: 2fr 80px 1fr 70px 80px 1fr 70px;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(59,159,232,0.08);
+            border-bottom: 1px solid rgba(59,159,232,0.2);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        .modal-major-header span {
+            text-align: center;
+        }
+        .modal-major-header span:first-child {
+            text-align: left;
+        }
+        .modal-major-row {
+            display: grid;
+            grid-template-columns: 2fr 80px 1fr 70px 80px 1fr 70px;
+            gap: 8px;
+            padding: 10px 20px;
+            border-bottom: 1px solid rgba(59,159,232,0.06);
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .modal-major-row:hover {
+            background: rgba(59,159,232,0.05);
+        }
+        .modal-major-name {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .modal-major-cell {
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+        .modal-major-cell .score-val {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+        .modal-major-cell .subject-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(59,159,232,0.15);
+            border: 1px solid rgba(59,159,232,0.3);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+        }
+        .modal-major-cell .subject-badge.unlimited {
+            background: rgba(110,231,183,0.15);
+            border-color: rgba(110,231,183,0.3);
+            color: #6ee7b7;
+        }
 
         .major-name-result {
             font-size: 0.9rem; color: var(--text-primary); font-weight: 500;
@@ -1062,9 +1206,16 @@
 <body>
 
     <!-- 欢迎语 -->
-    <div id="welcomeUser" class="welcome-user"></div>
+    <div id="welcomeUser" class="welcome-user status-pill"></div>
     <!-- 连接状态 -->
-    <div id="connectionStatus" class="connection-status disconnected">🔴 未连接到后端</div>
+    <div id="connectionStatus" class="connection-status status-pill disconnected">未连接到后端</div>
+    <!-- 筛选按钮（结果页显示） -->
+    <button class="filter-toggle-btn" id="filterToggleBtn" onclick="toggleFilterPanel()" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+        <span>筛选</span>
+    </button>
 
     <!-- ====== 表单视图 ====== -->
     <div id="viewForm" class="form-view-wrap">
@@ -1118,17 +1269,9 @@
     <!-- ====== 结果视图 ====== -->
     <div id="viewResult" class="result-view-wrap">
 
-        <!-- 返回按钮 -->
-        <button class="back-btn" onclick="showFormView()">← 返回重新查询</button>
-
-        <!-- 页面标题 -->
-        <div class="page-title">
-            🌟 智能推荐结果
-            <span id="generateTimeText"></span>
-        </div>
-
-        <!-- 基本信息栏 -->
+        <!-- 基本信息栏（包含返回按钮） -->
         <div class="info-bar" id="infoBar">
+            <button class="back-btn" onclick="showFormView()">← 返回</button>
             <div class="info-tag"><span class="label">生源地：</span><strong id="infoRegion">-</strong></div>
             <div class="info-tag"><span class="label">分数：</span><strong id="infoScore">-</strong></div>
             <div class="info-tag"><span class="label">选科：</span><strong id="infoSubject">-</strong></div>
@@ -1138,8 +1281,16 @@
             </div>
         </div>
 
-        <!-- 筛选栏 -->
-        <div class="filter-bar">
+        <!-- 固定在右侧的筛选按钮 -->
+        <button class="filter-toggle-btn" id="filterToggleBtn" onclick="toggleFilterPanel()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            筛选
+        </button>
+
+        <!-- 筛选栏（默认隐藏，点击按钮后悬浮显示） -->
+        <div class="filter-bar" id="filterBar" style="display:none;">
             <div class="filter-grid">
                 <div class="filter-item"><label>院校名称</label><input type="text" id="filterSchool" placeholder="搜索学校名..." oninput="onFilterChange()"></div>
                 <div class="filter-item"><label>专业名称</label><input type="text" id="filterMajor" placeholder="搜索专业名..." oninput="onFilterChange()"></div>
@@ -1185,13 +1336,22 @@
             <button class="page-btn" id="btnNext" onclick="goPage(currentPage + 1)">›</button>
             <button class="page-btn" id="btnLast" onclick="goPage(totalPages)">»</button>
             <select id="pageSizeSelect" class="page-btn page-size-select" onchange="changePageSize()">
-                <option value="3" selected>3所/页</option>
-                <option value="5">5所/页</option>
-                <option value="10">10所/页</option>
+                <option value="10" selected>10所/页</option>
                 <option value="20">20所/页</option>
                 <option value="50">50所/页</option>
                 <option value="0">全部</option>
             </select>
+        </div>
+
+        <!-- 专业组模态框 -->
+        <div id="groupModal" class="modal-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;justify-content:center;align-items:center;">
+            <div class="modal-content" style="background:linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);border:1px solid rgba(59,159,232,0.4);border-radius:12px;width:90%;max-width:1000px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+                <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid rgba(59,159,232,0.3);background:rgba(10,25,70,0.5);">
+                    <h3 id="groupModalTitle" style="margin:0;color:var(--accent-cyan);font-size:1.1rem;"></h3>
+                    <button onclick="closeGroupModal()" style="background:none;border:none;color:var(--text-secondary);font-size:1.5rem;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all 0.2s;">×</button>
+                </div>
+                <div id="groupModalBody" style="padding:0;overflow-y:auto;flex:1;"></div>
+            </div>
         </div>
     </div>
 
@@ -1226,12 +1386,30 @@
     function showFormView() {
         document.getElementById('viewForm').style.display = 'block';
         document.getElementById('viewResult').style.display = 'none';
+        document.getElementById('filterToggleBtn').style.display = 'none';
+        // 关闭筛选面板
+        document.getElementById('filterBar').style.display = 'none';
+        document.getElementById('filterToggleBtn').classList.remove('active');
     }
 
     function showResultView() {
         document.getElementById('viewForm').style.display = 'none';
         document.getElementById('viewResult').style.display = 'block';
+        document.getElementById('filterToggleBtn').style.display = 'flex';
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 切换筛选面板显示/隐藏
+    function toggleFilterPanel() {
+        const filterBar = document.getElementById('filterBar');
+        const filterBtn = document.getElementById('filterToggleBtn');
+        if (filterBar.style.display === 'none') {
+            filterBar.style.display = 'block';
+            filterBtn.classList.add('active');
+        } else {
+            filterBar.style.display = 'none';
+            filterBtn.classList.remove('active');
+        }
     }
 
     // ====================================================
@@ -1242,7 +1420,7 @@
         const savedUsername = localStorage.getItem('qd_username');
         if (savedUsername) {
             const el = document.getElementById('welcomeUser');
-            el.textContent = `👋 欢迎，${savedUsername}`;
+            el.textContent = `欢迎，${savedUsername}`;
             el.style.display = 'flex';
         }
 
@@ -1260,8 +1438,8 @@
 
     function updateConnectionStatus(connected) {
         const el = document.getElementById('connectionStatus');
-        el.className = 'connection-status ' + (connected ? 'connected' : 'disconnected');
-        el.textContent = connected ? '🟢 已连接到后端' : '🔴 未连接到后端';
+        el.className = 'connection-status status-pill ' + (connected ? 'connected' : 'disconnected');
+        el.textContent = connected ? '已连接到后端' : '未连接到后端';
     }
 
     // ====================================================
@@ -1476,8 +1654,7 @@
         document.getElementById('infoRegion').textContent = region;
         document.getElementById('infoScore').textContent = score;
         document.getElementById('infoSubject').textContent = subjectCombination;
-        const now=new Date();
-        document.getElementById('generateTimeText').textContent=`（${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} 生成）`;
+
 
         // 切换到结果视图，先显示加载中
         showResultView();
@@ -1494,7 +1671,12 @@
             const result = await resp.json();
             if(!result.success) throw new Error(result.error||'接口返回失败');
 
-            allData = result.data || [];
+            const userScore = parseInt(score) || 0;
+            allData = (result.data || []).filter(r => {
+                // 只显示专业最低分小于或等于用户分数的专业
+                const minScore = r.min_score != null ? parseInt(r.min_score) : null;
+                return minScore != null && minScore <= userScore;
+            });
             document.getElementById('infoTotal').textContent = new Set(allData.map(r=>r.name)).size;
             document.getElementById('infoMajorTotal').textContent = allData.length;
 
@@ -1513,8 +1695,8 @@
             document.getElementById('filterSchool').value='';
             document.getElementById('filterMajor').value='';
             sortKey='score'; sortAsc=false;
-            currentPage=1; pageSize=3;
-            document.getElementById('pageSizeSelect').value='3';
+            currentPage=1; pageSize=10;
+            document.getElementById('pageSizeSelect').value='10';
             // 重置排序按钮
             document.querySelectorAll('.sort-btn').forEach(btn=>{btn.classList.remove('active');const a=btn.querySelector('.sort-arrow');if(a)a.textContent='⇅';});
             const sb=document.getElementById('sortBtn_score');if(sb){sb.classList.add('active');const a=sb.querySelector('.sort-arrow');if(a)a.textContent='▼';}
@@ -1723,98 +1905,111 @@
             // 检测是否为移动端
             const isMobileHeader = window.innerWidth <= 768;
 
+            // 获取该院校所有符合条件的专业名称（在一行内逐个显示，自动换行）
+            const displayMajors = majors.slice(0, 8);
+            const moreCount = majors.length > 8 ? `+${majors.length - 8}` : '';
+            const majorNamesHtml = displayMajors.map(m => `<span class="major-tag" style="display:inline-block;background:rgba(0,212,255,0.15);color:var(--accent-cyan);padding:2px 8px;border-radius:4px;font-size:0.8rem;margin-right:6px;margin-bottom:2px;border:1px solid rgba(0,212,255,0.3);white-space:nowrap;vertical-align:middle;">${escHtml(m.major || '-')}</span>`).join('');
+            const moreTag = moreCount ? `<span class="major-tag more-tag" style="display:inline-block;background:rgba(100,100,100,0.3);color:var(--text-secondary);padding:2px 8px;border-radius:4px;font-size:0.8rem;margin-right:6px;margin-bottom:2px;border:1px solid rgba(100,100,100,0.5);white-space:nowrap;vertical-align:middle;">${moreCount}</span>` : '';
+            const majorsText = `<span class="school-majors-text" style="margin-left:6px;flex:1;min-width:0;">${majorNamesHtml}${moreTag}</span>`;
+
             html+=`
             <div class="school-card collapsed">
                 <div class="school-header" onclick="this.closest('.school-card').classList.toggle('collapsed')">
                     <div class="school-header-left">
                         <div class="school-name-row">
-                            <a class="school-link" onclick="event.stopPropagation();window.open('school-detail.html?schoolName=${encodeURIComponent(school.name)}','_blank')" href="#">${escHtml(school.name||'-')}</a>
+                            <div class="school-name-wrapper">
+                                ${lvTag}
+                                <a class="school-link" onclick="event.stopPropagation();window.open('school-detail.html?schoolName=${encodeURIComponent(school.name)}','_blank')" href="#">${escHtml(school.name||'-')}</a>
+                            </div>
+                            ${!isMobileHeader ? majorsText : ''}
                             ${isMobileHeader ? `<span class="school-major-count">共 <strong>${majors.length}</strong> 个专业</span>` : ''}
                         </div>
-                        <span class="school-col-code">${escHtml(school.school_code||'-')}</span>
-                        <span class="school-col-city-province">${escHtml(school.province||'-')}</span>
-                        <span class="school-col-province">${escHtml(school.college_city||'-')}</span>
-                        <span class="school-col-level">${lvTag}</span>
-                        <span class="school-col-batch">${school.batch?`<span class="batch-tag">${escHtml(school.batch)}</span>`:''}</span>
-                        <span class="school-col-remark">${school.batch_remark?`<span class="batch-tag" style="background:rgba(59,159,232,0.1);border-color:rgba(59,159,232,0.3);color:#7dc8f0;">${escHtml(school.batch_remark)}</span>`:''}</span>
                     </div>
                     ${!isMobileHeader ? `<span class="school-major-count desktop-only">共 <strong>${majors.length}</strong> 个专业</span>` : ''}
                 </div>
-                <div class="major-body">`;
+                <div class="major-body" data-school-key="${escHtml((school.school_code||'')+'|'+(school.name||''))}">`;
 
-            // 分组
+            // 获取专业组信息（用于显示组按钮）
             const groupMap=new Map();
             majors.forEach(row=>{const gk=row.major_group_code!=null?String(row.major_group_code):'__nogroup__';if(!groupMap.has(gk))groupMap.set(gk,[]);groupMap.get(gk).push(row);});
             const groupKeys=[...groupMap.keys()].sort((a,b)=>{if(a==='__nogroup__')return 1;if(b==='__nogroup__')return -1;return Number(a)-Number(b);});
             const hasGroups=groupKeys.length>1||(groupKeys.length===1&&groupKeys[0]!=='__nogroup__');
 
+            // 显示专业组按钮（可点击筛选）
             if(hasGroups){
-                html+=`<div class="group-tabs">`;
-                groupKeys.forEach((gk,i)=>{
+                html+=`<div class="group-buttons" style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 20px;background:rgba(10,25,70,0.3);border-bottom:1px solid rgba(59,159,232,0.12);">`;
+                groupKeys.forEach((gk, idx)=>{
                     const label=gk==='__nogroup__'?'未分组':`第 ${gk} 组`;
-                    const cnt=groupMap.get(gk).length;
-                    const fr=groupMap.get(gk)[0]||{};
-                    const gA=fr.group_admit_count_1!=null?fr.group_admit_count_1:null;
-                    const gS=fr.group_min_score_1!=null?fr.group_min_score_1:null;
-                    const gR=fr.group_min_rank_1!=null?fr.group_min_rank_1:null;
-                    // 手机端：未选中只显示组名+数量，选中才显示统计信息
-                    const stats=[gA!=null?`<span class="tab-stat stat-admit">录取${gA}人</span>`:'',gS!=null?`<span class="tab-stat stat-score">最低${gS}分</span>`:'',gR!=null?`<span class="tab-stat stat-rank">位次${Number(gR).toLocaleString()}</span>`:'' ].join('');
-                    const statsHtml = stats ? `<div class="tab-stats">${stats}</div>` : '';
-                    html+=`<div class="group-tab${i===0?' active':''}" onclick="switchGroupTab(this)" data-stats="${escHtml(stats)}"><span class="tab-label">${escHtml(label)}</span><span class="tab-count">${cnt}个专业</span>${statsHtml}</div>`;
+                    const groupMajors = groupMap.get(gk);
+                    const cnt = groupMajors.length;
+
+                    // 计算专业组统计信息（使用实际数据）
+                    const groupMinScore = groupMajors.reduce((min, r) => {
+                        const score = r.min_score || r.min_score_1;
+                        return score != null && (min === null || score < min) ? score : min;
+                    }, null);
+                    const groupMinRank = groupMajors.reduce((min, r) => {
+                        const rank = r.rank || r.min_rank || r.min_rank_1;
+                        return rank != null && (min === null || rank < min) ? rank : min;
+                    }, null);
+
+                    const stats = [];
+                    stats.push(`${cnt}个专业`);
+                    if(groupMinScore!=null) stats.push(`最低${groupMinScore}分`);
+                    if(groupMinRank!=null) stats.push(`位次${Number(groupMinRank).toLocaleString()}`);
+                    const statsText = stats.join(' · ');
+
+                    html+=`<button class="group-btn${idx===0?' active':''}" onclick="showGroupModal('${escHtml(school.school_code||'')}', '${escHtml(school.name||'')}', '${escHtml(gk)}', '${escHtml(label)}')" data-group="${escHtml(gk)}" style="display:inline-flex;align-items:center;gap:6px;background:rgba(59,159,232,0.15);border:1px solid rgba(59,159,232,0.3);border-radius:6px;padding:4px 10px;font-size:0.8rem;color:var(--accent-cyan);min-width:180px;cursor:pointer;transition:all 0.2s;"><span style="font-weight:600;min-width:60px;">${escHtml(label)}</span><span style="color:var(--text-secondary);font-size:0.75rem;">${statsText}</span></button>`;
                 });
                 html+=`</div>`;
             }
 
-            groupKeys.forEach((gk,gi)=>{
-                const groupRows=groupMap.get(gk);
-                html+=`<div class="group-panel${!hasGroups||gi===0?' active':''}">`;
-                // 检测是否为移动端
-                const isMobile = window.innerWidth <= 768;
-                if (isMobile) {
-                    html+=`<div class="major-list-header"><span>专业名称</span><span>编号</span><span>最低分</span><span>概率</span></div>`;
+            // 直接显示所有符合条件的专业（不按组分开）
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                html+=`<div class="major-list-header"><span>专业名称</span><span>编号</span><span>最低分</span><span>概率</span></div>`;
+            } else {
+                html+=`<div class="major-list-header"><span>专业名称</span><span>专业编号</span><span>专业门类</span><span>最低分</span><span>最低位次</span><span>选科要求</span><span>招生计划</span><span>录取概率</span></div>`;
+            }
+            const isMobileView = window.innerWidth <= 768;
+            majors.forEach(row=>{
+                const sc=row.subject_require==='不限'?'unlimited':'';
+                const pc=row.adjustedType==='冲'?'rush':(row.adjustedType==='保'?'safe':'stable');
+                // 限制备注最多显示10个字
+                let remarkText = row.major_remark || '';
+                const displayRemark = remarkText.length > 10 ? remarkText.substring(0, 10) + '...' : remarkText;
+                const remark=remarkText?`<span class="major-remark-text" title="${escHtml(remarkText)}">${escHtml(displayRemark)}</span>`:'';
+                const gk = row.major_group_code != null ? String(row.major_group_code) : '__nogroup__';
+                
+                if (isMobileView) {
+                    // 移动端只显示4列：专业名称、专业编号、最低分、录取概率
+                    html+=`
+                    <div class="major-row" data-group-code="${escHtml(gk)}">
+                        <div class="major-row-left">
+                            <span class="major-name-result" data-major="${(row.major||'').replace(/"/g,'&quot;')}">${escHtml(row.major||'-')}</span>
+                            ${remark}
+                        </div>
+                        <div class="major-row-cell"><span style="color:var(--text-secondary);font-size:0.78rem;">${escHtml(row.major_code||'-')}</span></div>
+                        <div class="major-row-cell"><span style="color:var(--accent-cyan);font-size:0.78rem;font-weight:600;">${row.min_score!=null?row.min_score:'-'}</span></div>
+                        <div class="major-row-cell"><span style="font-size:0.78rem;">${escHtml(row.probability||'-')}</span></div>
+                    </div>`;
                 } else {
-                    html+=`<div class="major-list-header"><span>专业名称</span><span>专业编号</span><span>专业门类</span><span>最低分</span><span>最低位次</span><span>选科要求</span><span>招生计划</span><span>录取概率</span></div>`;
+                    // 桌面端显示全部列
+                    html+=`
+                    <div class="major-row" data-group-code="${escHtml(gk)}">
+                        <div class="major-row-left">
+                            <span class="major-name-result" data-major="${(row.major||'').replace(/"/g,'&quot;')}">${escHtml(row.major||'-')}</span>
+                            ${remark}
+                        </div>
+                        <div class="major-row-cell"><span style="color:var(--text-secondary);font-size:0.78rem;">${escHtml(row.major_code||'-')}</span></div>
+                        <div class="major-row-cell"><span class="major-category-text">${escHtml(row.major_category||'-')}</span></div>
+                        <div class="major-row-cell"><span class="score-val">${row.min_score!=null?row.min_score:'-'}</span></div>
+                        <div class="major-row-cell"><span class="rank-val">${row.rank!=null?Number(row.rank).toLocaleString():'-'}</span></div>
+                        <div class="major-row-cell"><span class="subject-badge ${sc}">${escHtml(row.subject_require||'-')}</span></div>
+                        <div class="major-row-cell"><span style="color:var(--text-secondary);font-size:0.85rem;">${row.admit_count!=null?row.admit_count+'人':'-'}</span></div>
+                        <div class="major-row-cell"><span class="prob-badge ${pc}">${escHtml(row.probability||'-')}</span></div>
+                    </div>`;
                 }
-                const isMobileView = window.innerWidth <= 768;
-                groupRows.forEach(row=>{
-                    const sc=row.subject_require==='不限'?'unlimited':'';
-                    const pc=row.adjustedType==='冲'?'rush':(row.adjustedType==='保'?'safe':'stable');
-                    // 限制备注最多显示10个字
-                    let remarkText = row.major_remark || '';
-                    const displayRemark = remarkText.length > 10 ? remarkText.substring(0, 10) + '...' : remarkText;
-                    const remark=remarkText?`<span class="major-remark-text" title="${escHtml(remarkText)}">${escHtml(displayRemark)}</span>`:'';
-                    
-                    if (isMobileView) {
-                        // 移动端只显示4列：专业名称、专业编号、最低分、录取概率
-                        html+=`
-                        <div class="major-row">
-                            <div class="major-row-left">
-                                <span class="major-name-result" data-major="${(row.major||'').replace(/"/g,'&quot;')}">${escHtml(row.major||'-')}</span>
-                                ${remark}
-                            </div>
-                            <div class="major-row-cell"><span style="color:var(--text-secondary);font-size:0.78rem;">${escHtml(row.major_code||'-')}</span></div>
-                            <div class="major-row-cell"><span style="color:var(--accent-cyan);font-size:0.78rem;font-weight:600;">${row.min_score!=null?row.min_score:'-'}</span></div>
-                            <div class="major-row-cell"><span style="font-size:0.78rem;">${escHtml(row.probability||'-')}</span></div>
-                        </div>`;
-                    } else {
-                        // 桌面端显示全部列
-                        html+=`
-                        <div class="major-row">
-                            <div class="major-row-left">
-                                <span class="major-name-result" data-major="${(row.major||'').replace(/"/g,'&quot;')}">${escHtml(row.major||'-')}</span>
-                                ${remark}
-                            </div>
-                            <div class="major-row-cell"><span style="color:var(--text-secondary);font-size:0.78rem;">${escHtml(row.major_code||'-')}</span></div>
-                            <div class="major-row-cell"><span class="major-category-text">${escHtml(row.major_category||'-')}</span></div>
-                            <div class="major-row-cell"><span class="score-val">${row.min_score!=null?row.min_score:'-'}</span></div>
-                            <div class="major-row-cell"><span class="rank-val">${row.rank!=null?Number(row.rank).toLocaleString():'-'}</span></div>
-                            <div class="major-row-cell"><span class="subject-badge ${sc}">${escHtml(row.subject_require||'-')}</span></div>
-                            <div class="major-row-cell"><span style="color:var(--text-secondary);font-size:0.85rem;">${row.admit_count!=null?row.admit_count+'人':'-'}</span></div>
-                            <div class="major-row-cell"><span class="prob-badge ${pc}">${escHtml(row.probability||'-')}</span></div>
-                        </div>`;
-                    }
-                });
-                html+=`</div>`;
             });
             html+=`</div></div>`;
         });
@@ -1830,6 +2025,31 @@
             document.getElementById('btnNext').disabled=currentPage===totalPages;
             document.getElementById('btnLast').disabled=currentPage===totalPages;
         } else {pBar.style.display='none';}
+    }
+
+    function filterByGroup(btnEl, groupCode){
+        // 切换按钮激活状态
+        const buttons = btnEl.parentElement.querySelectorAll('.group-btn');
+        buttons.forEach(b => {
+            b.classList.remove('active');
+            b.style.background = 'rgba(59,159,232,0.15)';
+            b.style.borderColor = 'rgba(59,159,232,0.3)';
+        });
+        btnEl.classList.add('active');
+        btnEl.style.background = 'rgba(59,159,232,0.35)';
+        btnEl.style.borderColor = 'rgba(59,159,232,0.6)';
+        
+        // 筛选专业列表
+        const majorBody = btnEl.closest('.major-body');
+        const allRows = majorBody.querySelectorAll('.major-row');
+        allRows.forEach(row => {
+            const rowGroupCode = row.getAttribute('data-group-code');
+            if (groupCode === '__all__' || rowGroupCode === groupCode) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
     }
 
     function switchGroupTab(tabEl){
@@ -1899,6 +2119,81 @@
     document.addEventListener('mouseover',e=>{const el=e.target.closest('.major-name-result');if(el)showTooltipMajor(e,el.dataset.major||el.textContent.trim());});
     document.addEventListener('mousemove',e=>{if(tooltip.classList.contains('visible'))positionTooltip(e);});
     document.addEventListener('mouseout',e=>{if(e.target.closest('.major-name-result'))hideTooltip();});
+
+    // 显示专业组模态框
+    async function showGroupModal(schoolCode, schoolName, groupCode, groupLabel) {
+        const modal = document.getElementById('groupModal');
+        const title = document.getElementById('groupModalTitle');
+        const body = document.getElementById('groupModalBody');
+        
+        title.textContent = `${schoolName} - ${groupLabel}`;
+        body.innerHTML = '<div style="text-align:center;padding:40px;">加载中...</div>';
+        modal.style.display = 'flex';
+        
+        try {
+            const region = document.getElementById('region').value || '河南';
+            const resp = await fetch(`${API_BASE}/school-group-majors?schoolCode=${encodeURIComponent(schoolCode)}&groupCode=${encodeURIComponent(groupCode)}&region=${encodeURIComponent(region)}`);
+            const result = await resp.json();
+            
+            if (!result.success) {
+                body.innerHTML = `<div style="text-align:center;padding:40px;color:#f87171;">加载失败：${result.error || '未知错误'}</div>`;
+                return;
+            }
+            
+            const majors = result.data || [];
+            if (majors.length === 0) {
+                body.innerHTML = '<div style="text-align:center;padding:40px;">暂无数据</div>';
+                return;
+            }
+            
+            // 计算专业组的统计信息
+            const totalMajors = majors.length;
+            const minScore = majors.reduce((min, r) => r.min_score != null && (min === null || r.min_score < min) ? r.min_score : min, null);
+            const minRank = majors.reduce((min, r) => r.rank != null && (min === null || r.rank < min) ? r.rank : min, null);
+            
+            // 构建统计信息文本
+            const stats = [];
+            stats.push(`共 ${totalMajors} 个专业`);
+            if (minScore != null) stats.push(`组最低分 ${minScore}`);
+            if (minRank != null) stats.push(`最低位次 ${Number(minRank).toLocaleString()}`);
+            
+            // 更新标题
+            title.innerHTML = `${schoolName} - ${groupLabel} <span style="font-size:0.85rem;color:var(--text-secondary);font-weight:400;margin-left:12px;">${stats.join(' · ')}</span>`;
+            
+            // 渲染专业列表
+            let html = '<div class="modal-major-list">';
+            html += '<div class="modal-major-header"><span>专业名称</span><span>专业编号</span><span>专业门类</span><span>最低分</span><span>最低位次</span><span>选科要求</span><span>招生计划</span></div>';
+            
+            majors.forEach(row => {
+                const sc = row.subject_require === '不限' ? 'unlimited' : '';
+                html += `
+                <div class="modal-major-row">
+                    <div class="modal-major-name">${escHtml(row.major || '-')}</div>
+                    <div class="modal-major-cell">${escHtml(row.major_code || '-')}</div>
+                    <div class="modal-major-cell">${escHtml(row.major_category || '-')}</div>
+                    <div class="modal-major-cell"><span class="score-val">${row.min_score != null ? row.min_score : '-'}</span></div>
+                    <div class="modal-major-cell">${row.rank != null ? Number(row.rank).toLocaleString() : '-'}</div>
+                    <div class="modal-major-cell"><span class="subject-badge ${sc}">${escHtml(row.subject_require || '-')}</span></div>
+                    <div class="modal-major-cell">${row.admit_count != null ? row.admit_count + '人' : '-'}</div>
+                </div>`;
+            });
+            
+            html += '</div>';
+            body.innerHTML = html;
+        } catch (err) {
+            body.innerHTML = `<div style="text-align:center;padding:40px;color:#f87171;">加载失败：${err.message}</div>`;
+        }
+    }
+    
+    // 关闭模态框
+    function closeGroupModal() {
+        document.getElementById('groupModal').style.display = 'none';
+    }
+    
+    // 点击模态框背景关闭
+    document.getElementById('groupModal').addEventListener('click', function(e) {
+        if (e.target === this) closeGroupModal();
+    });
     </script>
 </body>
 </html>

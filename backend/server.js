@@ -899,7 +899,7 @@ app.get('/api/school-group-majors', async (req, res) => {
         major_group_name,
         subject_require,
         min_score_1 AS min_score,
-        min_rank_1 AS rank,
+        min_rank_1 AS \`rank\`,
         admit_count_1 AS admit_count,
         batch,
         batch_remark,

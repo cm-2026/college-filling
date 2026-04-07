@@ -28,7 +28,7 @@
         "profession": "前端开发工程师",
         "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/02-Engineering/FrontendDeveloper/FrontendDeveloper.png",
         "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/FrontendDeveloper/FrontendDeveloper_zh.md",
-        "usedAt": 1775013126450,
+        "usedAt": 1775529708805,
         "industryId": "02-Engineering"
       }
     ],
@@ -39,7 +39,7 @@
         "profession": "高级开发工程师",
         "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/02-Engineering/SeniorDeveloper/SeniorDeveloper.png",
         "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/SeniorDeveloper/SeniorDeveloper_zh.md",
-        "usedAt": 1775264756787,
+        "usedAt": 1775529354374,
         "industryId": "all"
       },
       {
@@ -73,5 +73,5 @@
       }
     ]
   },
-  "lastUpdated": 1775269867741
+  "lastUpdated": 1775531441554
 }

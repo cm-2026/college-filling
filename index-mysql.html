@@ -84,6 +84,8 @@
         .welcome-user {
             top: 20px;
             display: none;
+            width: 131px;
+            justify-content: center;
         }
         .welcome-user::before {
             content: "👋";
@@ -92,6 +94,8 @@
 
         .connection-status {
             top: 64px;
+            width: 131px;
+            justify-content: center;
         }
         .connection-status.connected {
             color: #6ee7b7;
@@ -350,6 +354,8 @@
             z-index: 999;
             height: 36px;
             padding: 0 16px;
+            width: 131px;
+            justify-content: center;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -408,26 +414,52 @@
         .info-tag { display: flex; align-items: center; gap: 6px; font-size: 0.92rem; color: var(--text-secondary); }
         .info-tag strong { color: var(--accent-cyan); font-size: 1.05rem; }
 
+        /* 筛选栏背景遮罩 - 参考模态框效果 */
+        .filter-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .filter-backdrop.active {
+            display: block;
+            opacity: 1;
+        }
+
         /* 筛选栏 */
         .filter-bar {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 14px;
-            padding: 16px 20px;
+            border-radius: 16px;
+            padding: 20px 24px;
             margin-bottom: 20px;
             position: fixed;
             top: 80px;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) scale(0.95);
             width: 90%;
             max-width: 1200px;
             z-index: 1000;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px) saturate(180%);
             max-height: calc(100vh - 100px);
             overflow-y: auto;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
         }
-        .filter-bar.show { display: block !important; }
+        .filter-bar.active {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+            pointer-events: auto;
+        }
         .filter-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -451,16 +483,10 @@
         .filter-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding-top: 4px; border-top: 1px solid rgba(59,159,232,0.1); }
         .result-count { color: var(--text-secondary); font-size: 0.86rem; margin-right: auto; }
         .result-count strong { color: var(--accent-cyan); }
-        .reset-btn { padding: 6px 20px; border-radius: 8px; border: 1px solid rgba(59,159,232,0.4); background: rgba(59,159,232,0.08); color: var(--accent-cyan); font-size: 0.86rem; cursor: pointer; transition: background 0.15s; height: 34px; white-space: nowrap; }
+        .reset-btn { padding: 6px 20px; border-radius: 8px; border: 1px solid rgba(59,159,232,0.4); background: rgba(59,159,232,0.08); color: var(--accent-cyan); font-size: 0.86rem; cursor: pointer; transition: background 0.15s; height: 36px; width: 100px; white-space: nowrap; }
         .reset-btn:hover { background: rgba(59,159,232,0.2); border-color: rgba(59,159,232,0.7); }
-
-        /* 排序工具栏 */
-        .sort-bar { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; margin-bottom: 14px; flex-wrap: wrap; margin-top: -3px; }
-        .sort-bar-label { color: var(--text-secondary); font-size: 0.82rem; white-space: nowrap; }
-        .sort-btn { padding: 0 16px; height: 32px; line-height: 32px; border-radius: 8px; border: 1px solid rgba(59,159,232,0.25); background: rgba(59,159,232,0.07); color: var(--text-secondary); font-size: 0.82rem; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
-        .sort-btn:hover { background: rgba(59,159,232,0.18); color: var(--accent-cyan); }
-        .sort-btn.active { background: rgba(59,159,232,0.22); color: var(--accent-cyan); border-color: rgba(59,159,232,0.6); }
-        .sort-btn .sort-arrow { margin-left: 3px; font-size: 0.7rem; }
+        .confirm-btn { padding: 6px 20px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.4); background: rgba(16,185,129,0.15); color: #10b981; font-size: 0.86rem; cursor: pointer; transition: background 0.15s; height: 36px; width: 100px; white-space: nowrap; font-weight: 600; }
+        .confirm-btn:hover { background: rgba(16,185,129,0.25); border-color: rgba(16,185,129,0.7); }
 
         /* 院校卡片 */
         .cards-wrapper { display: flex; flex-direction: column; gap: 0; }
@@ -525,7 +551,7 @@
         .score-val { color: var(--accent-cyan); font-weight: 700; font-size: 1rem; }
         .rank-val  { color: var(--text-secondary); font-size: 0.85rem; }
         
-        /* 模态框专业列表样式 */
+        /* 模态框专业列表样式 - 与主页面保持一致 */
         .modal-major-list {
             width: 100%;
         }
@@ -534,11 +560,12 @@
             grid-template-columns: 2fr 80px 1fr 70px 80px 1fr 70px;
             gap: 8px;
             padding: 12px 20px;
-            background: rgba(59,159,232,0.08);
-            border-bottom: 1px solid rgba(59,159,232,0.2);
-            font-size: 0.8rem;
+            background: rgba(59, 159, 232, 0.06);
+            border-bottom: 1px solid rgba(59, 159, 232, 0.12);
+            font-size: 0.75rem;
             color: var(--text-secondary);
             font-weight: 600;
+            letter-spacing: 0.02em;
         }
         .modal-major-header span {
             text-align: center;
@@ -550,42 +577,48 @@
             display: grid;
             grid-template-columns: 2fr 80px 1fr 70px 80px 1fr 70px;
             gap: 8px;
-            padding: 10px 20px;
-            border-bottom: 1px solid rgba(59,159,232,0.06);
+            padding: 11px 20px;
+            border-bottom: 1px solid rgba(59, 159, 232, 0.06);
             align-items: center;
-            transition: background 0.2s;
+            transition: background 0.12s;
+        }
+        .modal-major-row:last-child {
+            border-bottom: none;
         }
         .modal-major-row:hover {
-            background: rgba(59,159,232,0.05);
+            background: rgba(59, 159, 232, 0.06);
         }
         .modal-major-name {
-            font-size: 0.85rem;
+            font-size: 0.88rem;
             color: var(--text-primary);
+            font-weight: 500;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
         .modal-major-cell {
             text-align: center;
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
         }
         .modal-major-cell .score-val {
             color: var(--accent-cyan);
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1rem;
         }
         .modal-major-cell .subject-badge {
             display: inline-block;
-            padding: 2px 8px;
-            background: rgba(59,159,232,0.15);
-            border: 1px solid rgba(59,159,232,0.3);
-            border-radius: 4px;
-            font-size: 0.75rem;
-            color: var(--accent-cyan);
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            border-radius: 7px;
+            background: rgba(59, 159, 232, 0.12);
+            border: 1px solid rgba(59, 159, 232, 0.3);
+            color: var(--text-secondary);
+            white-space: nowrap;
         }
         .modal-major-cell .subject-badge.unlimited {
-            background: rgba(110,231,183,0.15);
-            border-color: rgba(110,231,183,0.3);
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
             color: #6ee7b7;
         }
 
@@ -596,6 +629,79 @@
             transition: color 0.15s;
         }
         .major-name-result:hover { color: #7dc8f0; }
+
+        /* ========== 专业组模态框 ========== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 80px;
+            overflow-y: auto;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: calc(100vh - 100px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            margin-bottom: 40px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(59, 159, 232, 0.2);
+            background: rgba(10, 25, 70, 0.3);
+        }
+        .modal-header h3 {
+            margin: 0;
+            color: var(--accent-cyan);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .modal-close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .modal-close-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #f87171;
+        }
+        #groupModalBody {
+            padding: 0;
+            overflow-y: auto;
+            flex: 1;
+        }
         .major-remark-text {
             font-size: 0.72rem;
             color: var(--accent-pink);
@@ -635,6 +741,31 @@
 
         /* 空状态 */
         .empty-state { text-align: center; padding: 60px 24px; color: var(--text-secondary); }
+
+        /* 模态框空状态 */
+        .modal-empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+        }
+        .modal-empty-state .spinner-border {
+            width: 2.5rem;
+            height: 2.5rem;
+            color: var(--accent-cyan);
+            margin-bottom: 16px;
+        }
+        .modal-empty-state p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        .modal-empty-state.error {
+            color: #f87171;
+        }
 
         /* 分页 */
         .pagination-bar { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 18px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; margin-top: 4px; }
@@ -801,6 +932,22 @@
             /* 筛选栏优化 */
             .filter-bar {
                 padding: 12px 15px;
+                border-radius: 12px;
+                top: 60px;
+                max-height: calc(100vh - 80px);
+            }
+            .filter-backdrop {
+                background: rgba(0, 0, 0, 0.7);
+            }
+
+            /* 模态框移动端适配 */
+            .modal-overlay {
+                padding-top: 60px;
+                align-items: flex-start;
+            }
+            .modal-content {
+                max-height: calc(100vh - 80px);
+                margin-bottom: 20px;
             }
             
             .filter-grid {
@@ -824,28 +971,6 @@
             
             .filter-item input::placeholder {
                 font-size: 0.75rem;
-            }
-            
-            /* 排序栏优化 */
-            .sort-bar {
-                padding: 8px 10px;
-                gap: 6px;
-                flex-wrap: nowrap;
-                overflow-x: auto;
-            }
-            
-            .sort-bar-label {
-                white-space: nowrap;
-                font-size: 0.75rem;
-            }
-            
-            .sort-btn {
-                padding: 0 8px;
-                height: 30px;
-                line-height: 30px;
-                font-size: 0.7rem;
-                white-space: nowrap;
-                flex: none;
             }
             
             /* 院校卡片优化 - 内容显示为两行 */
@@ -1178,11 +1303,11 @@
         
         /* 触摸设备优化 */
         @media (hover: none) and (pointer: coarse) {
-            .btn, .subject-tag, .sort-btn, .page-btn, 
-            .school-header, .group-tab, .reset-btn {
+            .btn, .subject-tag, .page-btn,
+            .school-header, .group-tab, .reset-btn, .confirm-btn {
                 min-height: 44px;
             }
-            
+
             .subject-tag {
                 padding: 0 16px;
             }
@@ -1196,7 +1321,6 @@
             
             .btn:active,
             .subject-tag:active,
-            .sort-btn:active,
             .page-btn:active {
                 transform: scale(0.98);
             }
@@ -1289,6 +1413,9 @@
             筛选
         </button>
 
+        <!-- 筛选栏背景遮罩 -->
+        <div class="filter-backdrop" id="filterBackdrop" onclick="closeFilterPanel()"></div>
+
         <!-- 筛选栏（默认隐藏，点击按钮后悬浮显示） -->
         <div class="filter-bar" id="filterBar" style="display:none;">
             <div class="filter-grid">
@@ -1306,17 +1433,8 @@
             <div class="filter-actions">
                 <span class="result-count">筛选结果：<strong id="filteredCount">0</strong> 条</span>
                 <button class="reset-btn" onclick="resetFilter()">重置筛选</button>
+                <button class="confirm-btn" onclick="closeFilterPanel()">确定</button>
             </div>
-        </div>
-
-        <!-- 排序工具栏 -->
-        <div class="sort-bar">
-            <span class="sort-bar-label">排序：</span>
-            <button class="sort-btn active" id="sortBtn_score"       onclick="sortTable('score')">最低分 <span class="sort-arrow">▼</span></button>
-            <button class="sort-btn"        id="sortBtn_rank"        onclick="sortTable('rank')">最低位次 <span class="sort-arrow">⇅</span></button>
-            <button class="sort-btn"        id="sortBtn_name"        onclick="sortTable('name')">院校名称 <span class="sort-arrow">⇅</span></button>
-            <button class="sort-btn"        id="sortBtn_major"       onclick="sortTable('major')">专业名称 <span class="sort-arrow">⇅</span></button>
-            <button class="sort-btn"        id="sortBtn_probability" onclick="sortTable('probability')">录取概率 <span class="sort-arrow">⇅</span></button>
         </div>
 
         <!-- 结果加载提示 -->
@@ -1344,13 +1462,13 @@
         </div>
 
         <!-- 专业组模态框 -->
-        <div id="groupModal" class="modal-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;justify-content:center;align-items:center;">
-            <div class="modal-content" style="background:linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);border:1px solid rgba(59,159,232,0.4);border-radius:12px;width:90%;max-width:1000px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
-                <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid rgba(59,159,232,0.3);background:rgba(10,25,70,0.5);">
-                    <h3 id="groupModalTitle" style="margin:0;color:var(--accent-cyan);font-size:1.1rem;"></h3>
-                    <button onclick="closeGroupModal()" style="background:none;border:none;color:var(--text-secondary);font-size:1.5rem;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all 0.2s;">×</button>
+        <div id="groupModal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="groupModalTitle"></h3>
+                    <button class="modal-close-btn" onclick="closeGroupModal()">×</button>
                 </div>
-                <div id="groupModalBody" style="padding:0;overflow-y:auto;flex:1;"></div>
+                <div id="groupModalBody"></div>
             </div>
         </div>
     </div>
@@ -1388,8 +1506,7 @@
         document.getElementById('viewResult').style.display = 'none';
         document.getElementById('filterToggleBtn').style.display = 'none';
         // 关闭筛选面板
-        document.getElementById('filterBar').style.display = 'none';
-        document.getElementById('filterToggleBtn').classList.remove('active');
+        closeFilterPanel();
     }
 
     function showResultView() {
@@ -1403,12 +1520,19 @@
     function toggleFilterPanel() {
         const filterBar = document.getElementById('filterBar');
         const filterBtn = document.getElementById('filterToggleBtn');
-        if (filterBar.style.display === 'none') {
+        const backdrop = document.getElementById('filterBackdrop');
+
+        if (!filterBar.classList.contains('active')) {
+            // 显示筛选面板
+            backdrop.classList.add('active');
             filterBar.style.display = 'block';
+            // 强制重绘以触发过渡动画
+            filterBar.offsetHeight;
+            filterBar.classList.add('active');
             filterBtn.classList.add('active');
         } else {
-            filterBar.style.display = 'none';
-            filterBtn.classList.remove('active');
+            // 隐藏筛选面板
+            closeFilterPanel();
         }
     }
 
@@ -1694,17 +1818,13 @@
             });
             document.getElementById('filterSchool').value='';
             document.getElementById('filterMajor').value='';
-            sortKey='score'; sortAsc=false;
             currentPage=1; pageSize=10;
             document.getElementById('pageSizeSelect').value='10';
-            // 重置排序按钮
-            document.querySelectorAll('.sort-btn').forEach(btn=>{btn.classList.remove('active');const a=btn.querySelector('.sort-arrow');if(a)a.textContent='⇅';});
-            const sb=document.getElementById('sortBtn_score');if(sb){sb.classList.add('active');const a=sb.querySelector('.sort-arrow');if(a)a.textContent='▼';}
 
             initFilterOptions();
             filteredData=[...allData];
             document.getElementById('filteredCount').textContent=filteredData.length;
-            sortAndRender();
+            renderTable(filteredData);
 
         } catch(err) {
             document.getElementById('resultLoading').style.display='none';
@@ -1734,10 +1854,9 @@
     }
 
     // ====================================================
-    // 结果页：数据、筛选、排序、渲染
+    // 结果页：数据、筛选、渲染
     // ====================================================
     let allData=[], filteredData=[];
-    let sortKey='score', sortAsc=false;
     let currentPage=1, pageSize=3, totalPages=1;
 
     function initFilterOptions() {
@@ -1814,6 +1933,36 @@
         initFilterOptions();
         applyFilter();
     }
+
+    function closeFilterPanel(){
+        // 关闭筛选面板
+        const filterBar = document.getElementById('filterBar');
+        const filterBtn = document.getElementById('filterToggleBtn');
+        const backdrop = document.getElementById('filterBackdrop');
+
+        if(filterBar){
+            filterBar.classList.remove('active');
+            // 等待过渡动画完成后再隐藏
+            setTimeout(() => {
+                if (!filterBar.classList.contains('active')) {
+                    filterBar.style.display = 'none';
+                }
+            }, 300);
+        }
+        if(filterBtn){
+            filterBtn.classList.remove('active');
+        }
+        if(backdrop){
+            backdrop.classList.remove('active');
+        }
+        
+        // 更新统计数据为筛选后的实际数据
+        const schoolCount = new Set(filteredData.map(r => r.name)).size;
+        const majorCount = filteredData.length;
+        document.getElementById('infoTotal').textContent = schoolCount;
+        document.getElementById('infoMajorTotal').textContent = majorCount;
+    }
+
     function applyFilter(excludeField){
         const school=document.getElementById('filterSchool').value.trim().toLowerCase();
         const major=document.getElementById('filterMajor').value.trim().toLowerCase();
@@ -1839,7 +1988,7 @@
             return true;
         });
         document.getElementById('filteredCount').textContent=filteredData.length;
-        currentPage=1;sortAndRender();
+        currentPage=1;renderTable(filteredData);
 
         // 联动更新其他下拉框选项
         if (excludeField) {
@@ -1852,25 +2001,8 @@
         applyFilter(field);
     }
 
-    function changePageSize(){pageSize=parseInt(document.getElementById('pageSizeSelect').value);currentPage=1;sortAndRender();}
-    function goPage(p){if(p<1||p>totalPages)return;currentPage=p;sortAndRender();}
-
-    function sortTable(key){
-        if(sortKey===key){sortAsc=!sortAsc;}else{sortKey=key;sortAsc=(key==='name'||key==='major');}
-        document.querySelectorAll('.sort-btn').forEach(btn=>{btn.classList.remove('active');const a=btn.querySelector('.sort-arrow');if(a)a.textContent='⇅';});
-        const ab=document.getElementById('sortBtn_'+key);if(ab){ab.classList.add('active');const a=ab.querySelector('.sort-arrow');if(a)a.textContent=sortAsc?'▲':'▼';}
-        currentPage=1;sortAndRender();
-    }
-    function sortAndRender(){
-        const sorted=[...filteredData].sort((a,b)=>{
-            let va=a[sortKey],vb=b[sortKey];
-            if(va==null)va='';if(vb==null)vb='';
-            if(typeof va==='number'||!isNaN(Number(va))){va=Number(va)||0;vb=Number(vb)||0;return sortAsc?va-vb:vb-va;}
-            if(sortKey==='probability'){va=parseFloat(String(va))||0;vb=parseFloat(String(vb))||0;return sortAsc?va-vb:vb-va;}
-            va=String(va);vb=String(vb);return sortAsc?va.localeCompare(vb,'zh'):vb.localeCompare(va,'zh');
-        });
-        renderTable(sorted);
-    }
+    function changePageSize(){pageSize=parseInt(document.getElementById('pageSizeSelect').value);currentPage=1;renderTable(filteredData);}
+    function goPage(p){if(p<1||p>totalPages)return;currentPage=p;renderTable(filteredData);}
 
     function escHtml(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
@@ -1934,6 +2066,17 @@
             majors.forEach(row=>{const gk=row.major_group_code!=null?String(row.major_group_code):'__nogroup__';if(!groupMap.has(gk))groupMap.set(gk,[]);groupMap.get(gk).push(row);});
             const groupKeys=[...groupMap.keys()].sort((a,b)=>{if(a==='__nogroup__')return 1;if(b==='__nogroup__')return -1;return Number(a)-Number(b);});
             const hasGroups=groupKeys.length>1||(groupKeys.length===1&&groupKeys[0]!=='__nogroup__');
+
+            // 显示院校代码、批次、批次备注、地址区域
+            const schoolCode = school.school_code || majors[0]?.school_code || '-';
+            const batch = school.batch || majors[0]?.batch || '-';
+            const batchRemark = school.batch_remark || majors[0]?.batch_remark || '';
+            const collegeProvince = school.province || school.college_province || majors[0]?.province || majors[0]?.college_province || '';
+            const collegeCity = school.college_city || majors[0]?.college_city || '';
+            const provinceTag = collegeProvince ? `<span style="font-weight:600;color:#fff;background:rgba(244,114,182,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(244,114,182,0.3);">${escHtml(collegeProvince)}</span>` : '';
+            const cityTag = collegeCity ? `<span style="font-weight:600;color:#fff;background:rgba(244,114,182,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(244,114,182,0.3);">${escHtml(collegeCity)}</span>` : '';
+            const locationTags = (provinceTag || cityTag) ? `${provinceTag}${collegeProvince && collegeCity ? ' ' : ''}${cityTag}` : '<span style="color:var(--text-secondary);">-</span>';
+            html+=`<div class="school-code-bar" style="padding:8px 20px;background:rgba(10,25,70,0.2);border-bottom:1px solid rgba(59,159,232,0.08);color:var(--text-secondary);font-size:0.85rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">院校代码：</span><span style="font-family:'Courier New',monospace;font-weight:700;color:#fff;background:rgba(59,159,232,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(59,159,232,0.3);">${escHtml(String(schoolCode))}</span></span><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">地址：</span>${locationTags}</span><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">批次：</span><span style="font-weight:600;color:#fff;background:rgba(168,85,247,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(168,85,247,0.3);">${escHtml(batch)}</span></span>${batchRemark?`<span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">备注：</span><span style="color:var(--text-secondary);">${escHtml(batchRemark)}</span></span>`:''}</div>`;
 
             // 显示专业组按钮（可点击筛选）
             if(hasGroups){
@@ -2127,8 +2270,8 @@
         const body = document.getElementById('groupModalBody');
         
         title.textContent = `${schoolName} - ${groupLabel}`;
-        body.innerHTML = '<div style="text-align:center;padding:40px;">加载中...</div>';
-        modal.style.display = 'flex';
+        body.innerHTML = '<div class="modal-empty-state"><div class="spinner-border" role="status"></div><p>加载中...</p></div>';
+        modal.classList.add('active');
         
         try {
             const region = document.getElementById('region').value || '河南';
@@ -2136,13 +2279,14 @@
             const result = await resp.json();
             
             if (!result.success) {
-                body.innerHTML = `<div style="text-align:center;padding:40px;color:#f87171;">加载失败：${result.error || '未知错误'}</div>`;
+                const errorMsg = result.error === '缺少必要参数' ? '没有分组' : (result.error || '未知错误');
+                body.innerHTML = `<div class="modal-empty-state error"><div style="font-size:2rem;margin-bottom:12px;">⚠️</div><div>${errorMsg}</div></div>`;
                 return;
             }
             
             const majors = result.data || [];
             if (majors.length === 0) {
-                body.innerHTML = '<div style="text-align:center;padding:40px;">暂无数据</div>';
+                body.innerHTML = '<div class="modal-empty-state"><div style="font-size:2rem;margin-bottom:12px;">📋</div><div>暂无数据</div></div>';
                 return;
             }
             
@@ -2181,18 +2325,33 @@
             html += '</div>';
             body.innerHTML = html;
         } catch (err) {
-            body.innerHTML = `<div style="text-align:center;padding:40px;color:#f87171;">加载失败：${err.message}</div>`;
+            body.innerHTML = `<div class="modal-empty-state error"><div style="font-size:2rem;margin-bottom:12px;">⚠️</div><div>加载失败：${err.message}</div></div>`;
         }
     }
     
     // 关闭模态框
     function closeGroupModal() {
-        document.getElementById('groupModal').style.display = 'none';
+        document.getElementById('groupModal').classList.remove('active');
     }
     
     // 点击模态框背景关闭
-    document.getElementById('groupModal').addEventListener('click', function(e) {
-        if (e.target === this) closeGroupModal();
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('groupModal').addEventListener('click', function(e) {
+            if (e.target === this) closeGroupModal();
+        });
+    });
+
+    // ESC键关闭模态框和筛选面板
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('groupModal');
+            const filterBar = document.getElementById('filterBar');
+            if (modal && modal.classList.contains('active')) {
+                closeGroupModal();
+            } else if (filterBar && filterBar.classList.contains('active')) {
+                closeFilterPanel();
+            }
+        }
     });
     </script>
 </body>

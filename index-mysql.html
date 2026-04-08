@@ -15,406 +15,664 @@
     </script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        /* ============================================
+           简洁大气主题系统 - Minimalist Elegant Theme
+           ============================================ */
         :root {
-            --bg-gradient: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-            --card-bg: rgba(20, 20, 40, 0.6);
-            --card-border: rgba(100, 100, 255, 0.15);
-            --text-primary: #ffffff;
-            --text-secondary: #b0b0d0;
-            --accent-cyan: #00d4ff;
-            --accent-purple: #a855f7;
-            --accent-pink: #f472b6;
-            --glow-cyan: 0 0 20px rgba(0, 212, 255, 0.3);
+            /* 主色调 - 深邃蓝灰系 */
+            --primary-900: #0f172a;
+            --primary-800: #1e293b;
+            --primary-700: #334155;
+            --primary-600: #475569;
+            --primary-500: #64748b;
+            --primary-400: #94a3b8;
+            --primary-300: #cbd5e1;
+            --primary-200: #e2e8f0;
+            --primary-100: #f1f5f9;
+            --primary-50: #f8fafc;
+            
+            /* 强调色 - 靛蓝 */
+            --accent-600: #4f46e5;
+            --accent-500: #6366f1;
+            --accent-400: #818cf8;
+            --accent-50: #eef2ff;
+            
+            /* 功能色 */
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            
+            /* 背景与文字 */
+            --bg-primary: #fafafa;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --bg-card: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #94a3b8;
+            --text-muted: #64748b;
+            
+            /* 边框与阴影 */
+            --border-light: #e2e8f0;
+            --border-medium: #cbd5e1;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            
+            /* 间距系统 */
+            --space-1: 0.25rem;
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-5: 1.25rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+            --space-10: 2.5rem;
+            --space-12: 3rem;
+            --space-16: 4rem;
+            --space-20: 5rem;
+            
+            /* 圆角 */
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-2xl: 24px;
+            --radius-full: 9999px;
         }
 
-        * { box-sizing: border-box; }
-
-        html, body {
-            height: 100%;
+        * { 
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            background: var(--bg-gradient);
+            background: var(--bg-primary);
             min-height: 100vh;
-            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             color: var(--text-primary);
-            position: relative;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image:
-                radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* ========== 全局通用 ========== */
-        /* 统一状态按钮样式 - 玻璃拟态胶囊 */
-        .status-pill {
-            position: fixed;
-            right: 16px;
-            z-index: 1000;
-            height: 36px;
-            padding: 0 16px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            border-radius: 18px;
-            font-weight: 500;
-            font-size: 0.85rem;
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-        .status-pill:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-        }
-
-        .welcome-user {
-            top: 20px;
-            display: none;
-            width: 131px;
-            justify-content: center;
-        }
-        .welcome-user::before {
-            content: "👋";
-            font-size: 0.9rem;
-        }
-
-        .connection-status {
-            top: 64px;
-            width: 131px;
-            justify-content: center;
-        }
-        .connection-status.connected {
-            color: #6ee7b7;
-            border-color: rgba(110, 231, 183, 0.4);
-            background: rgba(16, 185, 129, 0.1);
-        }
-        .connection-status.disconnected {
-            color: #fca5a5;
-            border-color: rgba(252, 165, 165, 0.4);
-            background: rgba(239, 68, 68, 0.1);
-        }
-        .connection-status::before {
-            content: "";
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: currentColor;
-            box-shadow: 0 0 8px currentColor;
+            line-height: 1.6;
+            overflow-x: hidden;
         }
 
         /* ========== 视图容器 ========== */
         #viewForm   { display: block; }
         #viewResult { display: none; }
 
-        /* ========== 表单视图 ========== */
+        /* ========== 表单视图 - 简洁大气版 ========== */
         .form-view-wrap {
-            position: relative;
-            z-index: 1;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             align-items: center;
-            overflow: hidden;
+            padding: var(--space-8) var(--space-4);
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
         }
 
         .main-container {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            margin: 80px 0 0 0;
-            padding: 40px;
-            position: relative;
-            z-index: 1;
-            max-width: 1200px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-xl);
+            margin: 0 auto;
+            padding: var(--space-12) var(--space-10);
+            max-width: 720px;
             width: 100%;
         }
 
         .header-title {
-            font-weight: 800;
+            font-weight: 700;
             text-align: center;
-            margin-bottom: 40px;
-            font-size: 34px;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple), var(--accent-pink));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -1px;
+            margin-bottom: var(--space-10);
+            font-size: 2rem;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        
+        .header-title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-500), var(--accent-400));
+            border-radius: var(--radius-full);
+            margin: var(--space-4) auto 0;
         }
 
         .section-card {
-            background: rgba(30, 30, 50, 0.4);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            margin-bottom: var(--space-6);
+            transition: all 0.2s ease;
         }
         .section-card:hover {
-            border-color: rgba(0, 212, 255, 0.3);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border-color: var(--border-medium);
+            box-shadow: var(--shadow-md);
         }
 
         .section-title {
             color: var(--text-primary);
-            font-weight: 700;
-            font-size: 1.5rem;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid transparent;
-            border-image: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple)) 1;
-            display: flex; align-items: center; gap: 10px;
+            font-weight: 600;
+            font-size: 1.125rem;
+            margin-bottom: var(--space-6);
+            padding-bottom: var(--space-4);
+            border-bottom: 1px solid var(--border-light);
+            display: flex; 
+            align-items: center; 
+            gap: var(--space-3);
+        }
+        
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: var(--accent-500);
+            border-radius: var(--radius-full);
         }
 
-        .form-label { font-weight: 600; color: var(--text-primary); margin-bottom: 10px; font-size: 14px; }
+        .form-label { 
+            font-weight: 500; 
+            color: var(--text-secondary); 
+            margin-bottom: var(--space-2); 
+            font-size: 0.875rem; 
+        }
 
         .form-control, .form-select {
-            background: rgba(30, 30, 50, 0.5);
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
-            height: 34px;
-            padding: 4px 18px;
-            font-size: 14px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--bg-card);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-lg);
+            height: 48px;
+            padding: var(--space-3) var(--space-4);
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
             color: var(--text-primary);
         }
         .form-control:focus, .form-select:focus {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1), var(--glow-cyan);
-            background: rgba(30, 30, 50, 0.7);
-            color: var(--text-primary);
+            border-color: var(--accent-500);
+            box-shadow: 0 0 0 3px var(--accent-50);
+            outline: none;
         }
-        .form-control::placeholder { color: var(--text-secondary); }
+        .form-control::placeholder { color: var(--text-tertiary); }
 
         .btn {
-            border-radius: 12px;
-            padding: 0 32px;
-            height: 44px;
-            line-height: 44px;
-            font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-            margin: 6px;
+            border-radius: var(--radius-lg);
+            padding: 0 var(--space-6);
+            height: 48px;
+            line-height: 48px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            margin: var(--space-2);
             border: none;
-            position: relative;
-            overflow: hidden;
-            font-size: 16px;
-            min-width: 120px;
+            font-size: 0.9375rem;
+            cursor: pointer;
         }
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
+        
+        /* 主要按钮 */
+        .btn-primary {
+            background: var(--accent-600);
+            color: white;
+            box-shadow: var(--shadow-sm);
         }
-        .btn:hover::before { left: 100%; }
-
-        /* 统一按钮样式：深紫到浅紫渐变（加深版） */
-        .btn-primary, .btn-warning, .btn-college, .btn-secondary {
-            background: linear-gradient(135deg, #2e1065 0%, #5b21b6 50%, #7c3aed 100%) !important;
-            color: white !important;
-            border: none !important;
-            box-shadow: 0 4px 15px rgba(91, 33, 182, 0.4);
+        .btn-primary:hover {
+            background: var(--accent-500);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
-        .btn-primary:hover, .btn-warning:hover, .btn-college:hover, .btn-secondary:hover {
-            transform: translateY(-2px);
-            background: linear-gradient(135deg, #3b157a 0%, #6d28d9 50%, #8b5cf6 100%) !important;
-            box-shadow: 0 6px 20px rgba(91, 33, 182, 0.5);
+        
+        /* 次要按钮 */
+        .btn-secondary, .btn-warning, .btn-college {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-medium);
+        }
+        .btn-secondary:hover, .btn-warning:hover, .btn-college:hover {
+            background: var(--primary-200);
+            color: var(--text-primary);
+            border-color: var(--border-medium);
         }
 
         .loading {
             display: none;
             text-align: center;
-            padding: 40px;
+            padding: var(--space-10);
         }
-        .spinner-border { width: 3.5rem; height: 3.5rem; color: var(--accent-cyan); filter: drop-shadow(0 0 10px rgba(59,159,232,0.5)); }
-        .loading h4 { color: var(--text-primary); margin-top: 20px; font-weight: 600; }
+        .spinner-border { 
+            width: 3rem; 
+            height: 3rem; 
+            color: var(--accent-500); 
+            border-width: 3px;
+        }
+        .loading h4 { 
+            color: var(--text-secondary); 
+            margin-top: var(--space-4); 
+            font-weight: 500;
+            font-size: 1rem;
+        }
 
-        /* 选科标签 */
-        .subject-tags { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+        /* 选科标签 - 简洁版 */
+        .subject-tags { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: var(--space-3); 
+            margin-top: var(--space-3); 
+        }
         .subject-tag {
-            padding: 0 20px;
-            height: 34px;
-            font-size: 14px;
-            border: 2px solid var(--card-border);
-            border-radius: 30px;
+            padding: var(--space-2) var(--space-5);
+            height: 40px;
+            font-size: 0.9375rem;
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-full);
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-            background: rgba(10,30,80,0.6);
-            font-weight: 600;
+            transition: all 0.2s ease;
+            background: var(--bg-card);
+            font-weight: 500;
             user-select: none;
-            color: var(--text-primary);
-            backdrop-filter: blur(5px);
+            color: var(--text-secondary);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            line-height: 1;
         }
-        .subject-tag:hover { border-color: var(--accent-cyan); box-shadow: 0 0 15px rgba(59,159,232,0.45); }
-        .subject-tag.selected { background: linear-gradient(135deg, var(--accent-cyan), #0099cc); color: white; border-color: var(--accent-cyan); box-shadow: 0 5px 20px rgba(59,159,232,0.4); }
-        .subject-tag.disabled { opacity: 0.4; cursor: not-allowed; background: rgba(10,30,80,0.3); }
-        .subject-tag.disabled:hover { border-color: var(--card-border); box-shadow: none; }
+        .subject-tag:hover { 
+            border-color: var(--accent-400); 
+            color: var(--accent-600);
+            background: var(--accent-50);
+        }
+        .subject-tag.selected { 
+            background: var(--accent-600); 
+            color: white; 
+            border-color: var(--accent-600); 
+            box-shadow: var(--shadow-sm);
+        }
+        .subject-tag.disabled { 
+            opacity: 0.4; 
+            cursor: not-allowed; 
+            background: var(--bg-tertiary);
+        }
+        .subject-tag.disabled:hover { 
+            border-color: var(--border-medium); 
+            color: var(--text-tertiary);
+            background: var(--bg-tertiary);
+        }
 
-        .form-text { color: var(--text-secondary) !important; font-size: 0.9rem; }
-        .invalid-feedback { color: #ef4444; font-weight: 600; }
+        .form-text { color: var(--text-muted) !important; font-size: 0.8125rem; }
+        .invalid-feedback { color: var(--danger); font-weight: 500; font-size: 0.8125rem; }
 
-        /* 地区 Combobox */
+        /* 地区 Combobox - 简洁版 */
         .region-combobox { position: relative; }
-        .region-combobox .form-control { padding-right: 36px; cursor: text; }
-        .region-combobox::after { content: '▾'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; font-size: 0.85rem; }
+        .region-combobox .form-control { padding-right: 40px; cursor: text; }
+        .region-combobox::after { 
+            content: '▾'; 
+            position: absolute; 
+            right: 16px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            color: var(--text-tertiary); 
+            pointer-events: none; 
+            font-size: 0.75rem; 
+        }
         .region-dropdown {
-            display: none; position: absolute;
-            top: calc(100% + 4px); left: 0; right: 0;
-            background: rgba(20, 20, 40, 0.98);
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            max-height: 240px; overflow-y: auto;
+            display: none; 
+            position: absolute;
+            top: calc(100% + 4px); 
+            left: 0; 
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-lg);
+            max-height: 280px; 
+            overflow-y: auto;
             z-index: 9999;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            box-shadow: var(--shadow-lg);
         }
         .region-dropdown.open { display: block; }
-        .region-dropdown::-webkit-scrollbar { width: 4px; }
-        .region-dropdown::-webkit-scrollbar-thumb { background: var(--accent-cyan); border-radius: 2px; }
-        .region-option { padding: 9px 16px; cursor: pointer; color: var(--text-primary); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; transition: background 0.15s; }
-        .region-option:hover, .region-option.highlighted { background: rgba(0, 212, 255, 0.1); }
-        .region-option .mode-tag { font-size: 0.7rem; padding: 1px 7px; border-radius: 10px; background: rgba(0, 212, 255, 0.1); color: var(--accent-cyan); border: 1px solid rgba(0, 212, 255, 0.25); flex-shrink: 0; }
-        .region-option .mode-tag.gold { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border-color: rgba(245, 158, 11, 0.25); }
-        .region-option .mode-tag.gray { background: rgba(168, 168, 168, 0.1); color: #aaa; border-color: rgba(168, 168, 168, 0.2); }
-        .region-option .match-highlight { color: var(--accent-cyan); font-weight: 700; }
-        .region-group-label { padding: 6px 16px 3px; font-size: 0.72rem; color: var(--text-secondary); letter-spacing: 0.05em; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 2px; }
+        .region-dropdown::-webkit-scrollbar { width: 6px; }
+        .region-dropdown::-webkit-scrollbar-thumb { 
+            background: var(--border-medium); 
+            border-radius: var(--radius-full); 
+        }
+        .region-option { 
+            padding: 10px 16px; 
+            cursor: pointer; 
+            color: var(--text-primary); 
+            font-size: 0.9375rem; 
+            display: flex; 
+            align-items: center; 
+            gap: var(--space-2); 
+            transition: background 0.15s; 
+        }
+        .region-option:hover, .region-option.highlighted { 
+            background: var(--accent-50); 
+        }
+        .region-option .mode-tag { 
+            font-size: 0.6875rem; 
+            padding: 2px 8px; 
+            border-radius: var(--radius-full); 
+            background: var(--accent-50); 
+            color: var(--accent-600); 
+            border: 1px solid var(--accent-400); 
+            flex-shrink: 0; 
+        }
+        .region-option .mode-tag.gold { 
+            background: #fef3c7; 
+            color: #d97706; 
+            border-color: #fbbf24; 
+        }
+        .region-option .mode-tag.gray { 
+            background: var(--bg-tertiary); 
+            color: var(--text-muted); 
+            border-color: var(--border-medium); 
+        }
+        .region-option .match-highlight { 
+            color: var(--accent-600); 
+            font-weight: 600; 
+        }
+        .region-group-label { 
+            padding: 8px 16px 4px; 
+            font-size: 0.6875rem; 
+            color: var(--text-muted); 
+            letter-spacing: 0.05em; 
+            border-top: 1px solid var(--border-light); 
+            margin-top: 2px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
         .region-group-label:first-child { border-top: none; }
-        .region-no-result { padding: 12px 16px; color: var(--text-secondary); font-size: 0.9rem; text-align: center; }
+        .region-no-result { 
+            padding: var(--space-4); 
+            color: var(--text-muted); 
+            font-size: 0.875rem; 
+            text-align: center; 
+        }
 
-        /* Toast */
-        .toast { background: rgba(20, 20, 40, 0.95); backdrop-filter: blur(20px); border: 1px solid var(--card-border); border-radius: 16px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); }
-        .toast-header { background: rgba(30, 30, 50, 0.9); border-bottom: 1px solid var(--card-border); color: var(--text-primary); border-radius: 16px 16px 0 0; }
-        .toast-body { background: transparent; color: var(--text-primary); padding: 20px; }
-        .text-success { color: #10b981 !important; }
-        .text-danger  { color: #ef4444 !important; }
-        .text-warning { color: #f59e0b !important; }
-        .text-info    { color: var(--accent-cyan) !important; }
-        .text-muted   { color: var(--text-secondary) !important; }
+        /* Toast - 简洁版 */
+        .toast { 
+            background: var(--bg-card); 
+            border: 1px solid var(--border-light); 
+            border-radius: var(--radius-xl); 
+            box-shadow: var(--shadow-xl); 
+        }
+        .toast-header { 
+            background: var(--bg-tertiary); 
+            border-bottom: 1px solid var(--border-light); 
+            color: var(--text-primary); 
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            padding: var(--space-3) var(--space-4);
+        }
+        .toast-body { 
+            background: transparent; 
+            color: var(--text-primary); 
+            padding: var(--space-4); 
+        }
+        .text-success { color: var(--success) !important; }
+        .text-danger  { color: var(--danger) !important; }
+        .text-warning { color: var(--warning) !important; }
+        .text-info    { color: var(--info) !important; }
+        .text-muted   { color: var(--text-muted) !important; }
 
-        /* alert */
-        .alert { border-radius: 16px; border: 1px solid var(--card-border); backdrop-filter: blur(10px); }
-        .alert-info    { background: rgba(0, 212, 255, 0.08);  border-color: rgba(0, 212, 255, 0.25);  color: var(--text-primary); }
-        .alert-warning { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.25); color: var(--text-primary); }
-        .alert h5 { color: var(--text-primary); font-weight: 700; }
-        .alert p, .alert ul { color: var(--text-secondary); }
+        /* alert - 简洁版 */
+        .alert { 
+            border-radius: var(--radius-lg); 
+            border: 1px solid var(--border-light); 
+            padding: var(--space-4) var(--space-5);
+        }
+        .alert-info    { 
+            background: var(--accent-50);  
+            border-color: var(--accent-400);  
+            color: var(--accent-700); 
+        }
+        .alert-warning { 
+            background: #fffbeb; 
+            border-color: #fbbf24; 
+            color: #92400e; 
+        }
+        .alert h5 { 
+            color: inherit; 
+            font-weight: 600; 
+            font-size: 0.9375rem;
+            margin-bottom: var(--space-2);
+        }
+        .alert p, .alert ul { 
+            color: inherit; 
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
 
-        /* ========== 结果视图 ========== */
+        /* ========== 结果视图 - 简洁大气版 ========== */
         .result-view-wrap {
             position: relative;
             z-index: 1;
             max-width: 1400px;
             margin: 0 auto;
-            padding: 24px 24px 48px;
-            max-height: 100vh;
+            padding: 160px 24px 48px;
+            min-height: 100vh;
+            background: var(--bg-primary);
         }
 
-        /* 返回按钮 */
+        /* 返回按钮 - 简洁版 */
         .back-btn {
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.25);
-            color: var(--accent-cyan);
-            border-radius: 8px;
-            padding: 5px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-medium);
+            color: var(--text-secondary);
+            border-radius: var(--radius-md);
+            padding: 8px 16px;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.875rem;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        .back-btn:hover { 
+            background: var(--accent-50); 
+            color: var(--accent-600); 
+            border-color: var(--accent-400);
+        }
+
+        /* 筛选按钮 - 简洁版 */
+        .filter-toggle-btn-inline {
+            height: 40px;
+            padding: 0 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: 0.875rem;
+            background: var(--accent-600);
+            border: 1px solid var(--accent-600);
+            color: white;
+            cursor: pointer;
             transition: all 0.2s ease;
             white-space: nowrap;
         }
-        .back-btn:hover { background: rgba(0, 212, 255, 0.15); color: var(--accent-cyan); transform: translateY(-1px); }
-
-        /* 筛选按钮 - 与状态按钮统一风格 */
-        .filter-toggle-btn {
-            position: fixed;
-            top: 108px;
-            right: 16px;
-            z-index: 999;
-            height: 36px;
-            padding: 0 16px;
-            width: 131px;
-            justify-content: center;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            border-radius: 18px;
-            font-weight: 500;
-            font-size: 0.85rem;
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .filter-toggle-btn-inline:hover {
+            background: var(--accent-500);
+            border-color: var(--accent-500);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
-        .filter-toggle-btn svg {
-            width: 14px;
-            height: 14px;
+        .filter-toggle-btn-inline svg {
+            width: 16px;
+            height: 16px;
             transition: transform 0.3s ease;
         }
-        .filter-toggle-btn:hover { 
-            background: rgba(255, 255, 255, 0.15); 
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        .filter-toggle-btn-inline.active {
+            background: var(--primary-700);
+            border-color: var(--primary-700);
         }
-        .filter-toggle-btn.active { 
-            background: rgba(0, 212, 255, 0.2); 
-            border-color: rgba(0, 212, 255, 0.5); 
-            color: var(--accent-cyan);
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-        .filter-toggle-btn.active svg {
+        .filter-toggle-btn-inline.active svg {
             transform: rotate(180deg);
         }
 
         /* 页面标题（结果页） */
         .page-title {
-            font-size: 2.2rem;
+            font-size: 1.75rem;
             font-weight: 700;
             color: var(--text-primary);
-            display: flex; align-items: center; gap: 10px;
-            margin-bottom: 15px;
+            display: flex; 
+            align-items: center; 
+            gap: var(--space-2);
+            margin-bottom: var(--space-4);
         }
-        .page-title span { font-size: 1rem; font-weight: 400; color: var(--text-secondary); }
-
-        /* 信息栏 */
-        .info-bar {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 14px;
-            padding: 12px 20px;
-            margin-bottom: 24px;
-            display: flex; flex-wrap: nowrap; gap: 16px; align-items: center;
-            overflow-x: auto;
+        .page-title span { 
+            font-size: 0.875rem; 
+            font-weight: 400; 
+            color: var(--text-muted); 
         }
-        .info-tag { display: flex; align-items: center; gap: 6px; font-size: 0.92rem; color: var(--text-secondary); }
-        .info-tag strong { color: var(--accent-cyan); font-size: 1.05rem; }
 
-        /* 筛选栏背景遮罩 - 参考模态框效果 */
+        /* 顶部固定容器 - 简洁版 */
+        .top-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        /* 第一行：Logo + 基本信息 + 统计 */
+        .top-bar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-light);
+            padding: var(--space-3) var(--space-6);
+        }
+        .top-bar-inner {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: var(--space-8);
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        /* Logo区域 */
+        .logo-section {
+            flex-shrink: 0;
+        }
+        .logo-large {
+            display: flex;
+            align-items: center;
+        }
+        .logo-large img {
+            height: 48px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        /* 基本信息 */
+        .basic-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-6);
+            flex: 1;
+        }
+        .basic-info .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+        }
+        .basic-info .info-label {
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .basic-info .info-value {
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .basic-info .info-value.highlight {
+            color: var(--accent-600);
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+
+        /* 统计区域 */
+        .stats-section {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            flex-shrink: 0;
+        }
+        .stat-item {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .stat-item strong {
+            color: var(--accent-600);
+            font-size: 1.0625rem;
+            font-weight: 700;
+        }
+        
+        /* 第二行：工具栏 */
+        .toolbar-bar {
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-light);
+            padding: var(--space-2) var(--space-6);
+        }
+        .toolbar-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-4);
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        /* 筛选条件 */
+        .filter-conditions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            flex: 1;
+        }
+        .filter-select {
+            height: 36px;
+            padding: 0 var(--space-3);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            min-width: 80px;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--accent-500);
+        }
+        
+        /* 分页区域 */
+        .pagination-section {
+            flex-shrink: 0;
+        }
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .stats-item strong {
+            color: var(--accent-600);
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        /* 筛选栏背景遮罩 - 简洁版 */
         .filter-backdrop {
             display: none;
             position: fixed;
@@ -422,7 +680,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(15, 23, 42, 0.5);
             backdrop-filter: blur(4px);
             z-index: 999;
             opacity: 0;
@@ -433,22 +691,21 @@
             opacity: 1;
         }
 
-        /* 筛选栏 */
+        /* 筛选栏 - 简洁版 */
         .filter-bar {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 20px 24px;
-            margin-bottom: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            margin-bottom: var(--space-5);
             position: fixed;
-            top: 80px;
+            top: 120px;
             left: 50%;
             transform: translateX(-50%) scale(0.95);
             width: 90%;
             max-width: 1200px;
-            z-index: 1000;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(20px) saturate(180%);
+            z-index: 1001;
+            box-shadow: var(--shadow-xl);
             max-height: calc(100vh - 100px);
             overflow-y: auto;
             opacity: 0;
@@ -463,30 +720,83 @@
         .filter-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 10px 16px;
-            margin-bottom: 12px;
+            gap: var(--space-3) var(--space-4);
+            margin-bottom: var(--space-4);
         }
-        .filter-item { display: flex; flex-direction: column; gap: 4px; }
-        .filter-item label { color: var(--text-secondary); font-size: 0.8rem; white-space: nowrap; }
+        .filter-item { display: flex; flex-direction: column; gap: var(--space-1); }
+        .filter-item label { 
+            color: var(--text-secondary); 
+            font-size: 0.8125rem; 
+            white-space: nowrap;
+            font-weight: 500;
+        }
         .filter-item select, .filter-item input {
-            background: rgba(10,30,80,0.8);
-            border: 1px solid rgba(59,159,232,0.3);
+            background: var(--bg-card);
+            border: 1px solid var(--border-medium);
             color: var(--text-primary);
-            border-radius: 8px;
-            padding: 6px 10px;
-            font-size: 0.86rem;
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-3);
+            font-size: 0.875rem;
             width: 100%;
-            height: 34px;
+            height: 40px;
+            transition: all 0.2s ease;
         }
-        .filter-item select:focus, .filter-item input:focus { outline: none; border-color: var(--accent-cyan); box-shadow: 0 0 0 2px rgba(59,159,232,0.2); }
-        .filter-item select option { background: #0d2566; }
-        .filter-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding-top: 4px; border-top: 1px solid rgba(59,159,232,0.1); }
-        .result-count { color: var(--text-secondary); font-size: 0.86rem; margin-right: auto; }
-        .result-count strong { color: var(--accent-cyan); }
-        .reset-btn { padding: 6px 20px; border-radius: 8px; border: 1px solid rgba(59,159,232,0.4); background: rgba(59,159,232,0.08); color: var(--accent-cyan); font-size: 0.86rem; cursor: pointer; transition: background 0.15s; height: 36px; width: 100px; white-space: nowrap; }
-        .reset-btn:hover { background: rgba(59,159,232,0.2); border-color: rgba(59,159,232,0.7); }
-        .confirm-btn { padding: 6px 20px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.4); background: rgba(16,185,129,0.15); color: #10b981; font-size: 0.86rem; cursor: pointer; transition: background 0.15s; height: 36px; width: 100px; white-space: nowrap; font-weight: 600; }
-        .confirm-btn:hover { background: rgba(16,185,129,0.25); border-color: rgba(16,185,129,0.7); }
+        .filter-item select:focus, .filter-item input:focus { 
+            outline: none; 
+            border-color: var(--accent-500); 
+            box-shadow: 0 0 0 3px var(--accent-50);
+        }
+        .filter-item select option { background: var(--bg-card); }
+        .filter-actions { 
+            display: flex; 
+            align-items: center; 
+            justify-content: flex-end; 
+            gap: var(--space-3); 
+            padding-top: var(--space-3); 
+            border-top: 1px solid var(--border-light); 
+        }
+        .result-count { 
+            color: var(--text-secondary); 
+            font-size: 0.875rem; 
+            margin-right: auto; 
+        }
+        .result-count strong { color: var(--accent-600); }
+        .reset-btn { 
+            padding: var(--space-2) var(--space-5); 
+            border-radius: var(--radius-md); 
+            border: 1px solid var(--border-medium); 
+            background: var(--bg-tertiary); 
+            color: var(--text-secondary); 
+            font-size: 0.875rem; 
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            height: 40px; 
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        .reset-btn:hover { 
+            background: var(--primary-200); 
+            border-color: var(--border-medium); 
+            color: var(--text-primary);
+        }
+        .confirm-btn { 
+            padding: var(--space-2) var(--space-5); 
+            border-radius: var(--radius-md); 
+            border: 1px solid var(--success); 
+            background: var(--success); 
+            color: white; 
+            font-size: 0.875rem; 
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            height: 40px; 
+            white-space: nowrap; 
+            font-weight: 500;
+        }
+        .confirm-btn:hover { 
+            background: #059669; 
+            border-color: #059669;
+            transform: translateY(-1px);
+        }
 
         /* 院校卡片 */
         .cards-wrapper { display: flex; flex-direction: column; gap: 0; }
@@ -510,7 +820,7 @@
         .school-col-city-province { min-width: 60px; width: 60px; color: var(--text-secondary); font-size: 0.82rem; }
         .school-col-batch  { min-width: 90px;  width: 90px; }
         .school-col-remark { min-width: 80px;  width: 80px; }
-        .school-link { color: var(--accent-cyan); text-decoration: none; font-weight: 700; font-size: 1.05rem; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; display: inline-block; }
+        .school-link { color: var(--accent-cyan); text-decoration: none; font-weight: 700; font-size: 1.05rem; cursor: pointer; white-space: nowrap; display: inline-block; }
         .school-link:hover { text-decoration: underline; color: #7dc8f0; }
         .school-major-count { font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; padding-top: 4px; flex-shrink: 0; }
         .school-major-count strong { color: var(--accent-cyan); font-size: 1rem; }
@@ -643,7 +953,7 @@
             z-index: 9999;
             justify-content: center;
             align-items: flex-start;
-            padding-top: 80px;
+            padding-top: 70px;
             overflow-y: auto;
         }
         .modal-overlay.active {
@@ -767,11 +1077,54 @@
             color: #f87171;
         }
 
-        /* 分页 */
-        .pagination-bar { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 18px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; margin-top: 4px; }
-        .page-btn { background: rgba(59,159,232,0.1); border: 1px solid rgba(59,159,232,0.25); color: var(--accent-cyan); border-radius: 7px; padding: 0 14px; height: 32px; line-height: 32px; cursor: pointer; font-size: 0.86rem; transition: background 0.15s; }
-        .page-btn:hover, .page-btn.active { background: rgba(59,159,232,0.25); }
+        /* 分页 - 内联在信息栏中 */
+        .pagination-inline {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            padding: 0 10px;
+            background: rgba(245, 245, 240, 0.8);
+            border-radius: 8px;
+            border: 1px solid rgba(180, 180, 160, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .page-btn {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(180, 180, 160, 0.4);
+            color: var(--accent-cyan);
+            border-radius: 6px;
+            padding: 0;
+            width: 32px;
+            height: 28px;
+            line-height: 28px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.15s;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .page-btn:hover, .page-btn.active { background: var(--accent-cyan); color: white; border-color: var(--accent-cyan); }
         .page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .pagination-info {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin: 0 8px;
+            min-width: 80px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .page-size-select {
+            width: 70px;
+            height: 28px;
+            padding: 0 4px;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(180, 180, 160, 0.4);
+            border-radius: 6px;
+            color: var(--text-primary);
+        }
 
         /* 专业介绍 tooltip（结果页） */
         #majorTooltip {
@@ -809,10 +1162,8 @@
         @media (max-width: 767.98px) {
             /* 表单视图优化 */
             .form-view-wrap {
-                height: auto;
                 min-height: 100vh;
                 padding: 20px 0;
-                overflow: visible;
             }
             
             .main-container {
@@ -879,8 +1230,8 @@
             
             /* 结果视图优化 */
             .result-view-wrap {
-                padding: 15px;
-                max-height: none;
+                padding: 180px 15px 15px;
+                min-height: 100vh;
             }
             
             .page-title {
@@ -895,20 +1246,115 @@
                 width: auto;
             }
             
-            /* 信息栏优化 */
-            .info-bar {
-                padding: 12px 15px;
-                gap: 8px;
-                font-size: 0.8rem;
-                flex-wrap: wrap;
+            /* 顶部容器优化 */
+            .top-bar-container {
+                width: 100%;
             }
             
+            /* 顶部栏移动端优化 */
+            .top-bar {
+                padding: var(--space-2) var(--space-3);
+            }
+            .top-bar-inner {
+                flex-wrap: wrap;
+                gap: var(--space-3);
+                overflow-x: auto;
+            }
+            
+            /* Logo移动端优化 */
+            .logo-large img {
+                height: 36px;
+            }
+            
+            /* 基本信息移动端 */
+            .basic-info {
+                gap: var(--space-3);
+                flex: 1;
+                min-width: 0;
+            }
+            .basic-info .info-item {
+                flex-shrink: 0;
+            }
+            .basic-info .info-label {
+                font-size: 0.625rem;
+            }
+            .basic-info .info-value {
+                font-size: 0.8125rem;
+            }
+            .basic-info .info-value.highlight {
+                font-size: 0.9375rem;
+            }
+            
+            /* 统计移动端 */
+            .stats-section {
+                gap: var(--space-2);
+                flex-shrink: 0;
+            }
+            .stat-item {
+                font-size: 0.75rem;
+            }
+            .stat-item strong {
+                font-size: 0.875rem;
+            }
+            
+            /* 工具栏移动端 */
+            .toolbar-bar {
+                padding: var(--space-2) var(--space-3);
+            }
+            .toolbar-inner {
+                flex-wrap: wrap;
+                gap: var(--space-2);
+            }
+            
+            /* 筛选条件移动端 */
+            .filter-conditions {
+                order: 3;
+                width: 100%;
+                overflow-x: auto;
+            }
+            .filter-select {
+                height: 32px;
+                font-size: 0.8125rem;
+                min-width: 70px;
+            }
+            
+            /* 分页移动端 */
+            .pagination-section {
+                display: none;
+            }
+
+            /* 右侧统计移动端 */
+            .info-right {
+                gap: 8px;
+            }
+            .stats-box {
+                padding: 4px 10px;
+            }
+            .stats-item {
+                font-size: 0.7rem;
+            }
+            .stats-item strong {
+                font-size: 0.9rem;
+            }
+
             .info-tag {
                 white-space: nowrap;
             }
-            
+
             .info-tag strong {
-                font-size: 0.9rem;
+                font-size: 0.85rem;
+            }
+
+            .filter-toggle-btn-inline {
+                height: 28px;
+                padding: 0 10px;
+                font-size: 0.75rem;
+                margin-left: auto;
+            }
+
+            .filter-toggle-btn-inline svg {
+                width: 12px;
+                height: 12px;
             }
             
             .info-tag .label {
@@ -933,8 +1379,9 @@
             .filter-bar {
                 padding: 12px 15px;
                 border-radius: 12px;
-                top: 60px;
+                top: 55px;
                 max-height: calc(100vh - 80px);
+                width: 95%;
             }
             .filter-backdrop {
                 background: rgba(0, 0, 0, 0.7);
@@ -942,7 +1389,7 @@
 
             /* 模态框移动端适配 */
             .modal-overlay {
-                padding-top: 60px;
+                padding-top: 55px;
                 align-items: flex-start;
             }
             .modal-content {
@@ -1171,56 +1618,37 @@
                 color: #fbbf24;
             }
             
-            /* 分页优化 */
-            .pagination-bar {
-                padding: 10px 12px;
-                flex-wrap: nowrap;
-                gap: 6px;
-                justify-content: space-between;
-                align-items: center;
+            /* 分页优化 - 内联在信息栏 */
+            .pagination-inline {
+                padding: 0 4px;
+                gap: 3px;
             }
-            
+
             .page-btn {
                 padding: 0;
-                height: 36px;
-                line-height: 36px;
-                font-size: 0.8rem;
-                flex: 1;
-                min-width: 36px;
-                max-width: 60px;
+                width: 26px;
+                height: 22px;
+                line-height: 22px;
+                font-size: 0.7rem;
+                flex: 0 0 auto;
                 text-align: center;
             }
-            
+
             .pagination-info {
-                font-size: 0.8rem;
+                font-size: 0.65rem;
                 white-space: nowrap;
-                flex: 2;
+                flex: 0 0 auto;
                 text-align: center;
-                min-width: 80px;
+                min-width: 60px;
+                margin: 0 3px;
             }
-            
+
             .page-size-select {
-                height: 36px;
-                font-size: 0.75rem;
-                padding: 0 4px;
-                flex: 1;
-                min-width: 50px;
-                max-width: 70px;
-            }
-            
-            /* 状态徽章优化 */
-            .welcome-user, .connection-status {
-                width: auto;
-                min-width: 120px;
-                padding: 0 10px;
-                font-size: 0.75rem;
-                height: 36px;
-                top: 10px;
-                right: 10px;
-            }
-            
-            .connection-status {
-                display: none;
+                width: 55px;
+                height: 22px;
+                font-size: 0.65rem;
+                padding: 0 2px;
+                flex: 0 0 auto;
             }
             
             /* Tooltip优化 */
@@ -1329,26 +1757,14 @@
 </head>
 <body>
 
-    <!-- 欢迎语 -->
-    <div id="welcomeUser" class="welcome-user status-pill"></div>
-    <!-- 连接状态 -->
-    <div id="connectionStatus" class="connection-status status-pill disconnected">未连接到后端</div>
-    <!-- 筛选按钮（结果页显示） -->
-    <button class="filter-toggle-btn" id="filterToggleBtn" onclick="toggleFilterPanel()" style="display:none;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-        </svg>
-        <span>筛选</span>
-    </button>
-
     <!-- ====== 表单视图 ====== -->
     <div id="viewForm" class="form-view-wrap">
         <div class="container">
             <div class="main-container">
-                <h1 class="header-title">⚡高考志愿辅助系统⚡</h1>
+                <h1 class="header-title">高考志愿辅助系统</h1>
 
                 <div class="section-card">
-                    <h2 class="section-title">🎯 志愿信息</h2>
+                    <h2 class="section-title">志愿信息</h2>
                     <form id="recommendationForm">
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -1393,25 +1809,85 @@
     <!-- ====== 结果视图 ====== -->
     <div id="viewResult" class="result-view-wrap">
 
-        <!-- 基本信息栏（包含返回按钮） -->
-        <div class="info-bar" id="infoBar">
-            <button class="back-btn" onclick="showFormView()">← 返回</button>
-            <div class="info-tag"><span class="label">生源地：</span><strong id="infoRegion">-</strong></div>
-            <div class="info-tag"><span class="label">分数：</span><strong id="infoScore">-</strong></div>
-            <div class="info-tag"><span class="label">选科：</span><strong id="infoSubject">-</strong></div>
-            <div class="info-tag" style="margin-left:auto;">
-                共找到 <strong id="infoTotal" style="color:var(--accent-cyan);">0</strong> 所院校，
-                <strong id="infoMajorTotal" style="color:var(--accent-cyan);">0</strong> 条专业数据
+        <!-- 顶部固定栏（包含信息栏和分页） -->
+        <div class="top-bar-container" id="topBarContainer">
+            <!-- 第一行：Logo + 基本信息 + 统计 -->
+            <div class="top-bar" id="topBar">
+                <div class="top-bar-inner">
+                    <!-- Logo -->
+                    <div class="logo-section">
+                        <div class="logo-large">
+                            <img src="images/权鼎教育.png" alt="权鼎教育">
+                        </div>
+                    </div>
+                    
+                    <!-- 基本信息 -->
+                    <div class="basic-info">
+                        <div class="info-item">
+                            <span class="info-label">生源地</span>
+                            <span class="info-value" id="infoRegion">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">分数</span>
+                            <span class="info-value highlight" id="infoScore">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">选科</span>
+                            <span class="info-value" id="infoSubject">-</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 统计 -->
+                    <div class="stats-section">
+                        <span class="stat-item"><strong id="infoTotal">0</strong> 所院校</span>
+                        <span class="stat-item"><strong id="infoMajorTotal">0</strong> 个专业</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 第二行：返回 + 筛选条件 + 分页 -->
+            <div class="toolbar-bar" id="toolbarBar">
+                <div class="toolbar-inner">
+                    <!-- 返回 -->
+                    <button class="back-btn" onclick="showFormView()">← 返回</button>
+                    
+                    <!-- 筛选条件（快捷筛选，与筛选面板联动） -->
+                    <div class="filter-conditions">
+                        <select id="quickFilterProvince" class="filter-select" onchange="syncQuickFilter('province')">
+                            <option value="">省份</option>
+                        </select>
+                        <select id="quickFilterCity" class="filter-select" onchange="syncQuickFilter('college_city')">
+                            <option value="">城市</option>
+                        </select>
+                        <select id="quickFilterMajorCategory" class="filter-select" onchange="syncQuickFilter('major_category')">
+                            <option value="">专业类</option>
+                        </select>
+                        <select id="quickFilterBatchRemark" class="filter-select" onchange="syncQuickFilter('batch_remark')">
+                            <option value="">批次备注</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 分页 -->
+                    <div class="pagination-section">
+                        <div class="pagination-inline" id="paginationBar" style="display:none;">
+                            <button class="page-btn" id="btnFirst" onclick="goPage(1)">«</button>
+                            <button class="page-btn" id="btnPrev" onclick="goPage(currentPage - 1)">‹</button>
+                            <span id="pageInfo" class="pagination-info"></span>
+                            <button class="page-btn" id="btnNext" onclick="goPage(currentPage + 1)">›</button>
+                            <button class="page-btn" id="btnLast" onclick="goPage(totalPages)">»</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 筛选按钮 -->
+                    <button class="filter-toggle-btn-inline" id="filterToggleBtn" onclick="toggleFilterPanel()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                        </svg>
+                        <span>筛选</span>
+                    </button>
+                </div>
             </div>
         </div>
-
-        <!-- 固定在右侧的筛选按钮 -->
-        <button class="filter-toggle-btn" id="filterToggleBtn" onclick="toggleFilterPanel()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-            </svg>
-            筛选
-        </button>
 
         <!-- 筛选栏背景遮罩 -->
         <div class="filter-backdrop" id="filterBackdrop" onclick="closeFilterPanel()"></div>
@@ -1445,21 +1921,6 @@
 
         <!-- 卡片列表 -->
         <div class="cards-wrapper" id="resultBody"></div>
-
-        <!-- 分页 -->
-        <div class="pagination-bar" id="paginationBar" style="display:none;">
-            <button class="page-btn" id="btnFirst" onclick="goPage(1)">«</button>
-            <button class="page-btn" id="btnPrev" onclick="goPage(currentPage - 1)">‹</button>
-            <span id="pageInfo" class="pagination-info"></span>
-            <button class="page-btn" id="btnNext" onclick="goPage(currentPage + 1)">›</button>
-            <button class="page-btn" id="btnLast" onclick="goPage(totalPages)">»</button>
-            <select id="pageSizeSelect" class="page-btn page-size-select" onchange="changePageSize()">
-                <option value="10" selected>10所/页</option>
-                <option value="20">20所/页</option>
-                <option value="50">50所/页</option>
-                <option value="0">全部</option>
-            </select>
-        </div>
 
         <!-- 专业组模态框 -->
         <div id="groupModal" class="modal-overlay">
@@ -1496,7 +1957,7 @@
     // 公共配置
     // ====================================================
     const API_BASE = `http://${window.location.hostname || 'localhost'}:3000/api`;
-    let isBackendConnected = false;
+
 
     // ====================================================
     // 视图切换
@@ -1504,7 +1965,6 @@
     function showFormView() {
         document.getElementById('viewForm').style.display = 'block';
         document.getElementById('viewResult').style.display = 'none';
-        document.getElementById('filterToggleBtn').style.display = 'none';
         // 关闭筛选面板
         closeFilterPanel();
     }
@@ -1512,7 +1972,6 @@
     function showResultView() {
         document.getElementById('viewForm').style.display = 'none';
         document.getElementById('viewResult').style.display = 'block';
-        document.getElementById('filterToggleBtn').style.display = 'flex';
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -1540,31 +1999,9 @@
     // 页面初始化
     // ====================================================
     document.addEventListener('DOMContentLoaded', async () => {
-        // 欢迎语
-        const savedUsername = localStorage.getItem('qd_username');
-        if (savedUsername) {
-            const el = document.getElementById('welcomeUser');
-            el.textContent = `欢迎，${savedUsername}`;
-            el.style.display = 'flex';
-        }
-
-        // 测试后端连接
-        try {
-            const res = await fetch(API_BASE + '/test-connection', { signal: AbortSignal.timeout(3000) });
-            isBackendConnected = res.ok;
-        } catch { isBackendConnected = false; }
-        updateConnectionStatus(isBackendConnected);
-        if (!isBackendConnected) showToast('无法连接到后端服务器，请确保后端服务已启动', 'error');
-
         // 初始化选科标签
         initSubjectTags();
     });
-
-    function updateConnectionStatus(connected) {
-        const el = document.getElementById('connectionStatus');
-        el.className = 'connection-status status-pill ' + (connected ? 'connected' : 'disconnected');
-        el.textContent = connected ? '已连接到后端' : '未连接到后端';
-    }
 
     // ====================================================
     // 高考模式 & 省份
@@ -1758,7 +2195,6 @@
     // ====================================================
     document.getElementById('recommendationForm').addEventListener('submit', async function(e){
         e.preventDefault();
-        if(!isBackendConnected){showToast('请先启动后端服务器！','warning');return;}
         const score=document.getElementById('score').value;
         const subjectCombination=document.getElementById('subjectCombination').value;
         const region=document.getElementById('region').value;
@@ -1802,7 +2238,7 @@
                 return minScore != null && minScore <= userScore;
             });
             document.getElementById('infoTotal').textContent = new Set(allData.map(r=>r.name)).size;
-            document.getElementById('infoMajorTotal').textContent = allData.length;
+            document.getElementById('infoMajorTotal').textContent = new Set(allData.map(r=>r.major)).size; // 专业名称去重
 
             document.getElementById('resultLoading').style.display='none';
 
@@ -1886,6 +2322,26 @@
         [...new Set(allData.map(r=>r.batch_remark).filter(Boolean))].sort().forEach(br=>{const o=document.createElement('option');o.value=br;o.textContent=br;brSel.appendChild(o);});
         [...new Set(allData.map(r=>r.college_level).filter(Boolean))].sort().forEach(lv=>{const o=document.createElement('option');o.value=lv;o.textContent=lv;lvSel.appendChild(o);});
         [...new Set(allData.map(r=>r.subject_require).filter(Boolean))].sort().forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sSel.appendChild(o);});
+
+        // 同步初始化快捷筛选下拉框
+        const quickFieldMap = {
+            province: 'quickFilterProvince',
+            college_city: 'quickFilterCity',
+            major_category: 'quickFilterMajorCategory',
+            batch_remark: 'quickFilterBatchRemark'
+        };
+        for (const [field, selectId] of Object.entries(quickFieldMap)) {
+            const sel = document.getElementById(selectId);
+            if (!sel) continue;
+            const options = [...new Set(allData.map(r => r[field]).filter(Boolean))].sort();
+            sel.innerHTML = '<option value="">' + (field === 'province' ? '省份' : field === 'college_city' ? '城市' : field === 'major_category' ? '专业类' : '批次备注') + '</option>';
+            options.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt;
+                o.textContent = opt;
+                sel.appendChild(o);
+            });
+        }
     }
 
     // 联动筛选：更新其他下拉框选项
@@ -1917,6 +2373,53 @@
                 sel.value = currentVal;
             }
         }
+
+        // 同步更新快捷筛选下拉框
+        const quickFieldMap = {
+            province: 'quickFilterProvince',
+            college_city: 'quickFilterCity',
+            major_category: 'quickFilterMajorCategory',
+            batch_remark: 'quickFilterBatchRemark'
+        };
+        for (const [field, selectId] of Object.entries(quickFieldMap)) {
+            if (field === excludeField) continue;
+            const sel = document.getElementById(selectId);
+            if (!sel) continue;
+            const currentVal = sel.value;
+            const options = [...new Set(filteredData.map(r => r[field]).filter(Boolean))].sort();
+            sel.innerHTML = '<option value="">' + (field === 'province' ? '省份' : field === 'college_city' ? '城市' : field === 'major_category' ? '专业类' : '批次备注') + '</option>';
+            options.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt;
+                o.textContent = opt;
+                sel.appendChild(o);
+            });
+            if (currentVal && options.includes(currentVal)) {
+                sel.value = currentVal;
+            }
+        }
+    }
+
+    // 快捷筛选联动：同步到筛选面板并触发筛选
+    function syncQuickFilter(field) {
+        const quickIdMap = {
+            province: 'quickFilterProvince',
+            college_city: 'quickFilterCity',
+            major_category: 'quickFilterMajorCategory',
+            batch_remark: 'quickFilterBatchRemark'
+        };
+        const panelIdMap = {
+            province: 'filterProvince',
+            college_city: 'filterCity',
+            major_category: 'filterMajorCategory',
+            batch_remark: 'filterBatchRemark'
+        };
+        const quickSel = document.getElementById(quickIdMap[field]);
+        const panelSel = document.getElementById(panelIdMap[field]);
+        if (quickSel && panelSel) {
+            panelSel.value = quickSel.value;
+        }
+        applyFilter(field);
     }
 
     function resetFilter(){
@@ -1930,6 +2433,11 @@
         document.getElementById('filterBatchRemark').value='';
         document.getElementById('filterCollegeLevel').value='';
         document.getElementById('filterSubjectRequire').value='';
+        // 同时重置快捷筛选
+        document.getElementById('quickFilterProvince').value='';
+        document.getElementById('quickFilterCity').value='';
+        document.getElementById('quickFilterMajorCategory').value='';
+        document.getElementById('quickFilterBatchRemark').value='';
         initFilterOptions();
         applyFilter();
     }
@@ -1958,7 +2466,7 @@
         
         // 更新统计数据为筛选后的实际数据
         const schoolCount = new Set(filteredData.map(r => r.name)).size;
-        const majorCount = filteredData.length;
+        const majorCount = new Set(filteredData.map(r => r.major)).size; // 专业名称去重
         document.getElementById('infoTotal').textContent = schoolCount;
         document.getElementById('infoMajorTotal').textContent = majorCount;
     }
@@ -1989,6 +2497,12 @@
         });
         document.getElementById('filteredCount').textContent=filteredData.length;
         currentPage=1;renderTable(filteredData);
+
+        // 同步快捷筛选显示
+        document.getElementById('quickFilterProvince').value = province;
+        document.getElementById('quickFilterCity').value = city;
+        document.getElementById('quickFilterMajorCategory').value = majorCategory;
+        document.getElementById('quickFilterBatchRemark').value = batchRemark;
 
         // 联动更新其他下拉框选项
         if (excludeField) {
@@ -2037,12 +2551,11 @@
             // 检测是否为移动端
             const isMobileHeader = window.innerWidth <= 768;
 
-            // 获取该院校所有符合条件的专业名称（在一行内逐个显示，自动换行）
-            const displayMajors = majors.slice(0, 8);
-            const moreCount = majors.length > 8 ? `+${majors.length - 8}` : '';
-            const majorNamesHtml = displayMajors.map(m => `<span class="major-tag" style="display:inline-block;background:rgba(0,212,255,0.15);color:var(--accent-cyan);padding:2px 8px;border-radius:4px;font-size:0.8rem;margin-right:6px;margin-bottom:2px;border:1px solid rgba(0,212,255,0.3);white-space:nowrap;vertical-align:middle;">${escHtml(m.major || '-')}</span>`).join('');
-            const moreTag = moreCount ? `<span class="major-tag more-tag" style="display:inline-block;background:rgba(100,100,100,0.3);color:var(--text-secondary);padding:2px 8px;border-radius:4px;font-size:0.8rem;margin-right:6px;margin-bottom:2px;border:1px solid rgba(100,100,100,0.5);white-space:nowrap;vertical-align:middle;">${moreCount}</span>` : '';
-            const majorsText = `<span class="school-majors-text" style="margin-left:6px;flex:1;min-width:0;">${majorNamesHtml}${moreTag}</span>`;
+            // 获取该院校所有符合条件的专业名称（全部显示，自动换行）
+            const majorNamesHtml = majors.map(m => `<span class="major-tag" style="display:inline-block;background:rgba(0,212,255,0.15);color:var(--accent-cyan);padding:2px 8px;border-radius:4px;font-size:0.8rem;margin-right:6px;margin-bottom:4px;border:1px solid rgba(0,212,255,0.3);white-space:nowrap;vertical-align:middle;">${escHtml(m.major || '-')}</span>`).join('');
+
+            // 专业数量标签
+            const majorCountTag = `<span class="school-major-count" style="margin-left:12px;flex-shrink:0;">共 <strong>${majors.length}</strong> 个专业</span>`;
 
             html+=`
             <div class="school-card collapsed">
@@ -2052,12 +2565,13 @@
                             <div class="school-name-wrapper">
                                 ${lvTag}
                                 <a class="school-link" onclick="event.stopPropagation();window.open('school-detail.html?schoolName=${encodeURIComponent(school.name)}','_blank')" href="#">${escHtml(school.name||'-')}</a>
+                                ${majorCountTag}
                             </div>
-                            ${!isMobileHeader ? majorsText : ''}
-                            ${isMobileHeader ? `<span class="school-major-count">共 <strong>${majors.length}</strong> 个专业</span>` : ''}
                         </div>
                     </div>
-                    ${!isMobileHeader ? `<span class="school-major-count desktop-only">共 <strong>${majors.length}</strong> 个专业</span>` : ''}
+                </div>
+                <div class="school-majors-bar" style="padding:10px 20px;background:rgba(10,25,70,0.2);border-bottom:1px solid rgba(59,159,232,0.08);">
+                    ${majorNamesHtml}
                 </div>
                 <div class="major-body" data-school-key="${escHtml((school.school_code||'')+'|'+(school.name||''))}">`;
 

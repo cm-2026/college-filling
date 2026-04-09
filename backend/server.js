@@ -1573,6 +1573,37 @@ app.get('/api/college-features', async (req, res) => {
   }
 });
 
+// 获取特色专业数据
+app.get('/api/featured-majors', async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT feature_type, majors FROM featured_majors`
+    );
+
+    // 转换为以特色类型为键的Map
+    const featuredMajorsMap = {};
+    rows.forEach(row => {
+      if (row.majors) {
+        // mysql2可能已自动解析JSON为数组，检查类型
+        if (Array.isArray(row.majors)) {
+          featuredMajorsMap[row.feature_type] = row.majors;
+        } else if (typeof row.majors === 'string') {
+          try {
+            featuredMajorsMap[row.feature_type] = JSON.parse(row.majors);
+          } catch (e) {
+            console.warn('解析特色专业JSON失败:', row.feature_type);
+          }
+        }
+      }
+    });
+
+    res.json({ success: true, data: featuredMajorsMap });
+  } catch (err) {
+    console.error('获取特色专业数据失败:', err.message);
+    res.json({ success: false, message: '服务器错误' });
+  }
+});
+
 // 提供静态文件服务
 app.use(express.static(path.join(__dirname, '../')));
 

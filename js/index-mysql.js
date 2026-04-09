@@ -6,6 +6,9 @@
     // 院校特色标签数据（院校名称 -> 特色标签数组）
     let collegeFeaturesMap = {};
     let allFeatureTags = []; // 所有特色标签列表（去重后）
+    
+    // 特色专业数据（特色类型 -> 专业数组）
+    let featuredMajorsMap = {};
 
 
     // ====================================================
@@ -92,6 +95,18 @@
             }
         } catch (err) {
             console.warn('加载院校特色标签失败:', err.message);
+        }
+        
+        // 加载特色专业数据
+        try {
+            const res = await fetch(`${API_BASE}/featured-majors`);
+            const json = await res.json();
+            if (json.success && json.data) {
+                featuredMajorsMap = json.data;
+                console.log(`已加载 ${Object.keys(featuredMajorsMap).length} 种特色专业的优势专业数据`);
+            }
+        } catch (err) {
+            console.warn('加载特色专业数据失败:', err.message);
         }
     });
 
@@ -798,9 +813,28 @@
                 return (majorOrderMap[a.major_category] || 999) - (majorOrderMap[b.major_category] || 999);
             });
             // 专业名称标签颜色：试验班=橙色，前85个专业类=红色，其他=蓝色
+            // 获取该院校的特色标签
+            const schoolFeatures = collegeFeaturesMap[school.name] || [];
+            
             const majorNamesHtml = sortedMajorNames.map(m => {
                 const isTestMajor = (m.major_category || '').includes('试验班');
                 const isTopMajor = topMajors.has(m.major_category);
+                
+                // 检查是否为特色专业（需要添加大拇指）
+                let isFeaturedMajor = false;
+                const majorCategory = m.major_category || '';
+                
+                // 遍历院校的所有特色标签，检查专业是否在特色专业列表中
+                for (const feature of schoolFeatures) {
+                    if (featuredMajorsMap[feature]) {
+                        // 检查专业类是否在该特色类型的优势专业列表中
+                        if (featuredMajorsMap[feature].includes(majorCategory)) {
+                            isFeaturedMajor = true;
+                            break;
+                        }
+                    }
+                }
+                
                 let style;
                 if (isTestMajor) {
                     // 试验班：高对比橙色 - 深橙文字+亮橙背景+粗边框
@@ -816,7 +850,9 @@
                 const majorName = m.major || '-';
                 const majorRemark = m.major_remark || '';
                 const displayMajorName = majorRemark.includes('中外') ? majorName + '（中外合作）' : majorName;
-                return `<span class="major-tag" style="${style}">${escHtml(displayMajorName)}</span>`;
+                // 如果是特色专业，添加大拇指图标
+                const thumbIcon = isFeaturedMajor ? '<span style="margin-right:4px;">👍</span>' : '';
+                return `<span class="major-tag" style="${style}">${thumbIcon}${escHtml(displayMajorName)}</span>`;
             }).join('');
 
             // 专业数量标签

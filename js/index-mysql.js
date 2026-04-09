@@ -779,15 +779,40 @@
         data.forEach(row=>{const key=(row.school_code||'')+'|'+(row.name||'');if(!schoolMap.has(key))schoolMap.set(key,[]);schoolMap.get(key).push(row);});
 
         function getLvPrio(lv){if(!lv)return 99;if(lv==='985'||lv.includes('985'))return 1;if(lv==='211'||lv.includes('211'))return 2;if(lv.includes('双一流')||lv.includes('一流'))return 3;if(lv.includes('公办'))return 4;if(lv.includes('民办'))return 5;return 99;}
-        // 排序：先按特色标签数量降序，再按院校层次优先级
+        
+        // 计算院校的大拇指数量（特色专业数量）
+        function getThumbCount(majors, schoolFeatures) {
+            let count = 0;
+            majors.forEach(m => {
+                const majorCategory = m.major_category || '';
+                for (const feature of schoolFeatures) {
+                    if (featuredMajorsMap[feature] && featuredMajorsMap[feature].includes(majorCategory)) {
+                        count++;
+                        break;
+                    }
+                }
+            });
+            return count;
+        }
+        
+        // 排序：1.大拇指数量降序 2.特色标签数量降序 3.院校层次优先级
         const groups=[...schoolMap.values()].sort((ga,gb)=>{
             const schoolNameA = ga[0].name || '';
             const schoolNameB = gb[0].name || '';
-            const featureCountA = (collegeFeaturesMap[schoolNameA] || []).length;
-            const featureCountB = (collegeFeaturesMap[schoolNameB] || []).length;
-            // 先按特色标签数量降序
+            const schoolFeaturesA = collegeFeaturesMap[schoolNameA] || [];
+            const schoolFeaturesB = collegeFeaturesMap[schoolNameB] || [];
+            
+            // 1. 大拇指数量降序
+            const thumbCountA = getThumbCount(ga, schoolFeaturesA);
+            const thumbCountB = getThumbCount(gb, schoolFeaturesB);
+            if(thumbCountA !== thumbCountB) return thumbCountB - thumbCountA;
+            
+            // 2. 特色标签数量降序
+            const featureCountA = schoolFeaturesA.length;
+            const featureCountB = schoolFeaturesB.length;
             if(featureCountA !== featureCountB) return featureCountB - featureCountA;
-            // 数量相同，按院校层次优先级
+            
+            // 3. 院校层次优先级
             return getLvPrio(ga[0].college_level||'') - getLvPrio(gb[0].college_level||'');
         });
 

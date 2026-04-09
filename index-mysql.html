@@ -13,7 +13,7 @@
             }
         })();
     </script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <style>
         /* ============================================
            简洁大气主题系统 - Minimalist Elegant Theme
@@ -43,23 +43,27 @@
             --danger: #ef4444;
             --info: #3b82f6;
             
-            /* 背景与文字 */
-            --bg-primary: #fafafa;
-            --bg-secondary: #f8fafc;
-            --bg-tertiary: #f1f5f9;
+            /* 背景与文字 - 增强对比度 */
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #eef2f7;
             --bg-card: #ffffff;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-tertiary: #94a3b8;
-            --text-muted: #64748b;
+            --text-primary: #1a1a2e;
+            --text-secondary: #3d3d5c;
+            --text-tertiary: #6b7280;
+            --text-muted: #9ca3af;
             
             /* 边框与阴影 */
-            --border-light: #e2e8f0;
-            --border-medium: #cbd5e1;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            --border-light: #d1d5db;
+            --border-medium: #9ca3af;
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            
+            /* 卡片专用色 */
+            --card-bg: #ffffff;
+            --card-border: #cbd5e1;
             
             /* 间距系统 */
             --space-1: 0.25rem;
@@ -106,43 +110,223 @@
         #viewForm   { display: block; }
         #viewResult { display: none; }
 
-        /* ========== 表单视图 - 简洁大气版 ========== */
+        /* ========== 表单视图 - 简洁背景版 ========== */
         .form-view-wrap {
             min-height: 100vh;
             display: flex;
-            align-items: center;
-            padding: var(--space-8) var(--space-4);
-            background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-        }
-
-        .main-container {
-            background: var(--bg-card);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-2xl);
-            box-shadow: var(--shadow-xl);
-            margin: 0 auto;
-            padding: var(--space-12) var(--space-10);
-            max-width: 720px;
-            width: 100%;
-        }
-
-        .header-title {
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: var(--space-10);
-            font-size: 2rem;
-            color: var(--text-primary);
-            letter-spacing: -0.02em;
+            flex-direction: column;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+            position: relative;
         }
         
-        .header-title::after {
-            content: '';
+
+
+        .form-header {
+            padding: var(--space-6) var(--space-8);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .form-header-logo {
+            height: 200px;
+            filter: brightness(0) invert(1);
+        }
+
+        .form-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-8) var(--space-4);
+            position: relative;
+            z-index: 10;
+        }
+
+        .form-title {
+            text-align: center;
+            color: white;
+            margin-bottom: var(--space-8);
+        }
+        
+        .form-title h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: var(--space-3);
+            letter-spacing: 0.02em;
+        }
+        
+        .form-title p {
+            font-size: 1rem;
+            opacity: 0.8;
+            font-weight: 300;
+        }
+
+        .search-box-container {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        .search-box-row {
+            display: flex;
+            gap: var(--space-3);
+            align-items: flex-end;
+        }
+        
+        .search-box-item {
+            flex: 1;
+        }
+        
+        .search-box-item label {
             display: block;
-            width: 60px;
-            height: 4px;
-            background: linear-gradient(90deg, var(--accent-500), var(--accent-400));
-            border-radius: var(--radius-full);
-            margin: var(--space-4) auto 0;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: var(--space-1);
+            font-weight: 500;
+        }
+        
+        .search-box-item .form-control,
+        .search-box-item .form-select {
+            height: 48px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+        }
+        
+        .search-box-item .form-control:focus,
+        .search-box-item .form-select:focus {
+            border-color: var(--accent-500);
+            box-shadow: 0 0 0 3px var(--accent-50);
+        }
+        
+        .search-btn {
+            height: 48px;
+            padding: 0 var(--space-8);
+            background: var(--accent-600);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .search-btn:hover {
+            background: var(--accent-500);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+        
+        .subject-section {
+            margin-top: var(--space-5);
+            padding-top: var(--space-5);
+            border-top: 1px solid var(--border-light);
+        }
+        
+        .subject-section-title {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-3);
+        }
+        
+        .subject-row {
+            display: flex;
+            gap: var(--space-6);
+            margin-bottom: var(--space-4);
+        }
+        
+        .subject-group {
+            flex: 1;
+        }
+        
+        .subject-group-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: var(--space-2);
+        }
+        
+        .subject-tags-inline {
+            display: flex;
+            gap: var(--space-2);
+        }
+        
+        .subject-tag-compact {
+            padding: var(--space-2) var(--space-4);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .subject-tag-compact:hover {
+            border-color: var(--accent-400);
+            color: var(--accent-600);
+        }
+        
+        .subject-tag-compact.selected {
+            background: var(--accent-600);
+            color: white;
+            border-color: var(--accent-600);
+        }
+        
+        .subject-tag-compact.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        .form-actions-row {
+            display: flex;
+            gap: var(--space-3);
+            margin-top: var(--space-5);
+            padding-top: var(--space-5);
+            border-top: 1px solid var(--border-light);
+        }
+        
+        .form-actions-row .btn-secondary {
+            height: 44px;
+            padding: 0 var(--space-5);
+            background: transparent;
+            border: 1px solid var(--border-medium);
+            color: var(--text-secondary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .form-actions-row .btn-secondary:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* 表单标题栏 */
+        .form-header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+        }
+        .form-header-logo-small {
+            height: 150px;
+            width: auto;
+            object-fit: contain;
+        }
+        .form-header-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
         }
 
         .section-card {
@@ -156,6 +340,12 @@
         .section-card:hover {
             border-color: var(--border-medium);
             box-shadow: var(--shadow-md);
+        }
+
+        /* 主容器 - 全局样式 */
+        .main-container {
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .section-title {
@@ -183,6 +373,35 @@
             color: var(--text-secondary); 
             margin-bottom: var(--space-2); 
             font-size: 0.875rem; 
+        }
+
+        /* 分数/位次切换按钮 */
+        .score-toggle-wrapper {
+            display: flex;
+            background: #e5e7eb;
+            border-radius: 20px;
+            padding: 3px;
+            gap: 3px;
+            width: fit-content;
+        }
+        .toggle-btn {
+            padding: 6px 20px;
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: 17px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .toggle-btn.active {
+            background: #ffffff;
+            color: #4f46e5;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .toggle-btn:hover:not(.active) {
+            color: #4f46e5;
         }
 
         .form-control, .form-select {
@@ -385,11 +604,11 @@
             text-transform: uppercase;
         }
         .region-group-label:first-child { border-top: none; }
-        .region-no-result { 
-            padding: var(--space-4); 
-            color: var(--text-muted); 
-            font-size: 0.875rem; 
-            text-align: center; 
+        .region-no-result {
+            padding: var(--space-4);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-align: center;
         }
 
         /* Toast - 简洁版 */
@@ -453,62 +672,62 @@
             margin: 0 auto;
             padding: 160px 24px 48px;
             min-height: 100vh;
-            background: var(--bg-primary);
+            background: #ffffff;
         }
 
-        /* 返回按钮 - 简洁版 */
+        /* 返回按钮 - 极简版 */
         .back-btn {
-            background: var(--bg-card);
-            border: 1px solid var(--border-medium);
-            color: var(--text-secondary);
-            border-radius: var(--radius-md);
-            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 6px 12px;
             cursor: pointer;
             font-size: 0.875rem;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             transition: all 0.2s ease;
             white-space: nowrap;
             font-weight: 500;
+            border-radius: var(--radius-md);
         }
         .back-btn:hover { 
-            background: var(--accent-50); 
-            color: var(--accent-600); 
-            border-color: var(--accent-400);
+            color: var(--text-primary); 
+            background: var(--bg-card);
         }
 
         /* 筛选按钮 - 简洁版 */
+        /* 筛选按钮 - 极简版 */
         .filter-toggle-btn-inline {
-            height: 40px;
-            padding: 0 20px;
+            height: 32px;
+            padding: 0 16px;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             border-radius: var(--radius-md);
             font-weight: 500;
             font-size: 0.875rem;
-            background: var(--accent-600);
-            border: 1px solid var(--accent-600);
-            color: white;
+            background: transparent;
+            border: 1px solid var(--border-medium);
+            color: var(--text-secondary);
             cursor: pointer;
             transition: all 0.2s ease;
             white-space: nowrap;
         }
         .filter-toggle-btn-inline:hover {
-            background: var(--accent-500);
-            border-color: var(--accent-500);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
+            color: var(--text-primary);
+            border-color: var(--border-medium);
+            background: var(--bg-card);
         }
         .filter-toggle-btn-inline svg {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             transition: transform 0.3s ease;
         }
         .filter-toggle-btn-inline.active {
-            background: var(--primary-700);
-            border-color: var(--primary-700);
+            color: var(--accent-600);
+            border-color: var(--accent-400);
+            background: var(--accent-50);
         }
         .filter-toggle-btn-inline.active svg {
             transform: rotate(180deg);
@@ -573,7 +792,7 @@
             object-fit: contain;
         }
 
-        /* 基本信息 */
+        /* 基本信息 - 与统计区域一致的风格 */
         .basic-info {
             display: flex;
             align-items: center;
@@ -582,24 +801,21 @@
         }
         .basic-info .info-item {
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 2px;
-        }
-        .basic-info .info-label {
-            font-size: 0.6875rem;
-            color: var(--text-muted);
-            font-weight: 500;
+            align-items: center;
+            gap: 6px;
         }
         .basic-info .info-value {
-            font-size: 0.9375rem;
-            color: var(--text-primary);
-            font-weight: 600;
+            font-size: 1rem;
+            color: var(--accent-600);
+            font-weight: 700;
         }
         .basic-info .info-value.highlight {
-            color: var(--accent-600);
-            font-size: 1.125rem;
-            font-weight: 700;
+            font-size: 1.25rem;
+        }
+        .basic-info .info-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
         }
 
         /* 统计区域 */
@@ -643,6 +859,29 @@
             gap: var(--space-2);
             flex: 1;
         }
+        
+        /* 筛选条件显示 */
+        .filter-display {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            flex: 1;
+            flex-wrap: wrap;
+        }
+        .filter-display-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.875rem;
+        }
+        .filter-display-label {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+        .filter-display-value {
+            color: var(--accent-600);
+            font-weight: 600;
+        }
         .filter-select {
             height: 36px;
             padding: 0 var(--space-3);
@@ -672,50 +911,29 @@
             font-weight: 700;
         }
 
-        /* 筛选栏背景遮罩 - 简洁版 */
-        .filter-backdrop {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(4px);
-            z-index: 999;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .filter-backdrop.active {
-            display: block;
-            opacity: 1;
-        }
-
-        /* 筛选栏 - 简洁版 */
+        /* 筛选栏 - 作为顶部工具栏的折叠部分 */
         .filter-bar {
-            background: var(--bg-card);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-xl);
-            padding: var(--space-6);
-            margin-bottom: var(--space-5);
-            position: fixed;
-            top: 120px;
-            left: 50%;
-            transform: translateX(-50%) scale(0.95);
-            width: 90%;
-            max-width: 1200px;
-            z-index: 1001;
-            box-shadow: var(--shadow-xl);
-            max-height: calc(100vh - 100px);
-            overflow-y: auto;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-light);
+            padding: 0;
+            width: 100%;
+            max-height: 0;
+            overflow: hidden;
             opacity: 0;
             transition: all 0.3s ease;
             pointer-events: none;
         }
         .filter-bar.active {
+            max-height: 600px;
+            padding: var(--space-4) 0;
             opacity: 1;
-            transform: translateX(-50%) scale(1);
             pointer-events: auto;
+            overflow: visible;
+        }
+        .filter-bar-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 var(--space-6);
         }
         .filter-grid {
             display: grid;
@@ -729,6 +947,17 @@
             font-size: 0.8125rem; 
             white-space: nowrap;
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .filter-count {
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            background: var(--bg-tertiary);
+            padding: 1px 5px;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-light);
         }
         .filter-item select, .filter-item input {
             background: var(--bg-card);
@@ -803,8 +1032,8 @@
         .school-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; margin-bottom: 14px; overflow: hidden; transition: border-color 0.2s; }
         .school-card:hover { border-color: rgba(59,159,232,0.45); }
 
-        .school-header { padding: 14px 20px; border-bottom: 1px solid rgba(59,159,232,0.12); display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
-        .school-header:hover { background: rgba(59,159,232,0.05); }
+        .school-header { padding: 14px 20px; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; background: #f8fafc; }
+        .school-header:hover { background: #f1f5f9; }
         .collapse-arrow { color: var(--text-secondary); font-size: 0.75rem; margin-left: auto; padding-top: 4px; transition: transform 0.2s; white-space: nowrap; }
         .school-card.collapsed .collapse-arrow { transform: rotate(-90deg); }
         .major-body { overflow: hidden; transition: max-height 0.25s ease, opacity 0.2s; max-height: 2000px; opacity: 1; }
@@ -813,8 +1042,6 @@
         .school-header-left { flex: 1; min-width: 0; display: flex; align-items: center; gap: 0; }
         .school-name-row { display: flex; align-items: center; flex: 1; min-width: 0; overflow: hidden; gap: 12px; }
         .school-name-wrapper { display: flex; align-items: center; gap: 8px; min-width: 225px; width: 225px; flex-shrink: 0; }
-        .college-level-tag { flex-shrink: 0; }
-        .school-col-level  { min-width: 80px;  width: 80px; }
         .school-col-code   { min-width: 70px;  width: 70px; color: var(--text-secondary); font-size: 0.78rem; }
         .school-col-province { min-width: 60px; width: 60px; color: var(--text-secondary); font-size: 0.82rem; }
         .school-col-city-province { min-width: 60px; width: 60px; color: var(--text-secondary); font-size: 0.82rem; }
@@ -826,12 +1053,8 @@
         .school-major-count strong { color: var(--accent-cyan); font-size: 1rem; }
         .school-major-count.desktop-only { margin-left: auto; padding-left: 20px; }
 
-        /* 批次/层次 标签 */
+        /* 批次标签 */
         .batch-tag { font-size: 0.72rem; padding: 2px 7px; border-radius: 5px; background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.3); color: var(--accent-pink); white-space: nowrap; }
-        .college-level-tag { display: inline-block; font-size: 0.7rem; padding: 2px 7px; border-radius: 5px; background: rgba(120,200,120,0.15); color: #7ec87e; border: 1px solid rgba(120,200,120,0.3); white-space: nowrap; font-weight: 600; }
-        .college-level-tag.level-211 { background: rgba(59,159,232,0.15); color: #7dc8f0; border-color: rgba(59,159,232,0.3); }
-        .college-level-tag.level-985 { background: rgba(255,180,0,0.15); color: #ffcc44; border-color: rgba(255,180,0,0.3); }
-        .college-level-tag.level-syl { background: rgba(200,100,255,0.15); color: #cc88ff; border-color: rgba(200,100,255,0.3); }
 
         /* 专业列表头/行 */
         .major-list-header {
@@ -897,6 +1120,13 @@
         }
         .modal-major-row:hover {
             background: rgba(59, 159, 232, 0.06);
+        }
+        .modal-major-row.within-score {
+            background: rgba(16, 185, 129, 0.12);
+            border-left: 3px solid #10b981;
+        }
+        .modal-major-row.within-score:hover {
+            background: rgba(16, 185, 129, 0.18);
         }
         .modal-major-name {
             font-size: 0.88rem;
@@ -1025,6 +1255,8 @@
 
         .major-group-tag { font-size: 0.7rem; padding: 1px 6px; border-radius: 4px; background: rgba(30,91,191,0.2); border: 1px solid rgba(30,91,191,0.4); color: #88aaee; white-space: nowrap; }
         .major-category-text { font-size: 0.72rem; color: var(--text-secondary); }
+        .major-category-text.top-major { color: #ef4444; font-weight: 600; }
+        .modal-major-cell.top-major { color: #ef4444; font-weight: 600; }
         .subject-badge { display: inline-block; font-size: 0.72rem; padding: 2px 7px; border-radius: 7px; background: rgba(59,159,232,0.12); border: 1px solid rgba(59,159,232,0.3); color: var(--text-secondary); white-space: nowrap; }
         .subject-badge.unlimited { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: #6ee7b7; }
         .prob-badge { display: inline-block; font-size: 0.78rem; font-weight: 600; padding: 3px 10px; border-radius: 8px; white-space: nowrap; }
@@ -1078,73 +1310,83 @@
         }
 
         /* 分页 - 内联在信息栏中 */
+        /* 分页 - 极简版 */
         .pagination-inline {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 4px;
-            padding: 0 10px;
-            background: rgba(245, 245, 240, 0.8);
-            border-radius: 8px;
-            border: 1px solid rgba(180, 180, 160, 0.3);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            gap: 2px;
         }
         .page-btn {
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid rgba(180, 180, 160, 0.4);
-            color: var(--accent-cyan);
-            border-radius: 6px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            border-radius: var(--radius-md);
             padding: 0;
-            width: 32px;
+            width: 28px;
             height: 28px;
             line-height: 28px;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.875rem;
             transition: all 0.15s;
             text-align: center;
             flex-shrink: 0;
         }
-        .page-btn:hover, .page-btn.active { background: var(--accent-cyan); color: white; border-color: var(--accent-cyan); }
-        .page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .page-btn:hover { 
+            color: var(--text-primary); 
+            background: var(--bg-card);
+        }
+        .page-btn.active { 
+            color: var(--accent-600); 
+            font-weight: 600;
+        }
+        .page-btn:disabled { 
+            opacity: 0.3; 
+            cursor: not-allowed; 
+        }
         .pagination-info {
             color: var(--text-secondary);
-            font-size: 0.8rem;
+            font-size: 0.8125rem;
             margin: 0 8px;
-            min-width: 80px;
+            min-width: 70px;
             text-align: center;
             flex-shrink: 0;
         }
         .page-size-select {
-            width: 70px;
+            width: 65px;
             height: 28px;
             padding: 0 4px;
             flex-shrink: 0;
             font-size: 0.75rem;
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid rgba(180, 180, 160, 0.4);
-            border-radius: 6px;
-            color: var(--text-primary);
+            background: transparent;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .page-size-select:focus {
+            outline: none;
+            border-color: var(--accent-400);
         }
 
         /* 专业介绍 tooltip（结果页） */
         #majorTooltip {
             position: fixed; z-index: 9999;
             width: 500px;
-            background: rgba(5,20,60,0.97);
-            border: 1px solid rgba(59,159,232,0.4);
-            border-radius: 10px;
-            padding: 14px 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            background: #ffffff;
+            border: 1px solid #3b82f6;
+            border-radius: 12px;
+            padding: 16px 18px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             display: none;
-            backdrop-filter: blur(8px);
         }
         #majorTooltip.visible { display: block; }
-        .tooltip-title { font-size: 0.92rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 8px; border-bottom: 1px solid rgba(59,159,232,0.2); padding-bottom: 6px; }
-        .tooltip-section { margin-bottom: 7px; }
-        .tooltip-section-label { font-size: 0.7rem; color: var(--accent-pink); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
-        .tooltip-section-body { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.55; }
-        .tooltip-loading { font-size: 0.8rem; color: var(--text-secondary); text-align: center; padding: 8px 0; }
-        .tooltip-none { font-size: 0.8rem; color: rgba(168,204,240,0.5); text-align: center; padding: 8px 0; }
+        .tooltip-title { font-size: 1rem; font-weight: 700; color: #1e40af; margin-bottom: 10px; border-bottom: 2px solid #dbeafe; padding-bottom: 8px; }
+        .tooltip-section { margin-bottom: 10px; }
+        .tooltip-section-label { font-size: 0.75rem; color: #4f46e5; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+        .tooltip-section-body { font-size: 0.85rem; color: #374151; line-height: 1.6; }
+        .tooltip-loading { font-size: 0.85rem; color: #6b7280; text-align: center; padding: 12px 0; }
+        .tooltip-none { font-size: 0.85rem; color: #9ca3af; text-align: center; padding: 12px 0; }
 
         /* 结果页加载遮罩 */
         #resultLoading { text-align: center; padding: 60px 0; }
@@ -1174,9 +1416,8 @@
                 max-width: 600px;
             }
             
-            .header-title {
-                font-size: 28px;
-                margin-bottom: 30px;
+            .form-logo {
+                height: 48px;
             }
             
             .section-card {
@@ -1274,15 +1515,16 @@
             }
             .basic-info .info-item {
                 flex-shrink: 0;
+                gap: 3px;
             }
             .basic-info .info-label {
-                font-size: 0.625rem;
+                font-size: 0.75rem;
             }
             .basic-info .info-value {
-                font-size: 0.8125rem;
+                font-size: 0.875rem;
             }
             .basic-info .info-value.highlight {
-                font-size: 0.9375rem;
+                font-size: 1rem;
             }
             
             /* 统计移动端 */
@@ -1347,9 +1589,8 @@
 
             .filter-toggle-btn-inline {
                 height: 28px;
-                padding: 0 10px;
+                padding: 0 12px;
                 font-size: 0.75rem;
-                margin-left: auto;
             }
 
             .filter-toggle-btn-inline svg {
@@ -1382,9 +1623,6 @@
                 top: 55px;
                 max-height: calc(100vh - 80px);
                 width: 95%;
-            }
-            .filter-backdrop {
-                background: rgba(0, 0, 0, 0.7);
             }
 
             /* 模态框移动端适配 */
@@ -1669,9 +1907,8 @@
                 max-width: 100%;
             }
             
-            .header-title {
-                font-size: 24px;
-                margin-bottom: 25px;
+            .form-logo {
+                height: 40px;
             }
             
             .section-title {
@@ -1761,25 +1998,34 @@
     <div id="viewForm" class="form-view-wrap">
         <div class="container">
             <div class="main-container">
-                <h1 class="header-title">高考志愿辅助系统</h1>
+                <!-- 标题栏：Logo -->
+                <div class="form-header-bar">
+                    <img src="images/权鼎教育.png" alt="权鼎教育" class="form-header-logo-small">
+                </div>
 
                 <div class="section-card">
-                    <h2 class="section-title">志愿信息</h2>
                     <form id="recommendationForm">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">地区选择 *</label>
-                                <div class="region-combobox" id="regionCombobox">
-                                    <input type="text" class="form-control" id="regionInput" placeholder="输入或选择省份…" autocomplete="off" value="河南">
-                                    <input type="hidden" id="region" value="河南">
-                                    <div class="region-dropdown" id="regionDropdown"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">高考分数 *</label>
-                                <input type="number" class="form-control" id="score" placeholder="请输入高考分数" min="0" max="750" required>
+                        <!-- 地区选择 -->
+                        <div class="mb-3">
+                            <label class="form-label">地区选择 *</label>
+                            <div class="region-combobox" id="regionCombobox">
+                                <input type="text" class="form-control" id="regionInput" placeholder="输入或选择省份…" autocomplete="off" value="河南">
+                                <input type="hidden" id="region" value="河南">
+                                <div class="region-dropdown" id="regionDropdown"></div>
                             </div>
                         </div>
+                        
+                        <!-- 高考分数/位次 -->
+                        <div class="mb-3">
+                            <div class="score-toggle-wrapper mb-2">
+                                <button type="button" class="toggle-btn active" data-mode="score" onclick="toggleScoreMode('score')">分数</button>
+                                <button type="button" class="toggle-btn" data-mode="rank" onclick="toggleScoreMode('rank')">位次</button>
+                            </div>
+                            <input type="number" class="form-control" id="score" placeholder="请输入高考分数" min="0" required>
+                            <input type="hidden" id="scoreMode" value="score">
+                        </div>
+                        
+                        <!-- 第二行：选科组合 -->
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">选科组合 *</label>
@@ -1789,6 +2035,8 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- 按钮行 -->
                         <div class="text-center" style="margin-top:5px;">
                             <button type="submit" class="btn btn-primary">开始推荐</button>
                             <button type="button" class="btn btn-warning" onclick="resetForm()">重置</button>
@@ -1832,6 +2080,10 @@
                             <span class="info-value highlight" id="infoScore">-</span>
                         </div>
                         <div class="info-item">
+                            <span class="info-label">位次</span>
+                            <span class="info-value highlight" id="infoRank">-</span>
+                        </div>
+                        <div class="info-item">
                             <span class="info-label">选科</span>
                             <span class="info-value" id="infoSubject">-</span>
                         </div>
@@ -1845,26 +2097,30 @@
                 </div>
             </div>
             
-            <!-- 第二行：返回 + 筛选条件 + 分页 -->
+            <!-- 第二行：返回 + 筛选条件 + 分页 + 筛选按钮 -->
             <div class="toolbar-bar" id="toolbarBar">
                 <div class="toolbar-inner">
                     <!-- 返回 -->
                     <button class="back-btn" onclick="showFormView()">← 返回</button>
                     
-                    <!-- 筛选条件（快捷筛选，与筛选面板联动） -->
-                    <div class="filter-conditions">
-                        <select id="quickFilterProvince" class="filter-select" onchange="syncQuickFilter('province')">
-                            <option value="">省份</option>
-                        </select>
-                        <select id="quickFilterCity" class="filter-select" onchange="syncQuickFilter('college_city')">
-                            <option value="">城市</option>
-                        </select>
-                        <select id="quickFilterMajorCategory" class="filter-select" onchange="syncQuickFilter('major_category')">
-                            <option value="">专业类</option>
-                        </select>
-                        <select id="quickFilterBatchRemark" class="filter-select" onchange="syncQuickFilter('batch_remark')">
-                            <option value="">批次备注</option>
-                        </select>
+                    <!-- 筛选条件显示 -->
+                    <div class="filter-display" id="filterDisplay">
+                        <span class="filter-display-item" id="displayProvince" style="display:none;">
+                            <span class="filter-display-label">省份</span>
+                            <span class="filter-display-value" id="displayProvinceValue">-</span>
+                        </span>
+                        <span class="filter-display-item" id="displayCity" style="display:none;">
+                            <span class="filter-display-label">城市</span>
+                            <span class="filter-display-value" id="displayCityValue">-</span>
+                        </span>
+                        <span class="filter-display-item" id="displayMajorCategory" style="display:none;">
+                            <span class="filter-display-label">专业类</span>
+                            <span class="filter-display-value" id="displayMajorCategoryValue">-</span>
+                        </span>
+                        <span class="filter-display-item" id="displayBatchRemark" style="display:none;">
+                            <span class="filter-display-label">批次备注</span>
+                            <span class="filter-display-value" id="displayBatchRemarkValue">-</span>
+                        </span>
                     </div>
                     
                     <!-- 分页 -->
@@ -1887,29 +2143,28 @@
                     </button>
                 </div>
             </div>
-        </div>
-
-        <!-- 筛选栏背景遮罩 -->
-        <div class="filter-backdrop" id="filterBackdrop" onclick="closeFilterPanel()"></div>
-
-        <!-- 筛选栏（默认隐藏，点击按钮后悬浮显示） -->
-        <div class="filter-bar" id="filterBar" style="display:none;">
-            <div class="filter-grid">
-                <div class="filter-item"><label>院校名称</label><input type="text" id="filterSchool" placeholder="搜索学校名..." oninput="onFilterChange()"></div>
-                <div class="filter-item"><label>专业名称</label><input type="text" id="filterMajor" placeholder="搜索专业名..." oninput="onFilterChange()"></div>
-                <div class="filter-item"><label>省份</label><select id="filterProvince" onchange="onFilterChange('province')"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>城市</label><select id="filterCity" onchange="onFilterChange('college_city')"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>选科要求</label><select id="filterSubjectRequire" onchange="onFilterChange('subject_require')"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>门类</label><select id="filterCategory" onchange="onFilterChange('category')"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>专业类</label><select id="filterMajorCategory" onchange="onFilterChange('major_category')"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>批次</label><select id="filterBatch" onchange="onFilterChange('batch')"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>批次备注</label><select id="filterBatchRemark" onchange="onFilterChange('batch_remark')"><option value="">全部</option></select></div>
-                <div class="filter-item"><label>院校层次</label><select id="filterCollegeLevel" onchange="onFilterChange('college_level')"><option value="">全部</option></select></div>
-            </div>
-            <div class="filter-actions">
-                <span class="result-count">筛选结果：<strong id="filteredCount">0</strong> 条</span>
-                <button class="reset-btn" onclick="resetFilter()">重置筛选</button>
-                <button class="confirm-btn" onclick="closeFilterPanel()">确定</button>
+            
+            <!-- 筛选栏（作为顶部工具栏的折叠部分） -->
+            <div class="filter-bar" id="filterBar">
+                <div class="filter-bar-inner">
+                    <div class="filter-grid">
+                        <div class="filter-item"><label>院校名称</label><input type="text" id="filterSchool" placeholder="搜索学校名..." oninput="onFilterChange()"></div>
+                        <div class="filter-item"><label>专业名称</label><input type="text" id="filterMajor" placeholder="搜索专业名..." oninput="onFilterChange()"></div>
+                        <div class="filter-item"><label>省份 <span class="filter-count" id="countProvince">0</span></label><select id="filterProvince" onchange="onFilterChange('province')"><option value="">全部</option></select></div>
+                        <div class="filter-item"><label>城市 <span class="filter-count" id="countCity">0</span></label><select id="filterCity" onchange="onFilterChange('college_city')"><option value="">全部</option></select></div>
+                        <div class="filter-item"><label>选科要求 <span class="filter-count" id="countSubjectRequire">0</span></label><select id="filterSubjectRequire" onchange="onFilterChange('subject_require')"><option value="">全部</option></select></div>
+                        <div class="filter-item"><label>门类 <span class="filter-count" id="countCategory">0</span></label><select id="filterCategory" onchange="onFilterChange('category')"><option value="">全部</option></select></div>
+                        <div class="filter-item"><label>专业类 <span class="filter-count" id="countMajorCategory">0</span></label><select id="filterMajorCategory" onchange="onFilterChange('major_category')"><option value="">全部</option></select></div>
+                        <div class="filter-item"><label>批次 <span class="filter-count" id="countBatch">0</span></label><select id="filterBatch" onchange="onFilterChange('batch')"><option value="">全部</option></select></div>
+                        <div class="filter-item"><label>批次备注 <span class="filter-count" id="countBatchRemark">0</span></label><select id="filterBatchRemark" onchange="onFilterChange('batch_remark')"><option value="">全部</option></select></div>
+                        <div class="filter-item"><label>特色标签 <span class="filter-count" id="countCollegeLevel">0</span></label><select id="filterCollegeLevel" onchange="onFilterChange('feature')"><option value="">全部</option></select></div>
+                    </div>
+                    <div class="filter-actions">
+                        <span class="result-count">筛选结果：<strong id="filteredCount">0</strong> 条</span>
+                        <button class="reset-btn" onclick="resetFilter()">重置筛选</button>
+                        <button class="confirm-btn" onclick="closeFilterPanel()">确定</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1951,12 +2206,16 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
     // ====================================================
     // 公共配置
     // ====================================================
     const API_BASE = `http://${window.location.hostname || 'localhost'}:3000/api`;
+
+    // 院校特色标签数据（院校名称 -> 特色标签数组）
+    let collegeFeaturesMap = {};
+    let allFeatureTags = []; // 所有特色标签列表（去重后）
 
 
     // ====================================================
@@ -1969,6 +2228,39 @@
         closeFilterPanel();
     }
 
+    // ====================================================
+    // 分数/位次切换
+    // ====================================================
+    function toggleScoreMode(mode) {
+        const scoreInput = document.getElementById('score');
+        const scoreModeInput = document.getElementById('scoreMode');
+        const buttons = document.querySelectorAll('.toggle-btn');
+        
+        // 更新按钮状态
+        buttons.forEach(btn => {
+            if (btn.dataset.mode === mode) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        
+        // 更新隐藏字段
+        scoreModeInput.value = mode;
+        
+        // 清空输入框
+        scoreInput.value = '';
+        
+        // 更新输入框
+        if (mode === 'score') {
+            scoreInput.placeholder = '请输入高考分数';
+            scoreInput.max = 750;
+        } else {
+            scoreInput.placeholder = '请输入高考位次';
+            scoreInput.removeAttribute('max');
+        }
+    }
+
     function showResultView() {
         document.getElementById('viewForm').style.display = 'none';
         document.getElementById('viewResult').style.display = 'block';
@@ -1979,14 +2271,11 @@
     function toggleFilterPanel() {
         const filterBar = document.getElementById('filterBar');
         const filterBtn = document.getElementById('filterToggleBtn');
-        const backdrop = document.getElementById('filterBackdrop');
 
         if (!filterBar.classList.contains('active')) {
             // 显示筛选面板
-            backdrop.classList.add('active');
-            filterBar.style.display = 'block';
-            // 强制重绘以触发过渡动画
-            filterBar.offsetHeight;
+            filterBar.classList.add('active');
+            filterBtn.classList.add('active');
             filterBar.classList.add('active');
             filterBtn.classList.add('active');
         } else {
@@ -2001,6 +2290,19 @@
     document.addEventListener('DOMContentLoaded', async () => {
         // 初始化选科标签
         initSubjectTags();
+
+        // 加载院校特色标签数据
+        try {
+            const res = await fetch(`${API_BASE}/college-features`);
+            const json = await res.json();
+            if (json.success && json.data) {
+                collegeFeaturesMap = json.data;
+                allFeatureTags = json.allFeatures || [];
+                console.log(`已加载 ${Object.keys(collegeFeaturesMap).length} 所院校的特色标签，共 ${allFeatureTags.length} 种标签`);
+            }
+        } catch (err) {
+            console.warn('加载院校特色标签失败:', err.message);
+        }
     });
 
     // ====================================================
@@ -2198,9 +2500,20 @@
         const score=document.getElementById('score').value;
         const subjectCombination=document.getElementById('subjectCombination').value;
         const region=document.getElementById('region').value;
+        const scoreMode=document.getElementById('scoreMode').value; // 获取当前模式
+        
         if(!region){document.getElementById('regionInput').focus();showToast('请选择有效的地区省份！','warning');return;}
         if(!score||!subjectCombination){if(!subjectCombination)document.getElementById('subjectError').style.display='block';showToast('请填写所有必填项！','warning');return;}
-        if(score<0||score>750){showToast('分数必须在0-750之间！','warning');return;}
+        
+        // 根据模式进行不同的验证
+        const scoreValue = parseInt(score);
+        if (scoreMode === 'score') {
+            // 分数模式：验证0-750
+            if(scoreValue<0||scoreValue>750){showToast('分数必须在0-750之间！','warning');return;}
+        } else {
+            // 位次模式：验证1-500000
+            if(scoreValue<1||scoreValue>500000){showToast('位次必须在1-500000之间！','warning');return;}
+        }
 
         document.getElementById('loading').style.display='block';
         setTimeout(async ()=>{
@@ -2212,9 +2525,71 @@
     async function doQueryAndShowResult(region, score, subjectCombination) {
         // 填写信息栏
         document.getElementById('infoRegion').textContent = region;
-        document.getElementById('infoScore').textContent = score;
         document.getElementById('infoSubject').textContent = subjectCombination;
 
+        // 获取当前模式（分数/位次）
+        const scoreMode = document.getElementById('scoreMode').value;
+        let userScore = parseInt(score) || 0;
+        let userRank = null;
+
+        // 如果是分数模式，先查询位次
+        if (scoreMode === 'score') {
+            document.getElementById('infoScore').textContent = score + '分';
+            document.getElementById('infoRank').textContent = '-';
+            
+            try {
+                // 调用API查询位次
+                const rankResp = await fetch(`${API_BASE}/get-rank-by-score`, {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({score: userScore, subjectCombination, region})
+                });
+                const rankResult = await rankResp.json();
+                
+                if (rankResult.success && rankResult.data) {
+                    userRank = rankResult.data.rank;
+                    window.currentUserRank = userRank; // 设置全局用户位次
+                    console.log(`分数${userScore}对应位次: ${userRank}`);
+                    // 在信息栏显示位次
+                    document.getElementById('infoRank').textContent = userRank;
+                } else {
+                    console.warn('未查询到位次数据:', rankResult.error);
+                    // 如果查询位次失败，仍然继续用分数查询
+                }
+            } catch (err) {
+                console.error('查询位次失败:', err);
+                // 继续用分数查询
+            }
+        } else {
+            // 位次模式，查询对应的分数用于显示
+            userRank = userScore;
+            window.currentUserRank = userRank; // 设置全局用户位次
+            document.getElementById('infoRank').textContent = userRank;
+            document.getElementById('infoScore').textContent = '-';
+            
+            try {
+                // 调用API查询分数
+                const scoreResp = await fetch(`${API_BASE}/get-score-by-rank`, {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({rank: userRank, subjectCombination, region})
+                });
+                const scoreResult = await scoreResp.json();
+                
+                if (scoreResult.success && scoreResult.data) {
+                    const queryScore = scoreResult.data.score;
+                    console.log(`位次${userRank}对应分数: ${queryScore}`);
+                    // 在信息栏显示分数
+                    document.getElementById('infoScore').textContent = queryScore + '分';
+                } else {
+                    console.warn('未查询到分数数据:', scoreResult.error);
+                    // 如果查询分数失败，分数显示为-
+                }
+            } catch (err) {
+                console.error('查询分数失败:', err);
+                // 分数显示为-
+            }
+        }
 
         // 切换到结果视图，先显示加载中
         showResultView();
@@ -2226,17 +2601,27 @@
             const resp = await fetch(`${API_BASE}/recommend-from-db`, {
                 method: 'POST',
                 headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({score:Number(score), subjectCombination, region})
+                body: JSON.stringify({
+                    score: userScore,
+                    rank: userRank,
+                    scoreMode: scoreMode,
+                    subjectCombination, 
+                    region
+                })
             });
             const result = await resp.json();
             if(!result.success) throw new Error(result.error||'接口返回失败');
 
-            const userScore = parseInt(score) || 0;
-            allData = (result.data || []).filter(r => {
-                // 只显示专业最低分小于或等于用户分数的专业
-                const minScore = r.min_score != null ? parseInt(r.min_score) : null;
-                return minScore != null && minScore <= userScore;
-            });
+            allData = result.data || [];
+            
+            // 如果是分数模式，仍然需要按分数过滤
+            if (scoreMode === 'score') {
+                allData = allData.filter(r => {
+                    const minScore = r.min_score != null ? parseInt(r.min_score) : null;
+                    return minScore != null && minScore <= userScore;
+                });
+            }
+            
             document.getElementById('infoTotal').textContent = new Set(allData.map(r=>r.name)).size;
             document.getElementById('infoMajorTotal').textContent = new Set(allData.map(r=>r.major)).size; // 专业名称去重
 
@@ -2247,16 +2632,17 @@
                 return;
             }
 
-            // 重置筛选下拉（清空旧数据）
-            ['filterProvince','filterCity','filterCategory','filterMajorCategory','filterBatch','filterBatchRemark','filterCollegeLevel','filterSubjectRequire'].forEach(id=>{
-                const el=document.getElementById(id);
-                el.innerHTML='<option value="">全部</option>';
+            // 重置筛选框（清空旧数据）
+            const filterIds = ['filterProvince', 'filterCity', 'filterCategory', 'filterMajorCategory', 'filterBatch', 'filterBatchRemark', 'filterCollegeLevel', 'filterSubjectRequire'];
+            filterIds.forEach(id => {
+                document.getElementById(id).value = '';
             });
             document.getElementById('filterSchool').value='';
             document.getElementById('filterMajor').value='';
             currentPage=1; pageSize=10;
-            document.getElementById('pageSizeSelect').value='10';
 
+            // 先加载专业推荐顺序，再初始化筛选选项
+            await loadMajorOrder();
             initFilterOptions();
             filteredData=[...allData];
             document.getElementById('filteredCount').textContent=filteredData.length;
@@ -2292,55 +2678,111 @@
     // ====================================================
     // 结果页：数据、筛选、渲染
     // ====================================================
-    let allData=[], filteredData=[];
+    let allData=[], filteredData=[], majorOrderMap={}; // major_category -> sort_order
+    let topMajors=new Set(); // 前85个推荐专业类
     let currentPage=1, pageSize=3, totalPages=1;
 
+    // 获取专业推荐顺序
+    async function loadMajorOrder() {
+        try {
+            const resp = await fetch(`${API_BASE}/major-recommend-order`);
+            const result = await resp.json();
+            if (result.success && result.data) {
+                result.data.forEach(item => {
+                    majorOrderMap[item.major_category] = item.sort_order;
+                    // 标记前85个专业类
+                    if (item.sort_order <= 85) {
+                        topMajors.add(item.major_category);
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('获取专业推荐顺序失败，使用默认排序');
+        }
+    }
+
     function initFilterOptions() {
-        const pSel=document.getElementById('filterProvince');
-        const cSel=document.getElementById('filterCity');
-        const catSel=document.getElementById('filterCategory');
-        const mcSel=document.getElementById('filterMajorCategory');
-        const bSel=document.getElementById('filterBatch');
-        const brSel=document.getElementById('filterBatchRemark');
-        const lvSel=document.getElementById('filterCollegeLevel');
-        const sSel=document.getElementById('filterSubjectRequire');
+        const pOptions=[...new Set(allData.map(r=>r.province).filter(Boolean))].sort();
+        const cOptions=[...new Set(allData.map(r=>r.college_city).filter(Boolean))].sort();
+        // 门类和专业类按推荐顺序排序
+        const catOptions=[...new Set(allData.map(r=>r.category).filter(Boolean))].sort((a, b) => {
+            const orderA = Math.min(...allData.filter(d => d.category === a).map(d => majorOrderMap[d.major_category] || 999));
+            const orderB = Math.min(...allData.filter(d => d.category === b).map(d => majorOrderMap[d.major_category] || 999));
+            return orderA - orderB;
+        });
+        const mcOptions=[...new Set(allData.map(r=>r.major_category).filter(Boolean))].sort((a, b) => {
+            const aIsTest = a.includes('试验班');
+            const bIsTest = b.includes('试验班');
+            if (aIsTest && !bIsTest) return -1;
+            if (!aIsTest && bIsTest) return 1;
+            return (majorOrderMap[a] || 999) - (majorOrderMap[b] || 999);
+        });
+        const bOptions=[...new Set(allData.map(r=>r.batch).filter(Boolean))].sort();
+        const brOptions=[...new Set(allData.map(r=>r.batch_remark).filter(Boolean))].sort();
+        // 特色标签从当前查询结果中的院校名称动态获取
+        const featureSet = new Set();
+        allData.forEach(r => {
+            const features = collegeFeaturesMap[r.name] || [];
+            features.forEach(f => featureSet.add(f));
+        });
+        const fOptions = [...featureSet].sort((a, b) => {
+            const priority = ['985', '211', '双一流', '保研'];
+            const aIdx = priority.indexOf(a);
+            const bIdx = priority.indexOf(b);
+            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+            if (aIdx !== -1) return -1;
+            if (bIdx !== -1) return 1;
+            return a.localeCompare(b, 'zh-CN');
+        });
+        const sOptions=[...new Set(allData.map(r=>r.subject_require).filter(Boolean))].sort();
 
-        pSel.innerHTML='<option value="">全部</option>';
-        cSel.innerHTML='<option value="">全部</option>';
-        catSel.innerHTML='<option value="">全部</option>';
-        mcSel.innerHTML='<option value="">全部</option>';
-        bSel.innerHTML='<option value="">全部</option>';
-        brSel.innerHTML='<option value="">全部</option>';
-        lvSel.innerHTML='<option value="">全部</option>';
-        sSel.innerHTML='<option value="">全部</option>';
-
-        [...new Set(allData.map(r=>r.province).filter(Boolean))].sort().forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;pSel.appendChild(o);});
-        [...new Set(allData.map(r=>r.college_city).filter(Boolean))].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;cSel.appendChild(o);});
-        [...new Set(allData.map(r=>r.category).filter(Boolean))].sort().forEach(cat=>{const o=document.createElement('option');o.value=cat;o.textContent=cat;catSel.appendChild(o);});
-        [...new Set(allData.map(r=>r.major_category).filter(Boolean))].sort().forEach(mc=>{const o=document.createElement('option');o.value=mc;o.textContent=mc;mcSel.appendChild(o);});
-        [...new Set(allData.map(r=>r.batch).filter(Boolean))].sort().forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;bSel.appendChild(o);});
-        [...new Set(allData.map(r=>r.batch_remark).filter(Boolean))].sort().forEach(br=>{const o=document.createElement('option');o.value=br;o.textContent=br;brSel.appendChild(o);});
-        [...new Set(allData.map(r=>r.college_level).filter(Boolean))].sort().forEach(lv=>{const o=document.createElement('option');o.value=lv;o.textContent=lv;lvSel.appendChild(o);});
-        [...new Set(allData.map(r=>r.subject_require).filter(Boolean))].sort().forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sSel.appendChild(o);});
-
-        // 同步初始化快捷筛选下拉框
-        const quickFieldMap = {
-            province: 'quickFilterProvince',
-            college_city: 'quickFilterCity',
-            major_category: 'quickFilterMajorCategory',
-            batch_remark: 'quickFilterBatchRemark'
-        };
-        for (const [field, selectId] of Object.entries(quickFieldMap)) {
-            const sel = document.getElementById(selectId);
-            if (!sel) continue;
-            const options = [...new Set(allData.map(r => r[field]).filter(Boolean))].sort();
-            sel.innerHTML = '<option value="">' + (field === 'province' ? '省份' : field === 'college_city' ? '城市' : field === 'major_category' ? '专业类' : '批次备注') + '</option>';
-            options.forEach(opt => {
+        const fillSelect = (id, opts) => {
+            const sel = document.getElementById(id);
+            const currentVal = sel.value;
+            sel.innerHTML = '<option value="">全部</option>';
+            opts.forEach(opt => {
                 const o = document.createElement('option');
                 o.value = opt;
                 o.textContent = opt;
                 sel.appendChild(o);
             });
+            if (currentVal && opts.includes(currentVal)) {
+                sel.value = currentVal;
+            }
+        };
+        fillSelect('filterProvince', pOptions);
+        fillSelect('filterCity', cOptions);
+        fillSelect('filterCategory', catOptions);
+        fillSelect('filterMajorCategory', mcOptions);
+        fillSelect('filterBatch', bOptions);
+        fillSelect('filterBatchRemark', brOptions);
+        fillSelect('filterCollegeLevel', fOptions);
+        fillSelect('filterSubjectRequire', sOptions);
+
+        // 更新选项数量显示
+        updateFilterOptionCounts();
+    }
+
+    // 更新筛选选项数量显示
+    function updateFilterOptionCounts() {
+        const counts = {
+            countProvince: 'filterProvince',
+            countCity: 'filterCity',
+            countCategory: 'filterCategory',
+            countMajorCategory: 'filterMajorCategory',
+            countBatch: 'filterBatch',
+            countBatchRemark: 'filterBatchRemark',
+            countCollegeLevel: 'filterCollegeLevel',
+            countSubjectRequire: 'filterSubjectRequire'
+        };
+
+        for (const [countId, filterId] of Object.entries(counts)) {
+            const sel = document.getElementById(filterId);
+            const countEl = document.getElementById(countId);
+            if (sel && countEl) {
+                // 统计非"全部"选项的数量
+                countEl.textContent = sel.options.length - 1;
+            }
         }
     }
 
@@ -2353,7 +2795,7 @@
             major_category: 'filterMajorCategory',
             batch: 'filterBatch',
             batch_remark: 'filterBatchRemark',
-            college_level: 'filterCollegeLevel',
+            feature: 'filterCollegeLevel', // 特色标签字段改为feature
             subject_require: 'filterSubjectRequire'
         };
 
@@ -2361,7 +2803,46 @@
             if (field === excludeField) continue;
             const sel = document.getElementById(selectId);
             const currentVal = sel.value;
-            const options = [...new Set(filteredData.map(r => r[field]).filter(Boolean))].sort();
+            let options;
+
+            // 特色标签特殊处理：从filteredData中的院校名称获取对应的特色标签
+            if (field === 'feature') {
+                const featureSet = new Set();
+                filteredData.forEach(r => {
+                    const features = collegeFeaturesMap[r.name] || [];
+                    features.forEach(f => featureSet.add(f));
+                });
+                options = [...featureSet].sort((a, b) => {
+                    const priority = ['985', '211', '双一流', '保研'];
+                    const aIdx = priority.indexOf(a);
+                    const bIdx = priority.indexOf(b);
+                    if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                    if (aIdx !== -1) return -1;
+                    if (bIdx !== -1) return 1;
+                    return a.localeCompare(b, 'zh-CN');
+                });
+            } else {
+                options = [...new Set(filteredData.map(r => r[field]).filter(Boolean))];
+                // 门类和专业类按推荐顺序排序
+                if (field === 'major_category') {
+                    options.sort((a, b) => {
+                        const aIsTest = a.includes('试验班');
+                        const bIsTest = b.includes('试验班');
+                        if (aIsTest && !bIsTest) return -1;
+                        if (!aIsTest && bIsTest) return 1;
+                        return (majorOrderMap[a] || 999) - (majorOrderMap[b] || 999);
+                    });
+                } else if (field === 'category') {
+                    options.sort((a, b) => {
+                        const orderA = Math.min(...filteredData.filter(d => d.category === a).map(d => majorOrderMap[d.major_category] || 999));
+                        const orderB = Math.min(...filteredData.filter(d => d.category === b).map(d => majorOrderMap[d.major_category] || 999));
+                        return orderA - orderB;
+                    });
+                } else {
+                    options.sort();
+                }
+            }
+
             sel.innerHTML = '<option value="">全部</option>';
             options.forEach(opt => {
                 const o = document.createElement('option');
@@ -2374,71 +2855,19 @@
             }
         }
 
-        // 同步更新快捷筛选下拉框
-        const quickFieldMap = {
-            province: 'quickFilterProvince',
-            college_city: 'quickFilterCity',
-            major_category: 'quickFilterMajorCategory',
-            batch_remark: 'quickFilterBatchRemark'
-        };
-        for (const [field, selectId] of Object.entries(quickFieldMap)) {
-            if (field === excludeField) continue;
-            const sel = document.getElementById(selectId);
-            if (!sel) continue;
-            const currentVal = sel.value;
-            const options = [...new Set(filteredData.map(r => r[field]).filter(Boolean))].sort();
-            sel.innerHTML = '<option value="">' + (field === 'province' ? '省份' : field === 'college_city' ? '城市' : field === 'major_category' ? '专业类' : '批次备注') + '</option>';
-            options.forEach(opt => {
-                const o = document.createElement('option');
-                o.value = opt;
-                o.textContent = opt;
-                sel.appendChild(o);
-            });
-            if (currentVal && options.includes(currentVal)) {
-                sel.value = currentVal;
-            }
-        }
-    }
-
-    // 快捷筛选联动：同步到筛选面板并触发筛选
-    function syncQuickFilter(field) {
-        const quickIdMap = {
-            province: 'quickFilterProvince',
-            college_city: 'quickFilterCity',
-            major_category: 'quickFilterMajorCategory',
-            batch_remark: 'quickFilterBatchRemark'
-        };
-        const panelIdMap = {
-            province: 'filterProvince',
-            college_city: 'filterCity',
-            major_category: 'filterMajorCategory',
-            batch_remark: 'filterBatchRemark'
-        };
-        const quickSel = document.getElementById(quickIdMap[field]);
-        const panelSel = document.getElementById(panelIdMap[field]);
-        if (quickSel && panelSel) {
-            panelSel.value = quickSel.value;
-        }
-        applyFilter(field);
+        // 更新选项数量显示
+        updateFilterOptionCounts();
     }
 
     function resetFilter(){
         document.getElementById('filterSchool').value='';
         document.getElementById('filterMajor').value='';
-        document.getElementById('filterProvince').value='';
-        document.getElementById('filterCity').value='';
-        document.getElementById('filterCategory').value='';
-        document.getElementById('filterMajorCategory').value='';
-        document.getElementById('filterBatch').value='';
-        document.getElementById('filterBatchRemark').value='';
-        document.getElementById('filterCollegeLevel').value='';
-        document.getElementById('filterSubjectRequire').value='';
-        // 同时重置快捷筛选
-        document.getElementById('quickFilterProvince').value='';
-        document.getElementById('quickFilterCity').value='';
-        document.getElementById('quickFilterMajorCategory').value='';
-        document.getElementById('quickFilterBatchRemark').value='';
+        const filterIds = ['filterProvince', 'filterCity', 'filterCategory', 'filterMajorCategory', 'filterBatch', 'filterBatchRemark', 'filterCollegeLevel', 'filterSubjectRequire'];
+        filterIds.forEach(id => {
+            document.getElementById(id).value = '';
+        });
         initFilterOptions();
+        updateFilterDisplay();
         applyFilter();
     }
 
@@ -2446,22 +2875,12 @@
         // 关闭筛选面板
         const filterBar = document.getElementById('filterBar');
         const filterBtn = document.getElementById('filterToggleBtn');
-        const backdrop = document.getElementById('filterBackdrop');
 
         if(filterBar){
             filterBar.classList.remove('active');
-            // 等待过渡动画完成后再隐藏
-            setTimeout(() => {
-                if (!filterBar.classList.contains('active')) {
-                    filterBar.style.display = 'none';
-                }
-            }, 300);
         }
         if(filterBtn){
             filterBtn.classList.remove('active');
-        }
-        if(backdrop){
-            backdrop.classList.remove('active');
         }
         
         // 更新统计数据为筛选后的实际数据
@@ -2480,7 +2899,7 @@
         const majorCategory=document.getElementById('filterMajorCategory').value;
         const batch=document.getElementById('filterBatch').value;
         const batchRemark=document.getElementById('filterBatchRemark').value;
-        const cl=document.getElementById('filterCollegeLevel').value;
+        const featureTag=document.getElementById('filterCollegeLevel').value; // 特色标签
         const subj=document.getElementById('filterSubjectRequire').value;
         filteredData=allData.filter(r=>{
             if(school&&!(r.name||'').toLowerCase().includes(school))return false;
@@ -2491,18 +2910,16 @@
             if(majorCategory&&r.major_category!==majorCategory)return false;
             if(batch&&r.batch!==batch)return false;
             if(batchRemark&&r.batch_remark!==batchRemark)return false;
-            if(cl&&r.college_level!==cl)return false;
+            // 特色标签筛选：检查院校是否包含选中的特色标签
+            if(featureTag){
+                const schoolFeatures = collegeFeaturesMap[r.name] || [];
+                if(!schoolFeatures.includes(featureTag)) return false;
+            }
             if(subj&&r.subject_require!==subj)return false;
             return true;
         });
         document.getElementById('filteredCount').textContent=filteredData.length;
         currentPage=1;renderTable(filteredData);
-
-        // 同步快捷筛选显示
-        document.getElementById('quickFilterProvince').value = province;
-        document.getElementById('quickFilterCity').value = city;
-        document.getElementById('quickFilterMajorCategory').value = majorCategory;
-        document.getElementById('quickFilterBatchRemark').value = batchRemark;
 
         // 联动更新其他下拉框选项
         if (excludeField) {
@@ -2512,10 +2929,37 @@
 
     // 各下拉框联动筛选触发函数
     function onFilterChange(field) {
+        updateFilterDisplay();
         applyFilter(field);
     }
+    
+    // 更新筛选条件显示
+    function updateFilterDisplay() {
+        const filters = [
+            { id: 'filterProvince', displayId: 'displayProvince', valueId: 'displayProvinceValue' },
+            { id: 'filterCity', displayId: 'displayCity', valueId: 'displayCityValue' },
+            { id: 'filterMajorCategory', displayId: 'displayMajorCategory', valueId: 'displayMajorCategoryValue' },
+            { id: 'filterBatchRemark', displayId: 'displayBatchRemark', valueId: 'displayBatchRemarkValue' }
+        ];
+        
+        filters.forEach(item => {
+            const select = document.getElementById(item.id);
+            const displayEl = document.getElementById(item.displayId);
+            const valueEl = document.getElementById(item.valueId);
+            
+            if (select && displayEl && valueEl) {
+                const value = select.value;
+                if (value && value !== '') {
+                    valueEl.textContent = value;
+                    displayEl.style.display = 'inline-flex';
+                } else {
+                    displayEl.style.display = 'none';
+                }
+            }
+        });
+    }
 
-    function changePageSize(){pageSize=parseInt(document.getElementById('pageSizeSelect').value);currentPage=1;renderTable(filteredData);}
+    // 分页相关变量
     function goPage(p){if(p<1||p>totalPages)return;currentPage=p;renderTable(filteredData);}
 
     function escHtml(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -2530,7 +2974,17 @@
         data.forEach(row=>{const key=(row.school_code||'')+'|'+(row.name||'');if(!schoolMap.has(key))schoolMap.set(key,[]);schoolMap.get(key).push(row);});
 
         function getLvPrio(lv){if(!lv)return 99;if(lv==='985'||lv.includes('985'))return 1;if(lv==='211'||lv.includes('211'))return 2;if(lv.includes('双一流')||lv.includes('一流'))return 3;if(lv.includes('公办'))return 4;if(lv.includes('民办'))return 5;return 99;}
-        const groups=[...schoolMap.values()].sort((ga,gb)=>getLvPrio(ga[0].college_level||'')-getLvPrio(gb[0].college_level||''));
+        // 排序：先按特色标签数量降序，再按院校层次优先级
+        const groups=[...schoolMap.values()].sort((ga,gb)=>{
+            const schoolNameA = ga[0].name || '';
+            const schoolNameB = gb[0].name || '';
+            const featureCountA = (collegeFeaturesMap[schoolNameA] || []).length;
+            const featureCountB = (collegeFeaturesMap[schoolNameB] || []).length;
+            // 先按特色标签数量降序
+            if(featureCountA !== featureCountB) return featureCountB - featureCountA;
+            // 数量相同，按院校层次优先级
+            return getLvPrio(ga[0].college_level||'') - getLvPrio(gb[0].college_level||'');
+        });
 
         const ps=pageSize===0?groups.length:pageSize;
         totalPages=pageSize===0?1:Math.ceil(groups.length/ps);
@@ -2541,21 +2995,71 @@
         let html='';
         pageGroups.forEach(majors=>{
             const school=majors[0];
-            const lv=school.college_level||'';
-            let lvClass='';
-            if(lv.includes('985'))lvClass='level-985';
-            else if(lv.includes('双一流')||lv.includes('一流'))lvClass='level-syl';
-            else if(lv.includes('211'))lvClass='level-211';
-            const lvTag=lv?`<span class="college-level-tag ${lvClass}">${escHtml(lv)}</span>`:'';
-
             // 检测是否为移动端
             const isMobileHeader = window.innerWidth <= 768;
 
             // 获取该院校所有符合条件的专业名称（全部显示，自动换行）
-            const majorNamesHtml = majors.map(m => `<span class="major-tag" style="display:inline-block;background:rgba(0,212,255,0.15);color:var(--accent-cyan);padding:2px 8px;border-radius:4px;font-size:0.8rem;margin-right:6px;margin-bottom:4px;border:1px solid rgba(0,212,255,0.3);white-space:nowrap;vertical-align:middle;">${escHtml(m.major || '-')}</span>`).join('');
+            // 先排序：试验班优先，然后按推荐顺序
+            const sortedMajorNames = [...majors].sort((a, b) => {
+                const aIsTest = (a.major_category || '').includes('试验班');
+                const bIsTest = (b.major_category || '').includes('试验班');
+                if (aIsTest && !bIsTest) return -1;
+                if (!aIsTest && bIsTest) return 1;
+                return (majorOrderMap[a.major_category] || 999) - (majorOrderMap[b.major_category] || 999);
+            });
+            // 专业名称标签颜色：试验班=橙色，前85个专业类=红色，其他=蓝色
+            const majorNamesHtml = sortedMajorNames.map(m => {
+                const isTestMajor = (m.major_category || '').includes('试验班');
+                const isTopMajor = topMajors.has(m.major_category);
+                let style;
+                if (isTestMajor) {
+                    // 试验班：高对比橙色 - 深橙文字+亮橙背景+粗边框
+                    style = 'display:inline-block;background:linear-gradient(135deg, #ff9800 0%, #f57c00 100%);color:#fff;padding:4px 10px;border-radius:6px;font-size:0.8rem;margin-right:6px;margin-bottom:6px;border:2px solid #e65100;white-space:nowrap;vertical-align:middle;font-weight:700;box-shadow:0 2px 4px rgba(230,81,0,0.3);';
+                } else if (isTopMajor) {
+                    // 前38个专业类：高对比红色 - 深红文字+亮红背景+粗边框
+                    style = 'display:inline-block;background:linear-gradient(135deg, #ff5252 0%, #d32f2f 100%);color:#fff;padding:4px 10px;border-radius:6px;font-size:0.8rem;margin-right:6px;margin-bottom:6px;border:2px solid #b71c1c;white-space:nowrap;vertical-align:middle;font-weight:700;box-shadow:0 2px 4px rgba(183,28,28,0.3);';
+                } else {
+                    // 其他：高对比蓝色 - 深蓝文字+亮蓝背景+粗边框
+                    style = 'display:inline-block;background:linear-gradient(135deg, #42a5f5 0%, #1976d2 100%);color:#fff;padding:4px 10px;border-radius:6px;font-size:0.8rem;margin-right:6px;margin-bottom:6px;border:2px solid #0d47a1;white-space:nowrap;vertical-align:middle;font-weight:600;box-shadow:0 2px 4px rgba(13,71,161,0.2);';
+                }
+                // 如果 major_remark 包含"中外"，在专业名称后面添加"（中外合作）"
+                const majorName = m.major || '-';
+                const majorRemark = m.major_remark || '';
+                const displayMajorName = majorRemark.includes('中外') ? majorName + '（中外合作）' : majorName;
+                return `<span class="major-tag" style="${style}">${escHtml(displayMajorName)}</span>`;
+            }).join('');
 
             // 专业数量标签
             const majorCountTag = `<span class="school-major-count" style="margin-left:12px;flex-shrink:0;">共 <strong>${majors.length}</strong> 个专业</span>`;
+
+            // 获取院校特色标签
+            const features = collegeFeaturesMap[school.name] || [];
+            const featuresHtml = features.length > 0 ? features.map(f => {
+                // 根据标签类型设置不同颜色
+                let bgColor, borderColor, textColor;
+                if (f === '985') {
+                    bgColor = 'rgba(255,180,0,0.15)';
+                    borderColor = 'rgba(255,180,0,0.4)';
+                    textColor = '#ffcc44';
+                } else if (f === '211') {
+                    bgColor = 'rgba(59,159,232,0.15)';
+                    borderColor = 'rgba(59,159,232,0.4)';
+                    textColor = '#7dc8f0';
+                } else if (f === '双一流') {
+                    bgColor = 'rgba(200,100,255,0.15)';
+                    borderColor = 'rgba(200,100,255,0.4)';
+                    textColor = '#cc88ff';
+                } else if (f === '保研') {
+                    bgColor = 'rgba(16,185,129,0.15)';
+                    borderColor = 'rgba(16,185,129,0.4)';
+                    textColor = '#5eead4';
+                } else {
+                    bgColor = 'rgba(251,146,60,0.12)';
+                    borderColor = 'rgba(251,146,60,0.3)';
+                    textColor = '#fdba74';
+                }
+                return `<span style="display:inline-block;font-size:0.7rem;padding:2px 8px;border-radius:5px;background:${bgColor};border:1px solid ${borderColor};color:${textColor};white-space:nowrap;font-weight:600;margin-left:6px;">${escHtml(f)}</span>`;
+            }).join('') : '';
 
             html+=`
             <div class="school-card collapsed">
@@ -2563,9 +3067,8 @@
                     <div class="school-header-left">
                         <div class="school-name-row">
                             <div class="school-name-wrapper">
-                                ${lvTag}
                                 <a class="school-link" onclick="event.stopPropagation();window.open('school-detail.html?schoolName=${encodeURIComponent(school.name)}','_blank')" href="#">${escHtml(school.name||'-')}</a>
-                                ${majorCountTag}
+                                ${majorCountTag}${featuresHtml}
                             </div>
                         </div>
                     </div>
@@ -2616,12 +3119,27 @@
                     if(groupMinRank!=null) stats.push(`位次${Number(groupMinRank).toLocaleString()}`);
                     const statsText = stats.join(' · ');
 
-                    html+=`<button class="group-btn${idx===0?' active':''}" onclick="showGroupModal('${escHtml(school.school_code||'')}', '${escHtml(school.name||'')}', '${escHtml(gk)}', '${escHtml(label)}')" data-group="${escHtml(gk)}" style="display:inline-flex;align-items:center;gap:6px;background:rgba(59,159,232,0.15);border:1px solid rgba(59,159,232,0.3);border-radius:6px;padding:4px 10px;font-size:0.8rem;color:var(--accent-cyan);min-width:180px;cursor:pointer;transition:all 0.2s;"><span style="font-weight:600;min-width:60px;">${escHtml(label)}</span><span style="color:var(--text-secondary);font-size:0.75rem;">${statsText}</span></button>`;
+                    // 判断是否高亮：专业组最低位次 >= 用户位次
+                    const isHighlight = window.currentUserRank && groupMinRank && parseInt(groupMinRank) >= window.currentUserRank;
+                    const highlightStyle = isHighlight ? 
+                        'background:linear-gradient(135deg, rgba(16,185,129,0.2), rgba(59,159,232,0.2));border:2px solid rgba(16,185,129,0.6);box-shadow:0 2px 8px rgba(16,185,129,0.3);' : 
+                        'background:rgba(59,159,232,0.15);border:1px solid rgba(59,159,232,0.3);';
+
+                    html+=`<button class="group-btn${idx===0?' active':''}" onclick="showGroupModal('${escHtml(school.school_code||'')}', '${escHtml(school.name||'')}', '${escHtml(gk)}', '${escHtml(label)}')" data-group="${escHtml(gk)}" style="position:relative;display:inline-flex;align-items:center;gap:6px;${highlightStyle}border-radius:6px;padding:4px 10px;font-size:0.8rem;color:var(--accent-cyan);min-width:180px;cursor:pointer;transition:all 0.2s;"><span style="font-weight:600;min-width:60px;">${escHtml(label)}</span><span style="color:var(--text-secondary);font-size:0.75rem;">${statsText}</span></button>`;
                 });
                 html+=`</div>`;
             }
 
             // 直接显示所有符合条件的专业（不按组分开）
+            // 先对专业排序：试验班优先，然后按推荐顺序
+            const sortedMajors = [...majors].sort((a, b) => {
+                const aIsTest = (a.major_category || '').includes('试验班');
+                const bIsTest = (b.major_category || '').includes('试验班');
+                if (aIsTest && !bIsTest) return -1;
+                if (!aIsTest && bIsTest) return 1;
+                return (majorOrderMap[a.major_category] || 999) - (majorOrderMap[b.major_category] || 999);
+            });
+
             const isMobile = window.innerWidth <= 768;
             if (isMobile) {
                 html+=`<div class="major-list-header"><span>专业名称</span><span>编号</span><span>最低分</span><span>概率</span></div>`;
@@ -2629,7 +3147,7 @@
                 html+=`<div class="major-list-header"><span>专业名称</span><span>专业编号</span><span>专业门类</span><span>最低分</span><span>最低位次</span><span>选科要求</span><span>招生计划</span><span>录取概率</span></div>`;
             }
             const isMobileView = window.innerWidth <= 768;
-            majors.forEach(row=>{
+            sortedMajors.forEach(row=>{
                 const sc=row.subject_require==='不限'?'unlimited':'';
                 const pc=row.adjustedType==='冲'?'rush':(row.adjustedType==='保'?'safe':'stable');
                 // 限制备注最多显示10个字
@@ -2638,12 +3156,16 @@
                 const remark=remarkText?`<span class="major-remark-text" title="${escHtml(remarkText)}">${escHtml(displayRemark)}</span>`:'';
                 const gk = row.major_group_code != null ? String(row.major_group_code) : '__nogroup__';
                 
+                // 如果 major_remark 包含"中外"，在专业名称后面添加"（中外合作）"
+                const majorName = row.major || '-';
+                const displayMajorName = remarkText.includes('中外') ? majorName + '（中外合作）' : majorName;
+                
                 if (isMobileView) {
                     // 移动端只显示4列：专业名称、专业编号、最低分、录取概率
                     html+=`
                     <div class="major-row" data-group-code="${escHtml(gk)}">
                         <div class="major-row-left">
-                            <span class="major-name-result" data-major="${(row.major||'').replace(/"/g,'&quot;')}">${escHtml(row.major||'-')}</span>
+                            <span class="major-name-result" data-major="${(row.major||'').replace(/"/g,'&quot;')}">${escHtml(displayMajorName)}</span>
                             ${remark}
                         </div>
                         <div class="major-row-cell"><span style="color:var(--text-secondary);font-size:0.78rem;">${escHtml(row.major_code||'-')}</span></div>
@@ -2655,11 +3177,11 @@
                     html+=`
                     <div class="major-row" data-group-code="${escHtml(gk)}">
                         <div class="major-row-left">
-                            <span class="major-name-result" data-major="${(row.major||'').replace(/"/g,'&quot;')}">${escHtml(row.major||'-')}</span>
+                            <span class="major-name-result" data-major="${(row.major||'').replace(/"/g,'&quot;')}">${escHtml(displayMajorName)}</span>
                             ${remark}
                         </div>
                         <div class="major-row-cell"><span style="color:var(--text-secondary);font-size:0.78rem;">${escHtml(row.major_code||'-')}</span></div>
-                        <div class="major-row-cell"><span class="major-category-text">${escHtml(row.major_category||'-')}</span></div>
+                        <div class="major-row-cell"><span class="major-category-text${topMajors.has(row.major_category)?' top-major':''}">${escHtml(row.major_category||'-')}</span></div>
                         <div class="major-row-cell"><span class="score-val">${row.min_score!=null?row.min_score:'-'}</span></div>
                         <div class="major-row-cell"><span class="rank-val">${row.rank!=null?Number(row.rank).toLocaleString():'-'}</span></div>
                         <div class="major-row-cell"><span class="subject-badge ${sc}">${escHtml(row.subject_require||'-')}</span></div>
@@ -2819,16 +3341,31 @@
             title.innerHTML = `${schoolName} - ${groupLabel} <span style="font-size:0.85rem;color:var(--text-secondary);font-weight:400;margin-left:12px;">${stats.join(' · ')}</span>`;
             
             // 渲染专业列表
+            // 先排序：试验班优先，然后按推荐顺序
+            const sortedModalMajors = [...majors].sort((a, b) => {
+                const aIsTest = (a.major_category || '').includes('试验班');
+                const bIsTest = (b.major_category || '').includes('试验班');
+                if (aIsTest && !bIsTest) return -1;
+                if (!aIsTest && bIsTest) return 1;
+                return (majorOrderMap[a.major_category] || 999) - (majorOrderMap[b.major_category] || 999);
+            });
+
             let html = '<div class="modal-major-list">';
             html += '<div class="modal-major-header"><span>专业名称</span><span>专业编号</span><span>专业门类</span><span>最低分</span><span>最低位次</span><span>选科要求</span><span>招生计划</span></div>';
-            
-            majors.forEach(row => {
+
+            sortedModalMajors.forEach(row => {
                 const sc = row.subject_require === '不限' ? 'unlimited' : '';
+                
+                // 判断该专业是否高亮：专业最低位次 >= 用户位次
+                const majorRank = row.rank != null ? parseInt(row.rank) : null;
+                const isHighlight = window.currentUserRank && majorRank && majorRank >= window.currentUserRank;
+                const rowClass = isHighlight ? 'modal-major-row within-score' : 'modal-major-row';
+
                 html += `
-                <div class="modal-major-row">
+                <div class="${rowClass}">
                     <div class="modal-major-name">${escHtml(row.major || '-')}</div>
                     <div class="modal-major-cell">${escHtml(row.major_code || '-')}</div>
-                    <div class="modal-major-cell">${escHtml(row.major_category || '-')}</div>
+                    <div class="modal-major-cell${topMajors.has(row.major_category)?' top-major':''}">${escHtml(row.major_category || '-')}</div>
                     <div class="modal-major-cell"><span class="score-val">${row.min_score != null ? row.min_score : '-'}</span></div>
                     <div class="modal-major-cell">${row.rank != null ? Number(row.rank).toLocaleString() : '-'}</div>
                     <div class="modal-major-cell"><span class="subject-badge ${sc}">${escHtml(row.subject_require || '-')}</span></div>

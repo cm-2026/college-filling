@@ -282,13 +282,194 @@ app.delete('/api/recommendations', async (req, res) => {
   }
 });
 
+// 根据分数查询位次（cumulative_count）
+app.post('/api/get-rank-by-score', async (req, res) => {
+  try {
+    const { score, subjectCombination, region } = req.body;
+    
+    console.log('\n====== 查询位次 ======');
+    console.log('参数:', { score, subjectCombination, region });
+    
+    if (!score || !region) {
+      return res.status(400).json({ success: false, error: '缺少必要参数' });
+    }
+    
+    const userScore = parseInt(score);
+    const sourceProvince = region.trim();
+    
+    // 解析选科组合，确定科类
+    const subjects = subjectCombination ? subjectCombination.split(',').map(s => s.trim()).filter(s => s) : [];
+    
+    // 判断是否为3+3模式
+    const mode33Provinces = ['北京', '天津', '上海', '山东', '浙江', '海南'];
+    const is33Mode = mode33Provinces.includes(sourceProvince);
+    
+    // 确定subject_type
+    let subjectType;
+    if (is33Mode) {
+      subjectType = '综合';
+    } else {
+      // 3+1+2模式：根据必选科目确定科类
+      if (subjects.includes('物理')) {
+        subjectType = '物理';
+      } else if (subjects.includes('历史')) {
+        subjectType = '历史';
+      } else {
+        return res.status(400).json({ success: false, error: '无法确定科类，请检查选科组合' });
+      }
+    }
+    
+    console.log(`生源地: ${sourceProvince}, 科类: ${subjectType}, 分数: ${userScore}`);
+    
+    // 查询score_rank_table
+    // 1. 先查询精确匹配的分数
+    let query = `
+      SELECT cumulative_count, batch
+      FROM score_rank_table
+      WHERE province = ? AND subject_type = ? AND score = ?
+      ORDER BY batch
+      LIMIT 1
+    `;
+    
+    let [rows] = await pool.execute(query, [sourceProvince, subjectType, userScore]);
+    
+    // 如果没有精确匹配，查询最接近的分数（向下取整）
+    if (rows.length === 0) {
+      query = `
+        SELECT cumulative_count, batch, score
+        FROM score_rank_table
+        WHERE province = ? AND subject_type = ? AND score <= ?
+        ORDER BY score DESC
+        LIMIT 1
+      `;
+      [rows] = await pool.execute(query, [sourceProvince, subjectType, userScore]);
+    }
+    
+    if (rows.length === 0) {
+      return res.json({ 
+        success: false, 
+        error: '未找到对应的位次数据',
+        data: null
+      });
+    }
+    
+    const result = rows[0];
+    console.log(`查询到位次: ${result.cumulative_count}, 批次: ${result.batch}`);
+    
+    res.json({
+      success: true,
+      data: {
+        rank: result.cumulative_count,
+        batch: result.batch,
+        score: result.score || userScore,
+        subjectType: subjectType
+      }
+    });
+    
+  } catch (error) {
+    console.error('查询位次失败:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 根据位次查询分数
+app.post('/api/get-score-by-rank', async (req, res) => {
+  try {
+    const { rank, subjectCombination, region } = req.body;
+    
+    console.log('\n====== 查询分数 ======');
+    console.log('参数:', { rank, subjectCombination, region });
+    
+    if (!rank || !region) {
+      return res.status(400).json({ success: false, error: '缺少必要参数' });
+    }
+    
+    const userRank = parseInt(rank);
+    const sourceProvince = region.trim();
+    
+    // 解析选科组合，确定科类
+    const subjects = subjectCombination ? subjectCombination.split(',').map(s => s.trim()).filter(s => s) : [];
+    
+    // 判断是否为3+3模式
+    const mode33Provinces = ['北京', '天津', '上海', '山东', '浙江', '海南'];
+    const is33Mode = mode33Provinces.includes(sourceProvince);
+    
+    // 确定subject_type
+    let subjectType;
+    if (is33Mode) {
+      subjectType = '综合';
+    } else {
+      // 3+1+2模式：根据必选科目确定科类
+      if (subjects.includes('物理')) {
+        subjectType = '物理';
+      } else if (subjects.includes('历史')) {
+        subjectType = '历史';
+      } else {
+        return res.status(400).json({ success: false, error: '无法确定科类，请检查选科组合' });
+      }
+    }
+    
+    console.log(`生源地: ${sourceProvince}, 科类: ${subjectType}, 位次: ${userRank}`);
+    
+    // 查询score_rank_table
+    // 位次越小排名越高，cumulative_count越大排名越低
+    // 查询cumulative_count >= 用户位次的最接近的分数
+    let query = `
+      SELECT score, batch, cumulative_count
+      FROM score_rank_table
+      WHERE province = ? AND subject_type = ? AND cumulative_count >= ?
+      ORDER BY cumulative_count ASC
+      LIMIT 1
+    `;
+    
+    let [rows] = await pool.execute(query, [sourceProvince, subjectType, userRank]);
+    
+    // 如果没有结果，尝试查询位次小于用户位次的最接近分数
+    if (rows.length === 0) {
+      query = `
+        SELECT score, batch, cumulative_count
+        FROM score_rank_table
+        WHERE province = ? AND subject_type = ? AND cumulative_count <= ?
+        ORDER BY cumulative_count DESC
+        LIMIT 1
+      `;
+      [rows] = await pool.execute(query, [sourceProvince, subjectType, userRank]);
+    }
+    
+    if (rows.length === 0) {
+      return res.json({ 
+        success: false, 
+        error: '未找到对应的分数数据',
+        data: null
+      });
+    }
+    
+    const result = rows[0];
+    console.log(`查询到分数: ${result.score}, 批次: ${result.batch}, 实际位次: ${result.cumulative_count}`);
+    
+    res.json({
+      success: true,
+      data: {
+        score: result.score,
+        batch: result.batch,
+        actualRank: result.cumulative_count,
+        subjectType: subjectType
+      }
+    });
+    
+  } catch (error) {
+    console.error('查询分数失败:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // 从 admission_plan 表获取推荐院校
 app.post('/api/recommend-from-db', async (req, res) => {
   try {
-    const { score, subjectCombination, region, targetRegion, batchFilter, majorPreference, categoryFilter, majorCategoryFilter } = req.body;
+    const { score, rank, scoreMode, subjectCombination, region, targetRegion, batchFilter, majorPreference, categoryFilter, majorCategoryFilter } = req.body;
 
     console.log('\n====== 推荐请求 ======');
-    console.log('接收到参数:', JSON.stringify({ score, subjectCombination, region, targetRegion, batchFilter, majorPreference, categoryFilter, majorCategoryFilter }));
+    console.log('接收到参数:', JSON.stringify({ score, rank, scoreMode, subjectCombination, region, targetRegion, batchFilter, majorPreference, categoryFilter, majorCategoryFilter }));
 
     // ========== 查询逻辑 ==========
     // 3+1+2 模式（河南等）：
@@ -302,11 +483,10 @@ app.post('/api/recommend-from-db', async (req, res) => {
 
     // 生源地 → source_province
     const sourceProvince = (region || '河南').trim();
-    console.log(`📍 生源地: ${sourceProvince}, 用户分数: ${score}`);
-
+    
     // 解析选科组合：前端格式 "物理,化学,生物"（3+1+2: 3门；3+3: 3门）
     const subjects = subjectCombination.split(',').map(s => s.trim()).filter(s => s);
-
+    
     // 判断是否为3+3模式
     const mode33Provinces = ['北京', '天津', '上海', '山东', '浙江', '海南'];
     const is33Mode = mode33Provinces.includes(sourceProvince);
@@ -314,6 +494,143 @@ app.post('/api/recommend-from-db', async (req, res) => {
     // 判断是否为传统文理分科模式
     const traditionalProvinces = ['西藏', '新疆'];
     const isTraditionalMode = traditionalProvinces.includes(sourceProvince);
+    
+    // 确定查询条件（分数范围或位次范围）
+    let whereCondition, orderCondition, rangeParams;
+    
+    // ========== 新逻辑：从score_rank_table获取位次 ==========
+    // 根据选科确定subject_type（用于查询score_rank_table）
+    let subjectTypeForRank;
+    if (is33Mode) {
+      subjectTypeForRank = '综合';
+    } else {
+      // 3+1+2模式：第一门是必选（物理/历史）
+      subjectTypeForRank = subjects[0] || '物理';
+    }
+    
+    // 从score_rank_table查询位次
+    let userRank = null;
+    let rankMinus10 = null;
+    
+    if (scoreMode === 'rank' && rank) {
+      // 位次模式：根据位次查询最接近的分数
+      const [rankRows] = await pool.execute(`
+        SELECT score, cumulative_count
+        FROM score_rank_table
+        WHERE province = ? AND subject_type = ?
+        ORDER BY ABS(cumulative_count - ?)
+        LIMIT 1
+      `, [sourceProvince, subjectTypeForRank, rank]);
+      
+      if (rankRows.length > 0) {
+        const nearestScore = rankRows[0].score;
+        console.log(`📊 位次模式：用户位次${rank}对应最接近分数${nearestScore}`);
+        
+        // 查询该分数-10分对应的位次
+        const [scoreRows] = await pool.execute(`
+          SELECT cumulative_count
+          FROM score_rank_table
+          WHERE province = ? AND subject_type = ? AND score = ?
+          LIMIT 1
+        `, [sourceProvince, subjectTypeForRank, nearestScore - 10]);
+        
+        userRank = rank;
+        rankMinus10 = scoreRows.length > 0 ? scoreRows[0].cumulative_count : Math.floor(rank * 1.2);
+        
+        console.log(`📍 生源地: ${sourceProvince}, 科目类型: ${subjectTypeForRank}, 用户位次: ${userRank}, 分数-10位次: ${rankMinus10}`);
+      } else {
+        // 如果score_rank_table没有数据，使用原有逻辑
+        userRank = rank;
+        rankMinus10 = Math.floor(rank * 1.2);
+        console.log(`⚠️ score_rank_table无数据，使用默认位次范围: ${userRank} ~ ${rankMinus10}`);
+      }
+    } else if (scoreMode === 'score' && score) {
+      // 分数模式：查询用户分数和分数-10对应的位次
+      const [scoreRows] = await pool.execute(`
+        SELECT score, cumulative_count
+        FROM score_rank_table
+        WHERE province = ? AND subject_type = ? AND score = ?
+        LIMIT 1
+      `, [sourceProvince, subjectTypeForRank, score]);
+      
+      if (scoreRows.length > 0) {
+        userRank = scoreRows[0].cumulative_count;
+        console.log(`📊 分数模式：用户分数${score}对应位次${userRank}`);
+      } else {
+        // 如果没有精确匹配，查询最接近的
+        const [nearestRows] = await pool.execute(`
+          SELECT score, cumulative_count
+          FROM score_rank_table
+          WHERE province = ? AND subject_type = ?
+          ORDER BY ABS(score - ?)
+          LIMIT 1
+        `, [sourceProvince, subjectTypeForRank, score]);
+        
+        if (nearestRows.length > 0) {
+          userRank = nearestRows[0].cumulative_count;
+          console.log(`📊 分数模式：最接近分数${nearestRows[0].score}对应位次${userRank}`);
+        }
+      }
+      
+      // 查询分数-10对应的位次
+      const [minus10Rows] = await pool.execute(`
+        SELECT cumulative_count
+        FROM score_rank_table
+        WHERE province = ? AND subject_type = ? AND score = ?
+        LIMIT 1
+      `, [sourceProvince, subjectTypeForRank, score - 10]);
+      
+      if (minus10Rows.length > 0) {
+        rankMinus10 = minus10Rows[0].cumulative_count;
+      } else {
+        // 如果没有精确匹配，查询最接近的
+        const [nearestMinus10Rows] = await pool.execute(`
+          SELECT cumulative_count
+          FROM score_rank_table
+          WHERE province = ? AND subject_type = ?
+          ORDER BY ABS(score - ?)
+          LIMIT 1
+        `, [sourceProvince, subjectTypeForRank, score - 10]);
+        
+        rankMinus10 = nearestMinus10Rows.length > 0 ? nearestMinus10Rows[0].cumulative_count : Math.floor((userRank || 10000) * 1.2);
+      }
+      
+      console.log(`📍 生源地: ${sourceProvince}, 科目类型: ${subjectTypeForRank}, 用户分数: ${score}, 用户位次: ${userRank}, 分数-10位次: ${rankMinus10}`);
+    }
+    
+    // 设置查询条件：使用位次范围
+    if (userRank && rankMinus10) {
+      // 位次越小排名越高，所以查询范围是 [userRank, rankMinus10]
+      const minRank = Math.min(userRank, rankMinus10);
+      const maxRank = Math.max(userRank, rankMinus10);
+      
+      whereCondition = `AND min_rank_1 >= ? AND min_rank_1 <= ?`;
+      orderCondition = `min_rank_1 ASC`;
+      rangeParams = [minRank, maxRank];
+      
+      console.log(`✅ 使用位次查询: ${minRank} ~ ${maxRank}`);
+    } else {
+      // 降级方案：使用原有分数查询逻辑
+      const useRankQuery = scoreMode === 'rank' && rank;
+      
+      if (useRankQuery && rank) {
+        const minRank = rank;
+        const maxRank = Math.floor(rank * 1.5);
+        
+        whereCondition = `AND min_rank_1 >= ? AND min_rank_1 <= ?`;
+        orderCondition = `min_rank_1 ASC`;
+        rangeParams = [minRank, maxRank];
+        
+        console.log(`⚠️ 降级使用位次范围: ${minRank} ~ ${maxRank}`);
+      } else {
+        // 分数查询：分数范围（上10分下20分）
+        whereCondition = `AND COALESCE(group_min_score_1, min_score_1) >= ? AND COALESCE(group_min_score_1, min_score_1) <= ?`;
+        orderCondition = `COALESCE(group_min_score_1, min_score_1) DESC`;
+        rangeParams = [score - 20, score + 10];
+        
+        console.log(`⚠️ 降级使用分数范围: ${score - 20} ~ ${score + 10}`);
+      }
+    }
 
     let query, queryParams;
 
@@ -376,8 +693,7 @@ app.post('/api/recommend-from-db', async (req, res) => {
           COALESCE(group_min_score_1, min_score_1) AS effective_score
         FROM admission_plan
         WHERE source_province = ?
-          AND COALESCE(group_min_score_1, min_score_1) >= ?
-          AND COALESCE(group_min_score_1, min_score_1) <= ?
+          ${whereCondition}
           AND (
             ${tripleCondition}
             OR subject_require IN (${pairs2.map(() => '?').join(',')})
@@ -386,7 +702,7 @@ app.post('/api/recommend-from-db', async (req, res) => {
             OR subject_require IS NULL
             OR subject_require = ''
           )
-        ORDER BY match_priority ASC, COALESCE(group_min_score_1, min_score_1) DESC, min_score DESC
+        ORDER BY match_priority ASC, ${orderCondition}, min_score DESC
       `;
 
       queryParams = [
@@ -394,7 +710,7 @@ app.post('/api/recommend-from-db', async (req, res) => {
         ...(hasTriples ? triples3 : []),
         ...pairs2, ...singles,
         // WHERE 参数
-        sourceProvince, score - 20, score + 10,
+        sourceProvince, ...rangeParams,
         // OR 条件参数（三科 + 两科 + 单科）
         ...(hasTriples ? triples3 : []),
         ...pairs2, ...singles
@@ -403,7 +719,7 @@ app.post('/api/recommend-from-db', async (req, res) => {
       console.log('🔍 [3+3] 查询参数:', {
         sourceProvince,
         选科: subjects,
-        分数范围: `${score - 20} ~ ${score + 10}`,
+        查询范围: rangeParams,
         三门组合数: triples3.length,
         三门组合示例: triples3.slice(0, 3),
         两门组合数: pairs2.length,
@@ -437,23 +753,21 @@ app.post('/api/recommend-from-db', async (req, res) => {
         FROM admission_plan
         WHERE source_province = ?
           AND subject_type = ?
-          AND COALESCE(group_min_score_1, min_score_1) >= ?
-          AND COALESCE(group_min_score_1, min_score_1) <= ?
-        ORDER BY COALESCE(group_min_score_1, min_score_1) DESC, min_score_1 DESC
+          ${whereCondition}
+        ORDER BY ${orderCondition}, min_score_1 DESC
       `;
 
       queryParams = [
         sourceProvince,
         subjectType,
-        score - 20,
-        score + 10
+        ...rangeParams
       ];
 
       console.log('🔍 [传统文理分科] 查询参数:', {
         sourceProvince,
         必选科目: requiredSubject,
         subjectType,
-        分数范围: `${score - 20} ~ ${score + 10}`
+        查询范围: rangeParams
       });
 
     } else {
@@ -520,24 +834,22 @@ app.post('/api/recommend-from-db', async (req, res) => {
         WHERE source_province = ?
           AND subject_type = ?
           ${subjectRequireClause}
-          AND COALESCE(group_min_score_1, min_score_1) >= ?
-          AND COALESCE(group_min_score_1, min_score_1) <= ?
-        ORDER BY COALESCE(group_min_score_1, min_score_1) DESC, min_score_1 DESC
+          ${whereCondition}
+        ORDER BY ${orderCondition}, min_score_1 DESC
       `;
 
       queryParams = [
         sourceProvince,
         subjectType,
         ...subjectRequireParams,
-        score - 20,
-        score + 10
+        ...rangeParams
       ];
 
       console.log('🔍 [3+1+2] 查询参数:', {
         sourceProvince,
         必选科目: requiredSubject, subjectType,
         再选科目: `${optional1}${optional2 ? '、' + optional2 : ''}`,
-        分数范围: `${score - 20} ~ ${score + 10}`,
+        查询范围: rangeParams,
         再选条件: subjectRequireConditions
       });
     }
@@ -1202,6 +1514,73 @@ app.get('/api/admin/stats', async (req, res) => {
   }
 });
 
+// 获取专业推荐顺序
+app.get('/api/major-recommend-order', async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      'SELECT discipline_category, major_category, sort_order FROM major_recommend_order ORDER BY sort_order'
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('❌ 获取专业推荐顺序失败:', err.message);
+    res.json({ success: false, message: '服务器错误' });
+  }
+});
+
+// 获取院校特色标签
+app.get('/api/college-features', async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT school_name, is_985, is_211, is_double_first_class, is_postgrad_recommended,
+              feature_1, feature_2, feature_3, feature_4, feature_5, feature_6, feature_7, feature_8,
+              feature_9, feature_10, feature_11, feature_12, feature_13, feature_14, feature_15, feature_16,
+              feature_17, feature_18, feature_19, feature_20, feature_21, feature_22, feature_23, feature_24,
+              feature_25, feature_26, feature_27, feature_28, feature_29, feature_30, feature_31, feature_32
+       FROM college_features`
+    );
+    
+    // 转换为以院校名称为键的Map，方便前端查询
+    const featuresMap = {};
+    const allFeaturesSet = new Set(); // 收集所有特色标签
+    
+    rows.forEach(row => {
+      const features = [];
+      if (row.is_985) { features.push('985'); allFeaturesSet.add('985'); }
+      if (row.is_211) { features.push('211'); allFeaturesSet.add('211'); }
+      if (row.is_double_first_class) { features.push('双一流'); allFeaturesSet.add('双一流'); }
+      if (row.is_postgrad_recommended) { features.push('保研'); allFeaturesSet.add('保研'); }
+      
+      // 添加特色标签
+      for (let i = 1; i <= 32; i++) {
+        const feature = row[`feature_${i}`];
+        if (feature && feature.trim()) {
+          features.push(feature.trim());
+          allFeaturesSet.add(feature.trim());
+        }
+      }
+      
+      featuresMap[row.school_name] = features;
+    });
+    
+    // 返回特色标签Map和所有去重的标签列表
+    const allFeatures = [...allFeaturesSet].sort((a, b) => {
+      // 985、211、双一流、保研排在最前面
+      const priority = ['985', '211', '双一流', '保研'];
+      const aIdx = priority.indexOf(a);
+      const bIdx = priority.indexOf(b);
+      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+      if (aIdx !== -1) return -1;
+      if (bIdx !== -1) return 1;
+      return a.localeCompare(b, 'zh-CN');
+    });
+    
+    res.json({ success: true, data: featuresMap, allFeatures });
+  } catch (err) {
+    console.error('获取院校特色标签失败:', err.message);
+    res.json({ success: false, message: '服务器错误' });
+  }
+});
+
 // 提供静态文件服务
 app.use(express.static(path.join(__dirname, '../')));
 
@@ -1232,7 +1611,9 @@ async function startServer() {
     console.log(`   POST   /api/recommendations       - 保存推荐记录`);
     console.log(`   DELETE /api/recommendations/:id  - 删除记录`);
     console.log(`   DELETE /api/recommendations      - 清空所有记录`);
-    console.log(`   POST   /api/recommend-from-db    - 从admission表获取推荐`);
+    console.log(`   POST   /api/get-rank-by-score   - 根据分数查询位次`);
+    console.log(`   POST   /api/get-score-by-rank   - 根据位次查询分数`);
+    console.log(`   POST   /api/recommend-from-db   - 从admission表获取推荐（支持分数/位次查询）`);
     console.log(`   GET    /api/school-detail        - 获取学校详情`);
     console.log(`   GET    /api/colleges            - 获取所有院校列表`);
     console.log(`   GET    /api/test-connection      - 测试数据库连接`);

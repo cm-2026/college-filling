@@ -13,51 +13,52 @@
             }
         })();
     </script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-            --card-bg: rgba(20, 20, 40, 0.6);
-            --card-border: rgba(100, 100, 255, 0.15);
-            --text-primary: #ffffff;
-            --text-secondary: #b0b0d0;
-            --accent-cyan: #00d4ff;
-            --accent-purple: #a855f7;
-            --accent-pink: #f472b6;
+            /* 背景与文字 - 与index-mysql.html一致 */
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #eef2f7;
+            --card-bg: #ffffff;
+            --card-border: #cbd5e1;
+            --text-primary: #1a1a2e;
+            --text-secondary: #3d3d5c;
+            --text-tertiary: #6b7280;
+            --text-muted: #9ca3af;
+            
+            /* 强调色 */
+            --accent-600: #4f46e5;
+            --accent-500: #6366f1;
+            --accent-cyan: #3b82f6;
+            --accent-purple: #6366f1;
+            
+            /* 边框与阴影 */
+            --border-light: #d1d5db;
+            --border-medium: #9ca3af;
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
         }
 
         body {
-            background: var(--bg-gradient);
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
             min-height: 100vh;
-            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             color: var(--text-primary);
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image:
-                radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 0;
         }
 
         .main-container {
             background: var(--card-bg);
-            backdrop-filter: blur(20px) saturate(180%);
             border: 1px solid var(--card-border);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            margin: 0 auto;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            margin: 20px auto;
             padding: 40px;
             position: relative;
             z-index: 1;
             max-width: 1400px;
-            min-height: 100vh;
+            min-height: calc(100vh - 40px);
         }
 
         .school-header {
@@ -70,10 +71,7 @@
             font-size: 2.5rem;
             font-weight: 800;
             margin-bottom: 15px;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple), var(--accent-pink));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--accent-600);
         }
 
         .badges {
@@ -111,12 +109,11 @@
         }
 
         .section-card {
-            background: rgba(30, 30, 50, 0.4);
+            background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 16px;
             padding: 30px;
             margin-bottom: 30px;
-            backdrop-filter: blur(10px);
         }
 
         .section-title {
@@ -125,14 +122,13 @@
             font-size: 1.5rem;
             margin-bottom: 25px;
             padding-bottom: 15px;
-            border-bottom: 2px solid transparent;
-            border-image: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple)) 1;
+            border-bottom: 2px solid #dbeafe;
         }
 
         .info-row {
             display: flex;
             padding: 12px 0;
-            border-bottom: 1px solid rgba(100, 100, 255, 0.1);
+            border-bottom: 1px solid #e5e7eb;
         }
 
         .info-label {
@@ -147,7 +143,7 @@
         }
 
         .info-value.highlight {
-            color: var(--accent-cyan);
+            color: var(--accent-600);
             font-weight: 700;
         }
 
@@ -170,13 +166,8 @@
             margin-bottom: 0;
         }
 
-        .description-text p:hover {
-            color: var(--text-primary);
-            transition: color 0.3s ease;
-        }
-
         .description-text .intro-highlight {
-            color: var(--accent-cyan);
+            color: var(--accent-600);
             font-weight: 600;
         }
 
@@ -194,7 +185,7 @@
             left: 0;
             right: 0;
             height: 80px;
-            background: linear-gradient(transparent, rgba(20, 20, 40, 0.9));
+            background: linear-gradient(transparent, rgba(255, 255, 255, 0.95));
             pointer-events: none;
         }
 
@@ -214,7 +205,7 @@
         }
 
         .show-more-btn:hover {
-            color: var(--accent-cyan);
+            color: var(--accent-600);
             opacity: 1;
         }
 
@@ -245,18 +236,19 @@
             display: inline-flex;
             align-items: center;
             padding: 8px 14px;
-            background: rgba(30, 30, 50, 0.5);
-            border: 1px solid rgba(100, 100, 255, 0.15);
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
             border-radius: 8px;
             font-size: 0.95rem;
-            color: var(--text-primary);
+            color: #1e40af;
             transition: all 0.2s ease;
             white-space: nowrap;
+            font-weight: 500;
         }
 
         .major-item:hover {
-            background: rgba(59, 159, 232, 0.1);
-            border-color: rgba(59, 159, 232, 0.3);
+            background: #bfdbfe;
+            border-color: #3b82f6;
         }
 
         .major-category-title {
@@ -268,23 +260,23 @@
         }
 
         .major-category-title.national {
-            color: var(--accent-cyan);
-            border-color: var(--accent-cyan);
+            color: #3b82f6;
+            border-color: #3b82f6;
         }
 
         .major-category-title.provincial {
-            color: var(--accent-purple);
-            border-color: var(--accent-purple);
+            color: #6366f1;
+            border-color: #6366f1;
         }
 
         .contact-link {
-            color: var(--accent-cyan);
+            color: var(--accent-600);
             text-decoration: none;
             transition: all 0.3s ease;
         }
 
         .contact-link:hover {
-            color: var(--accent-purple);
+            color: var(--accent-500);
             text-decoration: underline;
         }
 
@@ -296,13 +288,12 @@
         .spinner-border {
             width: 3.5rem;
             height: 3.5rem;
-            color: var(--accent-cyan);
-            filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
+            color: var(--accent-600);
         }
 
         .error-alert {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: #fef2f2;
+            border: 1px solid #fecaca;
             border-radius: 16px;
             padding: 30px;
             text-align: center;
@@ -324,7 +315,7 @@
         .info-grid .info-row {
             flex-direction: column;
             padding: 10px 0;
-            border-bottom: 1px solid rgba(100, 100, 255, 0.08);
+            border-bottom: 1px solid #f3f4f6;
         }
 
         .info-grid .info-label {
@@ -340,10 +331,11 @@
         /* ========== 移动端响应式优化 ========== */
         @media (max-width: 767.98px) {
             .main-container {
-                margin: 15px auto;
+                margin: 10px auto;
                 padding: 20px 15px;
-                border-radius: 16px;
+                border-radius: 12px;
                 width: calc(100% - 20px);
+                min-height: calc(100vh - 20px);
             }
 
             .school-header {

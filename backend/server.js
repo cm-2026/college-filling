@@ -1031,26 +1031,18 @@ app.get('/api/major-info', async (req, res) => {
 
     console.log(`📚 获取专业介绍: ${major_name}`);
 
-    // 先精确匹配，无结果时用 LIKE 模糊兜底
-    let [rows] = await pool.execute(
-      `SELECT major_name, introduction, career_path, courses
-       FROM major_info
+    // 严格精确匹配，不使用模糊查询
+    // 从 major_introduction 表查询，字段映射：major_intro → introduction, career_direction → career_path, major_content → courses
+    const [rows] = await pool.execute(
+      `SELECT major_name, 
+              major_intro as introduction, 
+              career_direction as career_path, 
+              major_content as courses
+       FROM major_introduction
        WHERE major_name = ?
        LIMIT 1`,
       [major_name]
     );
-
-    if (rows.length === 0) {
-      [rows] = await pool.execute(
-        `SELECT major_name, introduction, career_path, courses
-         FROM major_info
-         WHERE ? LIKE CONCAT('%', major_name, '%')
-            OR major_name LIKE CONCAT('%', ?, '%')
-         ORDER BY LENGTH(major_name) DESC
-         LIMIT 1`,
-        [major_name, major_name]
-      );
-    }
 
     if (rows.length === 0) {
       console.log(`⚠️  未找到专业介绍: ${major_name}`);

@@ -1,0 +1,206 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #e5e7eb;
+    min-height: 100vh;
+}
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+h1 { margin-bottom: 20px; font-size: 1.5rem; }
+
+/* 统计卡片 - 响应式网格 */
+.stats { 
+    display: grid; 
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 15px; 
+    margin-bottom: 20px; 
+}
+.stat-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 15px;
+}
+.stat-label { font-size: 14px; color: #9ca3af; }
+.stat-value { font-size: 28px; font-weight: bold; margin-top: 5px; }
+
+/* 工具栏 */
+.toolbar { 
+    display: flex; 
+    gap: 15px; 
+    margin-bottom: 15px; 
+    align-items: center;
+    flex-wrap: wrap;
+}
+.toolbar input { 
+    padding: 8px 12px; 
+    background: rgba(255,255,255,0.1); 
+    border: 1px solid rgba(255,255,255,0.2); 
+    color: #e5e7eb; 
+    border-radius: 6px;
+    flex: 1;
+    min-width: 200px;
+}
+.toolbar select { 
+    padding: 8px 12px; 
+    background: rgba(255,255,255,0.1); 
+    border: 1px solid rgba(255,255,255,0.2); 
+    color: #e5e7eb; 
+    border-radius: 6px;
+}
+
+/* 电脑端表格 */
+.table-desktop {
+    display: block;
+}
+.table-desktop table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.table-desktop th, .table-desktop td { 
+    padding: 12px; 
+    text-align: left; 
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.table-desktop th { 
+    background: rgba(0,0,0,0.3); 
+    font-weight: 600;
+}
+
+/* 手机端卡片列表 */
+.card-list {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+}
+.user-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 16px;
+}
+.user-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.user-card-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+}
+.user-card-id {
+    font-size: 12px;
+    color: #6b7280;
+}
+.user-card-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.user-card-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.user-card-label {
+    font-size: 12px;
+    color: #9ca3af;
+}
+.user-card-value {
+    font-size: 14px;
+    color: #e5e7eb;
+}
+.user-card-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+.user-card-actions .btn {
+    flex: 1;
+    min-width: 70px;
+    margin: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+/* 按钮样式 */
+.btn { 
+    padding: 6px 12px; 
+    border: none; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-size: 13px; 
+    margin-right: 5px;
+    margin-bottom: 5px;
+    white-space: nowrap;
+}
+.btn-enable { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+.btn-disable { background: rgba(239,68,68,0.2); color: #f87171; }
+.btn-delete { background: rgba(107,114,128,0.2); color: #9ca3af; }
+.btn-reset { background: rgba(59,130,246,0.2); color: #60a5fa; }
+
+select.role-select { 
+    padding: 4px 8px; 
+    background: rgba(255,255,255,0.1); 
+    border: 1px solid rgba(255,255,255,0.2); 
+    color: #e5e7eb; 
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.badge { 
+    padding: 4px 10px; 
+    border-radius: 12px; 
+    font-size: 12px;
+    display: inline-block;
+}
+.badge.active { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+.badge.disabled { background: rgba(239,68,68,0.2); color: #f87171; }
+
+.loading { text-align: center; padding: 40px; color: #9ca3af; }
+
+/* 手机端适配 */
+@media (max-width: 768px) {
+    .container { padding: 15px; }
+    h1 { font-size: 1.25rem; margin-bottom: 15px; }
+    
+    /* 统计卡片改为2列 */
+    .stats { 
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 10px;
+    }
+    .stat-card { padding: 12px; }
+    .stat-label { font-size: 12px; }
+    .stat-value { font-size: 22px; }
+    
+    /* 工具栏改为垂直布局 */
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .toolbar input,
+    .toolbar select,
+    .toolbar button {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    /* 手机端隐藏表格，显示卡片 */
+    .table-desktop {
+        display: none;
+    }
+    .card-list {
+        display: flex;
+    }
+}

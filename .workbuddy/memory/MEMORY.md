@@ -709,3 +709,163 @@
 - 查询缓存可显著提升热门查询性能（5分钟缓存）
 - 云服务器需关注内存使用，避免OOM
 
+---
+
+## 基于位次的智能推荐系统（2026-04-09）
+
+### 需求背景
+原有系统基于分数范围推荐，用户输入分数后直接用分数范围查询admission_plan表。新需求要求：
+1. 分数模式：先从score_rank_table查询分数对应位次，再用位次范围查询
+2. 位次模式：先从score_rank_table查询最接近分数，再查询分数-10的位次，用位次范围查询
+
+### 数据表结构
+
+**score_rank_table（分数位次对照表）**:
+- province: 省份
+- subject_type: 科目类型（物理/历史/综合）
+- score: 分数
+- cumulative_count: 累计人数（位次）
+- batch: 批次
+- year: 年份
+
+**admission_plan（招生计划表）**:
+- min_rank_1: 专业最低位次
+- group_min_rank_1: 专业组最低位次
+- subject_type: 科目类型（物理/历史）
+
+### 核心实现逻辑
+
+**文件**: `e:\xm\backend\server.js`（第485-633行）
+
+1. **科目类型映射**:
+   - 3+3模式（北京/天津/上海/山东/浙江/海南）：subject_type = '综合'
+   - 3+1+2模式：subject_type = 第一门选科（物理/历史）
+
+2. **分数模式查询流程**:
+   ```javascript
+   // 查询用户分数对应位次
+   SELECT cumulative_count FROM score_rank_table 
+   WHERE province = ? AND subject_type = ? AND score = ?
+   
+   // 查询分数-10对应位次
+   SELECT cumulative_count FROM score_rank_table 
+   WHERE province = ? AND subject_type = ? AND score = ?
+   
+   // 用位次范围查询admission_plan（只匹配min_rank_1）
+   WHERE min_rank_1 >= minRank AND min_rank_1 <= maxRank
+   ```
+
+3. **位次模式查询流程**:
+   ```javascript
+   // 查询最接近的分数
+   SELECT score FROM score_rank_table 
+   WHERE province = ? AND subject_type = ?
+   ORDER BY ABS(cumulative_count - ?)
+   
+   // 查询分数-10对应位次
+   SELECT cumulative_count FROM score_rank_table 
+   WHERE province = ? AND subject_type = ? AND score = ?
+   
+   // 用位次范围查询admission_plan（只匹配min_rank_1）
+   WHERE min_rank_1 >= minRank AND min_rank_1 <= maxRank
+   ```
+
+4. **降级方案**: 如果score_rank_table查询失败，自动降级使用原有分数查询逻辑
+
+### 重要修改（2026-04-09 10:57）
+
+**删除专业组位次匹配**：
+- 原逻辑：`COALESCE(group_min_rank_1, min_rank_1)`
+- 新逻辑：`min_rank_1`
+- 原因：用户要求只匹配专业最低位次，不使用专业组最低位次
+- 影响：数据量从1751条降至1037条（减少714条），匹配更精准
+
+### 验证结果
+
+**测试案例1**：河南物理500分
+- 500分位次：209695
+- 490分位次：229094
+- 查询范围：209695 ~ 229094
+- 返回数据：1037条（只匹配min_rank_1）
+
+**测试案例2**：河南物理位次10000
+- 最接近分数：646分（位次9989）
+- 636分位次：15066
+- 查询范围：9989 ~ 15066
+- 返回数据：452条
+
+### 技术要点
+
+1. **位次排序**：位次越小排名越高，查询范围使用[minRank, maxRank]
+2. **科目类型差异**：
+   - score_rank_table: "物理"、"历史"、"综合"
+   - admission_plan: "物理"、"历史"
+   - 前端传入: "物理,化学,生物"
+3. **只使用专业位次**：查询条件使用min_rank_1，不再使用COALESCE
+
+### 性能优化建议
+
+1. 添加索引：
+   ```sql
+   CREATE INDEX idx_province_subject_score 
+   ON score_rank_table(province, subject_type, score);
+   
+   CREATE INDEX idx_province_subject_rank 
+   ON score_rank_table(province, subject_type, cumulative_count);
+   
+   CREATE INDEX idx_min_rank 
+   ON admission_plan(min_rank_1);
+   ```
+
+2. 缓存热门省份的分数位次对照表
+3. 前端显示位次信息，提升用户体验
+
+---
+
+## 院校选项卡按特色标签数量排序（2026-04-09 11:22）
+
+### 需求背景
+用户要求推荐结果的院校选项卡按特色标签数量排序，特色标签多的排在前面。
+
+### 实现逻辑
+
+**文件**: `e:\xm\recommend-results.html`
+
+1. **排序规则**：
+   - 第一优先级：特色标签数量（降序）
+   - 第二优先级：院校层次（985 > 211 > 双一流 > 普通公办 > 民办）
+
+2. **特色标签显示**：
+   - 在院校卡片头部显示所有特色标签
+   - 不同类型标签使用不同颜色：
+     - 985: 金色（#ffb400）
+     - 211: 蓝色（#6495ed）
+     - 双一流: 红色（#ff6b6b）
+     - 保研: 绿色（#32cd32）
+     - 其他: 青色（#64c8ff）
+
+3. **数据加载**：
+   - 从 `/api/college-features` 接口获取 collegeFeaturesMap
+   - 在 DOMContentLoaded 事件中异步加载
+
+### 示例效果
+
+**排序前**（按院校层次）：
+1. 院校A（985，1个特色标签）
+2. 院校B（985，1个特色标签）
+3. 院校C（211，3个特色标签）
+4. 院校D（双一流，2个特色标签）
+
+**排序后**（按特色标签数量）：
+1. 院校C（211，3个特色标签）← 特色标签最多
+2. 院校D（双一流，2个特色标签）
+3. 院校A（985，1个特色标签）
+4. 院校B（985，1个特色标签）
+
+### 技术要点
+
+1. **排序时机**：院校分组后、分页前
+2. **降级处理**：特色标签加载失败时仍按院校层次排序
+3. **UI调整**：院校层次列宽度从80px调整为auto，适应特色标签显示
+
+

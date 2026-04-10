@@ -1337,14 +1337,24 @@
             h += `<div class="school-tooltip-section"><div class="school-tooltip-section-label">办学实力</div><div class="school-tooltip-section-body">${infoItems.join(' | ')}</div></div>`;
         }
         
+        // 将特色专业字符串转换为标签
+        function formatMajorTags(text, tagClass){
+            if(!text) return '';
+            const majors = text.split(/[;；]/).filter(m => m.trim());
+            if(majors.length === 0) return '';
+            return majors.map(m => `<span class="${tagClass}">${escHtml(m.trim())}</span>`).join('');
+        }
+        
         // 国家特色专业
         if(data.national_major_features){
-            h += `<div class="school-tooltip-section"><div class="school-tooltip-section-label">国家特色专业</div><div class="school-tooltip-section-body">${formatContent(data.national_major_features)}</div></div>`;
+            const tagsHtml = formatMajorTags(data.national_major_features, 'major-tag major-tag-national');
+            h += `<div class="school-tooltip-section"><div class="school-tooltip-section-label">国家特色专业</div><div class="school-tooltip-section-body major-tags-wrap">${tagsHtml}</div></div>`;
         }
         
         // 省级特色专业
         if(data.provincial_major_features){
-            h += `<div class="school-tooltip-section"><div class="school-tooltip-section-label">省级特色专业</div><div class="school-tooltip-section-body">${formatContent(data.provincial_major_features)}</div></div>`;
+            const tagsHtml = formatMajorTags(data.provincial_major_features, 'major-tag major-tag-provincial');
+            h += `<div class="school-tooltip-section"><div class="school-tooltip-section-label">省级特色专业</div><div class="school-tooltip-section-body major-tags-wrap">${tagsHtml}</div></div>`;
         }
         
         // 院校描述（description字段，智能截取前500字）

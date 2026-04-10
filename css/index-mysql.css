@@ -1482,6 +1482,39 @@
             text-align: center; 
         }
 
+        /* 特色专业标签样式 */
+        .major-tags-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            line-height: 1;
+        }
+        .major-tag {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: default;
+        }
+        .major-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        /* 国家特色专业标签 - 金色 */
+        .major-tag-national {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            border: 1px solid #fbbf24;
+        }
+        /* 省级特色专业标签 - 绿色 */
+        .major-tag-provincial {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
         /* 专业名称按钮样式 */
         .major-tag-btn {
             border: none;

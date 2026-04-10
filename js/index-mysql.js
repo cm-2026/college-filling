@@ -1047,6 +1047,12 @@
                             </div>
                         </div>
                     </div>
+                    <div class="school-header-right">
+                        <span class="expand-hint">
+                            <span class="expand-text">点击展开</span>
+                            <span class="expand-icon">▼</span>
+                        </span>
+                    </div>
                 </div>
                 <div class="school-code-bar" style="padding:8px 20px;background:#B5BAC7;border-bottom:1px solid rgba(59,159,232,0.08);color:var(--text-secondary);font-size:0.85rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">院校代码：</span><span style="font-family:'Courier New',monospace;font-weight:700;color:#fff;background:rgba(59,159,232,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(59,159,232,0.3);">${escHtml(String(schoolCode))}</span></span><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">地址：</span>${locationTags}</span><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">批次：</span><span style="font-weight:600;color:#fff;background:rgba(168,85,247,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(168,85,247,0.3);">${escHtml(batch)}</span></span>${batchRemark?`<span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">备注：</span><span style="color:var(--text-secondary);">${escHtml(batchRemark)}</span></span>`:''}</div>
                 <div class="school-majors-bar" style="padding:10px 20px;background:#D1D5DB;border-bottom:1px solid rgba(59,159,232,0.08);">

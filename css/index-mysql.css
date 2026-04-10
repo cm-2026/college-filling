@@ -1628,6 +1628,15 @@
             letter-spacing: 0.03em;
             text-align: justify;
         }
+        /* 就业方向列表样式 */
+        .career-path-list {
+            line-height: 2.5;
+        }
+        .career-path-list br {
+            content: "";
+            display: block;
+            margin-bottom: 8px;
+        }
         .major-modal-loading {
             color: #6b7280;
             font-style: italic;

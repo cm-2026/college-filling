@@ -772,7 +772,7 @@
         if(!data){body.innerHTML='<div class="major-modal-none">暂无专业介绍</div>';return;}
         let h='';
         if(data.introduction)h+=`<div class="major-modal-section"><div class="major-modal-section-label">专业介绍</div><div class="major-modal-section-body">${formatContent(data.introduction)}</div></div>`;
-        if(data.career_path)h+=`<div class="major-modal-section"><div class="major-modal-section-label">就业方向</div><div class="major-modal-section-body">${formatContent(data.career_path)}</div></div>`;
+        if(data.career_path)h+=`<div class="major-modal-section"><div class="major-modal-section-label">就业方向</div><div class="major-modal-section-body career-path-list">${formatCareerPath(data.career_path)}</div></div>`;
         if(data.courses)h+=`<div class="major-modal-section"><div class="major-modal-section-label">主要课程</div><div class="major-modal-section-body">${formatContent(data.courses)}</div></div>`;
         if(!h)h='<div class="major-modal-none">暂无专业介绍</div>';
         body.innerHTML=h;
@@ -1247,11 +1247,19 @@
         if(result.startsWith('<br>'))result=result.substring(4);
         return result;
     }
+    // 格式化就业方向：分号换行
+    function formatCareerPath(text){
+        if(!text)return '';
+        let result=escHtml(text);
+        // 将中英文分号替换为换行
+        result=result.replace(/[;；]/g,'<br>');
+        return result;
+    }
     function renderTooltipContent(data){
         if(!data){ttBody.innerHTML='<div class="tooltip-none">暂无专业介绍</div>';return;}
         let h='';
         if(data.introduction)h+=`<div class="tooltip-section"><div class="tooltip-section-label">专业介绍</div><div class="tooltip-section-body">${formatContent(data.introduction)}</div></div>`;
-        if(data.career_path)h+=`<div class="tooltip-section"><div class="tooltip-section-label">就业方向</div><div class="tooltip-section-body">${formatContent(data.career_path)}</div></div>`;
+        if(data.career_path)h+=`<div class="tooltip-section"><div class="tooltip-section-label">就业方向</div><div class="tooltip-section-body career-path-list">${formatCareerPath(data.career_path)}</div></div>`;
         if(data.courses)h+=`<div class="tooltip-section"><div class="tooltip-section-label">主要课程</div><div class="tooltip-section-body">${formatContent(data.courses)}</div></div>`;
         if(!h)h='<div class="tooltip-none">暂无专业介绍</div>';
         ttBody.innerHTML=h;

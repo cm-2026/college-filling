@@ -869,58 +869,75 @@ app.post('/api/recommend-from-db', async (req, res) => {
 
     // 转换为前端格式
     const recommendations = rows.map(row => {
-      // 以专业最低分与用户分数的差值计算录取概率
-      const effectiveScore = row.min_score || row.min_score_1;
-      // 分差 = 用户分数 - 专业最低分
-      // 分差为正表示用户分数高于专业线，录取概率高
-      // 分差为负表示用户分数低于专业线，录取概率低
-      const scoreDiff = score - effectiveScore;
-
-      // 推荐类型：根据分差判断
-      // 冲：分差 < 0（用户分数低于专业最低分，录取概率低）
-      // 稳：0 ≤ 分差 ≤ 10（用户分数略高于专业最低分，录取概率中等）
-      // 保：分差 > 10（用户分数明显高于专业最低分，录取概率高）
-      let type = '稳';
-      if (scoreDiff < 0) type = '冲';
-      else if (scoreDiff > 10) type = '保';
-
-      // 录取概率：基于分数差值的分段线性函数计算
-      // 分差 = 用户分数 - 专业最低分
-      // 分差越大（用户分数越高），录取概率越高
-      // 
-      // 模型（基于用户提供的数据校准）：
-      // - 分差 <= -20分: 5%
-      // - 分差 = -12分: 6%
-      // - 分差 = -11分: 8%
-      // - 分差 = -10分: 10%
-      // - 分差 = -9分: 14%
-      // - 分差 = 0分: 50%
-      // - 分差 = 5分: 75%
-      // - 分差 = 7分: 83%
-      // - 分差 >= 20分: 95%
+      // 录取概率计算：优先使用位次差，降级使用分数差
       let probability;
-      if (scoreDiff <= -20) {
-        probability = 5;
-      } else if (scoreDiff <= -10) {
-        // -20到-10分：5% -> 10%
-        probability = 5 + (scoreDiff + 20) * 0.5;
-      } else if (scoreDiff <= 0) {
-        // -10到0分：10% -> 50%，每分+4%
-        // 验证：-9分 → 10 + 1*4 = 14% ✓
-        // 验证：-11分 → 10 + (-1)*4 = 6%（接近8%）- 微调
-        probability = 10 + (scoreDiff + 10) * 4;
-      } else if (scoreDiff <= 10) {
-        // 0到10分：50% -> 90%，每分约+4%
-        // 验证：5分 → 50 + 5*5 = 75% ✓
-        // 验证：7分 → 50 + 7*4.7 ≈ 83% ✓
-        probability = 50 + scoreDiff * 4.7;
-      } else if (scoreDiff <= 20) {
-        // 10到20分：90% -> 95%
-        probability = 90 + (scoreDiff - 10) * 0.5;
+      let type;
+      const effectiveScore = row.min_score || row.min_score_1;
+      const majorRank = row.min_rank; // 专业最低位次
+
+      // 优先使用位次差计算概率（更准确）
+      if (userRank && majorRank && majorRank > 0) {
+        // 位次差 = 专业最低位次 - 用户位次
+        // 位次差为正：用户位次领先（位次数字越小越好）
+        // 位次差为负：用户位次落后
+        const rankDiff = majorRank - userRank;
+
+        // 基于指数衰减模型的概率计算
+        // P = 99 × e^(-位次差 / k)
+        // k = 1831（校准参数，使效果符合实际）
+        // 效果：
+        // - 位次差 = 0（压线）：P ≈ 99%
+        // - 位次差 = 1500（领先1500位）：P ≈ 60%
+        // - 位次差 = 3000（领先3000位）：P ≈ 36%
+        // - 位次差 = 6000（领先6000位）：P ≈ 13%
+        const k = 1831;
+
+        if (rankDiff >= 0) {
+          // 用户位次领先或压线：使用指数衰减
+          probability = 99 * Math.exp(-rankDiff / k);
+          // 确保概率 >= 1%
+          probability = Math.max(1, Math.min(99, probability));
+        } else {
+          // 用户位次落后：录取概率极低
+          // 位次差为负，位次每落后1000位，概率降为约1/3
+          probability = 99 * Math.exp(rankDiff / (k * 0.3));
+          // 确保概率 >= 1%
+          probability = Math.max(1, Math.min(99, probability));
+        }
+
+        // 推荐类型：基于位次差判断
+        if (rankDiff >= 3000) {
+          type = '保'; // 领先3000位以上，概率约36%以下，极稳妥
+        } else if (rankDiff >= 0) {
+          type = '稳'; // 压线到领先3000位，概率36%-99%，较稳妥
+        } else {
+          type = '冲'; // 位次落后，录取概率低，需要冲刺
+        }
       } else {
-        probability = 95;
+        // 降级方案：使用分数差计算（旧逻辑）
+        const scoreDiff = score - effectiveScore;
+
+        // 推荐类型：根据分差判断
+        if (scoreDiff < 0) type = '冲';
+        else if (scoreDiff > 10) type = '保';
+        else type = '稳';
+
+        // 录取概率：基于分数差值的分段线性函数
+        if (scoreDiff <= -20) {
+          probability = 5;
+        } else if (scoreDiff <= -10) {
+          probability = 5 + (scoreDiff + 20) * 0.5;
+        } else if (scoreDiff <= 0) {
+          probability = 10 + (scoreDiff + 10) * 4;
+        } else if (scoreDiff <= 10) {
+          probability = 50 + scoreDiff * 4.7;
+        } else if (scoreDiff <= 20) {
+          probability = 90 + (scoreDiff - 10) * 0.5;
+        } else {
+          probability = 95;
+        }
       }
-      
+
       // 四舍五入并格式化
       probability = Math.round(probability) + '%';
 

@@ -1181,16 +1181,20 @@ app.get('/api/major-detail', async (req, res) => {
 // 获取学校专业组的全部专业
 app.get('/api/school-group-majors', async (req, res) => {
   try {
-    const { schoolCode, groupCode, region } = req.query;
+    const { schoolCode, groupCode, region, subjectCombination, schoolName } = req.query;
     
     if (!schoolCode || !groupCode) {
       return res.status(400).json({ success: false, error: '缺少必要参数' });
     }
 
-    console.log(`📋 获取学校专业组专业: schoolCode=${schoolCode}, groupCode=${groupCode}, region=${region}`);
+    // 判断是3+3模式还是3+1+2模式
+    const mode33Provinces = ['北京', '天津', '上海', '山东', '浙江', '海南'];
+    const isMode33 = mode33Provinces.includes(region);
+    
+    console.log(`📋 获取学校专业组专业: schoolCode=${schoolCode}, groupCode=${groupCode}, region=${region}, subjectCombination=${subjectCombination}, schoolName=${schoolName}`);
+    console.log(`   isMode33: ${isMode33}, subjects: ${subjectCombination ? subjectCombination.split(',').filter(s => s.trim()) : '无'}`);
 
     // 查询该学校该专业组的全部专业
-    // 字段名参照 /api/recommend-from-db 中的实际字段
     let sql = `
       SELECT 
         id,
@@ -1202,6 +1206,7 @@ app.get('/api/school-group-majors', async (req, res) => {
         major_group_code,
         major_group_name,
         subject_require,
+        subject_type,
         min_score_1 AS min_score,
         min_rank_1 AS \`rank\`,
         admit_count_1 AS admit_count,
@@ -1215,15 +1220,71 @@ app.get('/api/school-group-majors', async (req, res) => {
     `;
     const params = [schoolCode, groupCode];
 
-    // 如果有地区参数，添加地区筛选
+    // 生源地筛选
     if (region) {
       sql += ` AND source_province = ?`;
       params.push(region);
     }
 
+    // 院校名称筛选（精确匹配）
+    if (schoolName) {
+      sql += ` AND college_name = ?`;
+      params.push(schoolName);
+    }
+
+    // 选科筛选
+    if (subjectCombination) {
+      // 解析选科组合
+      const subjects = subjectCombination.split(',').filter(s => s.trim());
+      
+      if (isMode33) {
+        // 3+3模式：用subject_require筛选
+        // 专业要求必须在用户的选科范围内
+        // 即：专业要求的每一门科目，用户都必须选了
+        // 实现方式：排除那些要求了用户未选科目的专业
+        const allSubjects = ['物理', '化学', '生物', '政治', '历史', '地理', '技术'];
+        const userNotSelected = allSubjects.filter(s => !subjects.includes(s));
+        
+        // 专业不能要求用户未选的科目
+        userNotSelected.forEach(s => {
+          sql += ` AND (subject_require IS NULL OR subject_require = '' OR subject_require NOT LIKE ?)`;
+          params.push(`%${s}%`);
+        });
+      } else {
+        // 3+1+2模式或传统文理：仅用subject_type筛选，不判断subject_require
+        // 注意：数据库中 subject_type 存储的是 "物理" 或 "历史"，不是 "物理类" 或 "历史类"
+        if (subjects.includes('物理')) {
+          sql += ` AND subject_type LIKE ?`;
+          params.push('%物理%');
+        } else if (subjects.includes('历史')) {
+          sql += ` AND subject_type LIKE ?`;
+          params.push('%历史%');
+        } else if (subjects.includes('理科')) {
+          sql += ` AND subject_type LIKE ?`;
+          params.push('%理科%');
+        } else if (subjects.includes('文科')) {
+          sql += ` AND subject_type LIKE ?`;
+          params.push('%文科%');
+        }
+        // 3+1+2模式不判断subject_require，只根据subject_type（物理/历史）筛选
+      }
+    }
+
     sql += ` ORDER BY min_score_1 ASC`;
 
+    console.log(`🔍 执行SQL: ${sql}`);
+    console.log(`   参数: ${JSON.stringify(params)}`);
+
     const [rows] = await pool.execute(sql, params);
+
+    console.log(`✅ 查询到 ${rows.length} 条记录`);
+    if (rows.length > 0) {
+      const typeCount = {};
+      rows.forEach(r => {
+        typeCount[r.subject_type] = (typeCount[r.subject_type] || 0) + 1;
+      });
+      console.log(`   subject_type分布: ${JSON.stringify(typeCount)}`);
+    }
 
     res.json({
       success: true,

@@ -174,13 +174,13 @@
                     <div class="filter-grid">
                         <div class="filter-item"><label>院校名称</label><input type="text" id="filterSchool" placeholder="搜索学校名..." oninput="onFilterChange()"></div>
                         <div class="filter-item"><label>专业名称</label><input type="text" id="filterMajor" placeholder="搜索专业名..." oninput="onFilterChange()"></div>
+                         <div class="filter-item"><label>批次 <span class="filter-count" id="countBatch">0</span></label><select id="filterBatch" onchange="onFilterChange('batch')"><option value="">全部</option></select></div>
+                        <div class="filter-item"><label>批次备注 <span class="filter-count" id="countBatchRemark">0</span></label><select id="filterBatchRemark" onchange="onFilterChange('batch_remark')"><option value="">全部</option></select></div>
+                        <div class="filter-item"><label>选科要求 <span class="filter-count" id="countSubjectRequire">0</span></label><select id="filterSubjectRequire" onchange="onFilterChange('subject_require')"><option value="">全部</option></select></div>
                         <div class="filter-item"><label>省份 <span class="filter-count" id="countProvince">0</span></label><select id="filterProvince" onchange="onFilterChange('province')"><option value="">全部</option></select></div>
                         <div class="filter-item"><label>城市 <span class="filter-count" id="countCity">0</span></label><select id="filterCity" onchange="onFilterChange('college_city')"><option value="">全部</option></select></div>
-                        <div class="filter-item"><label>选科要求 <span class="filter-count" id="countSubjectRequire">0</span></label><select id="filterSubjectRequire" onchange="onFilterChange('subject_require')"><option value="">全部</option></select></div>
                         <div class="filter-item"><label>门类 <span class="filter-count" id="countCategory">0</span></label><select id="filterCategory" onchange="onFilterChange('category')"><option value="">全部</option></select></div>
                         <div class="filter-item"><label>专业类 <span class="filter-count" id="countMajorCategory">0</span></label><select id="filterMajorCategory" onchange="onFilterChange('major_category')"><option value="">全部</option></select></div>
-                        <div class="filter-item"><label>批次 <span class="filter-count" id="countBatch">0</span></label><select id="filterBatch" onchange="onFilterChange('batch')"><option value="">全部</option></select></div>
-                        <div class="filter-item"><label>批次备注 <span class="filter-count" id="countBatchRemark">0</span></label><select id="filterBatchRemark" onchange="onFilterChange('batch_remark')"><option value="">全部</option></select></div>
                         <div class="filter-item"><label>特色标签 <span class="filter-count" id="countCollegeLevel">0</span></label><select id="filterCollegeLevel" onchange="onFilterChange('feature')"><option value="">全部</option></select></div>
                     </div>
                     <div class="filter-actions">
@@ -215,8 +215,30 @@
 
     <!-- 专业介绍 Tooltip -->
     <div id="majorTooltip">
-        <div class="tooltip-title" id="ttTitle"></div>
-        <div id="ttBody"></div>
+        <div class="tooltip-scroll-wrapper">
+            <div class="tooltip-title" id="ttTitle"></div>
+            <div id="ttBody"></div>
+        </div>
+    </div>
+
+    <!-- 院校描述 Tooltip -->
+    <div id="schoolTooltip">
+        <div class="tooltip-scroll-wrapper">
+            <div class="tooltip-title school-tooltip-title" id="schoolTtTitle"></div>
+            <div class="school-tooltip-meta" id="schoolTtMeta"></div>
+            <div id="schoolTtBody"></div>
+        </div>
+    </div>
+
+    <!-- 专业详情模态框 -->
+    <div id="majorModal" class="modal-overlay">
+        <div class="major-modal-content">
+            <div class="major-modal-header">
+                <h3 id="majorModalTitle"></h3>
+                <button class="modal-close-btn" onclick="closeMajorModal()">×</button>
+            </div>
+            <div class="major-modal-body" id="majorModalBody"></div>
+        </div>
     </div>
 
     <!-- Toast 提示 -->

@@ -207,6 +207,7 @@ async function handleLogin(e) {
     clearMsg();
     const account  = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
+    const rememberMe = document.getElementById('rememberMe').checked;
     let ok = true;
     ok = setFieldError('loginUsername', 'loginUsernameErr', '请输入手机号或用户名', !account) && ok;
     ok = setFieldError('loginPassword', 'loginPasswordErr', '请输入密码', !password) && ok;
@@ -228,6 +229,15 @@ async function handleLogin(e) {
             localStorage.setItem('qd_userId', data.userId);
             localStorage.setItem('qd_username', data.username);
             localStorage.setItem('qd_role', data.role || 'user');
+            
+            // 记住我功能
+            if (rememberMe) {
+                localStorage.setItem('qd_rememberedAccount', account);
+                localStorage.setItem('qd_rememberedPassword', password);
+            } else {
+                localStorage.removeItem('qd_rememberedAccount');
+                localStorage.removeItem('qd_rememberedPassword');
+            }
             
             // 根据角色跳转
             const role = data.role || 'user';
@@ -314,3 +324,15 @@ document.addEventListener('input', function(e) {
         if (errEl) errEl.classList.remove('show');
     }
 });
+
+// ===== 页面加载时检查记住的账号密码 =====
+(function loadRememberedCredentials() {
+    const rememberedAccount = localStorage.getItem('qd_rememberedAccount');
+    const rememberedPassword = localStorage.getItem('qd_rememberedPassword');
+    
+    if (rememberedAccount && rememberedPassword) {
+        document.getElementById('loginUsername').value = rememberedAccount;
+        document.getElementById('loginPassword').value = rememberedPassword;
+        document.getElementById('rememberMe').checked = true;
+    }
+})();

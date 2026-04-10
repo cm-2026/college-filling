@@ -17,6 +17,19 @@
     function showFormView() {
         document.getElementById('viewForm').style.display = 'block';
         document.getElementById('viewResult').style.display = 'none';
+        
+        // 清空所有筛选条件
+        const filterIds = ['filterProvince', 'filterCity', 'filterCategory', 'filterMajorCategory', 'filterBatch', 'filterBatchRemark', 'filterCollegeLevel', 'filterSubjectRequire'];
+        filterIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        document.getElementById('filterSchool').value = '';
+        document.getElementById('filterMajor').value = '';
+        
+        // 清空筛选条件显示
+        updateFilterDisplay();
+        
         // 关闭筛选面板
         closeFilterPanel();
     }
@@ -466,6 +479,20 @@
         document.getElementById('recommendationForm').reset();
         document.getElementById('region').value='河南';
         document.getElementById('regionInput').value='河南';
+
+        // 清空选科标签
+        document.querySelectorAll('.subject-tag.selected').forEach(tag => {
+            tag.classList.remove('selected');
+        });
+        const subjectCombination = document.getElementById('subjectCombination');
+        if (subjectCombination) {
+            subjectCombination.value = '';
+        }
+        const subjectError = document.getElementById('subjectError');
+        if (subjectError) {
+            subjectError.style.display = 'none';
+        }
+
         showToast('表单已重置！','info');
     }
     function openCollegeList(){ window.open('college-list.html','_blank'); }
@@ -695,6 +722,72 @@
         document.getElementById('infoMajorTotal').textContent = majorCount;
     }
 
+    // 按专业类筛选（点击专业名称按钮）
+    function filterByMajor(majorCategory){
+        const filterMajorCategory = document.getElementById('filterMajorCategory');
+        if(filterMajorCategory){
+            filterMajorCategory.value = majorCategory;
+            // 打开筛选面板
+            const filterBar = document.getElementById('filterBar');
+            const filterBtn = document.getElementById('filterToggleBtn');
+            if(filterBar) filterBar.classList.add('active');
+            if(filterBtn) filterBtn.classList.add('active');
+            // 应用筛选
+            updateFilterDisplay();
+            applyFilter();
+        }
+    }
+
+    // ====================================================
+    // 专业详情模态框
+    // ====================================================
+    function showMajorModal(majorName){
+        const modal = document.getElementById('majorModal');
+        const title = document.getElementById('majorModalTitle');
+        const body = document.getElementById('majorModalBody');
+        
+        title.textContent = majorName;
+        body.innerHTML = '<div class="major-modal-loading">加载中…</div>';
+        modal.classList.add('active');
+        
+        // 使用缓存
+        if(majorCache[majorName]!==undefined){
+            renderMajorModalContent(majorCache[majorName]);
+            return;
+        }
+        
+        fetch(`${API_BASE}/major-info?major_name=${encodeURIComponent(majorName)}`)
+            .then(r=>r.json())
+            .then(res=>{
+                if(res.success&&res.data)majorCache[majorName]=res.data;
+                renderMajorModalContent(res.success?res.data:null);
+            })
+            .catch(err=>{
+                body.innerHTML='<div class="major-modal-none">加载失败</div>';
+            });
+    }
+    
+    function renderMajorModalContent(data){
+        const body = document.getElementById('majorModalBody');
+        if(!data){body.innerHTML='<div class="major-modal-none">暂无专业介绍</div>';return;}
+        let h='';
+        if(data.introduction)h+=`<div class="major-modal-section"><div class="major-modal-section-label">专业介绍</div><div class="major-modal-section-body">${formatContent(data.introduction)}</div></div>`;
+        if(data.career_path)h+=`<div class="major-modal-section"><div class="major-modal-section-label">就业方向</div><div class="major-modal-section-body">${formatContent(data.career_path)}</div></div>`;
+        if(data.courses)h+=`<div class="major-modal-section"><div class="major-modal-section-label">主要课程</div><div class="major-modal-section-body">${formatContent(data.courses)}</div></div>`;
+        if(!h)h='<div class="major-modal-none">暂无专业介绍</div>';
+        body.innerHTML=h;
+    }
+    
+    function closeMajorModal(){
+        const modal = document.getElementById('majorModal');
+        modal.classList.remove('active');
+    }
+    
+    // 点击模态框背景关闭
+    document.getElementById('majorModal')?.addEventListener('click',function(e){
+        if(e.target===this)closeMajorModal();
+    });
+
     function applyFilter(excludeField){
         const school=document.getElementById('filterSchool').value.trim().toLowerCase();
         const major=document.getElementById('filterMajor').value.trim().toLowerCase();
@@ -880,11 +973,11 @@
                     // 试验班：高对比橙色 - 深橙文字+亮橙背景+粗边框
                     style = 'display:inline-block;background:linear-gradient(135deg, #ff9800 0%, #f57c00 100%);color:#fff;padding:4px 10px;border-radius:6px;font-size:0.8rem;margin-right:6px;margin-bottom:6px;border:2px solid #e65100;white-space:nowrap;vertical-align:middle;font-weight:700;box-shadow:0 2px 4px rgba(230,81,0,0.3);';
                 } else if (isTopMajor) {
-                    // 前38个专业类：高对比红色 - 深红文字+亮红背景+粗边框
-                    style = 'display:inline-block;background:linear-gradient(135deg, #ff5252 0%, #d32f2f 100%);color:#fff;padding:4px 10px;border-radius:6px;font-size:0.8rem;margin-right:6px;margin-bottom:6px;border:2px solid #b71c1c;white-space:nowrap;vertical-align:middle;font-weight:700;box-shadow:0 2px 4px rgba(183,28,28,0.3);';
-                } else {
-                    // 其他：高对比蓝色 - 深蓝文字+亮蓝背景+粗边框
+                    // 推荐专业：蓝色背景
                     style = 'display:inline-block;background:linear-gradient(135deg, #42a5f5 0%, #1976d2 100%);color:#fff;padding:4px 10px;border-radius:6px;font-size:0.8rem;margin-right:6px;margin-bottom:6px;border:2px solid #0d47a1;white-space:nowrap;vertical-align:middle;font-weight:600;box-shadow:0 2px 4px rgba(13,71,161,0.2);';
+                } else {
+                    // 不推荐专业：无背景，黑色字体和边框
+                    style = 'display:inline-block;background:transparent;color:#333;padding:4px 10px;border-radius:6px;font-size:0.8rem;margin-right:6px;margin-bottom:6px;border:2px solid #333;white-space:nowrap;vertical-align:middle;font-weight:500;';
                 }
                 // 如果 major_remark 包含"中外"，在专业名称后面添加"（中外合作）"
                 const majorName = m.major || '-';
@@ -892,7 +985,7 @@
                 const displayMajorName = majorRemark.includes('中外') ? majorName + '（中外合作）' : majorName;
                 // 如果是特色专业，添加大拇指图标
                 const thumbIcon = isFeaturedMajor ? '<span style="margin-right:4px;">👍</span>' : '';
-                return `<span class="major-tag" style="${style}">${thumbIcon}${escHtml(displayMajorName)}</span>`;
+                return `<button class="major-tag-btn" type="button" style="${style}cursor:pointer;transition:all 0.2s;" onclick="showMajorModal('${escHtml(majorName)}')">${thumbIcon}${escHtml(displayMajorName)}</button>`;
             }).join('');
 
             // 专业数量标签
@@ -901,30 +994,30 @@
             // 获取院校特色标签
             const features = collegeFeaturesMap[school.name] || [];
             const featuresHtml = features.length > 0 ? features.map(f => {
-                // 根据标签类型设置不同颜色
+                // 根据标签类型设置不同颜色 - 使用实心背景提高清晰度
                 let bgColor, borderColor, textColor;
                 if (f === '985') {
-                    bgColor = 'rgba(255,180,0,0.15)';
-                    borderColor = 'rgba(255,180,0,0.4)';
-                    textColor = '#ffcc44';
+                    bgColor = '#FFB800';
+                    borderColor = '#E5A600';
+                    textColor = '#fff';
                 } else if (f === '211') {
-                    bgColor = 'rgba(59,159,232,0.15)';
-                    borderColor = 'rgba(59,159,232,0.4)';
-                    textColor = '#7dc8f0';
+                    bgColor = '#3B9FE8';
+                    borderColor = '#2B8FD8';
+                    textColor = '#fff';
                 } else if (f === '双一流') {
-                    bgColor = 'rgba(200,100,255,0.15)';
-                    borderColor = 'rgba(200,100,255,0.4)';
-                    textColor = '#cc88ff';
+                    bgColor = '#A855F7';
+                    borderColor = '#9333EA';
+                    textColor = '#fff';
                 } else if (f === '保研') {
-                    bgColor = 'rgba(16,185,129,0.15)';
-                    borderColor = 'rgba(16,185,129,0.4)';
-                    textColor = '#5eead4';
+                    bgColor = '#10B981';
+                    borderColor = '#059669';
+                    textColor = '#fff';
                 } else {
-                    bgColor = 'rgba(251,146,60,0.12)';
-                    borderColor = 'rgba(251,146,60,0.3)';
-                    textColor = '#fdba74';
+                    bgColor = '#FB923C';
+                    borderColor = '#EA580C';
+                    textColor = '#fff';
                 }
-                return `<span style="display:inline-block;font-size:0.7rem;padding:2px 8px;border-radius:5px;background:${bgColor};border:1px solid ${borderColor};color:${textColor};white-space:nowrap;font-weight:600;margin-left:6px;">${escHtml(f)}</span>`;
+                return `<span style="display:inline-block;font-size:0.7rem;padding:2px 8px;border-radius:5px;background:${bgColor};border:1.5px solid ${borderColor};color:${textColor};white-space:nowrap;font-weight:700;margin-left:6px;box-shadow:0 1px 3px rgba(0,0,0,0.2);">${escHtml(f)}</span>`;
             }).join('') : '';
 
             // 获取专业组信息（用于显示组按钮）- 提前计算
@@ -955,15 +1048,15 @@
                         </div>
                     </div>
                 </div>
-                <div class="school-code-bar" style="padding:8px 20px;background:rgba(10,25,70,0.2);border-bottom:1px solid rgba(59,159,232,0.08);color:var(--text-secondary);font-size:0.85rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">院校代码：</span><span style="font-family:'Courier New',monospace;font-weight:700;color:#fff;background:rgba(59,159,232,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(59,159,232,0.3);">${escHtml(String(schoolCode))}</span></span><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">地址：</span>${locationTags}</span><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">批次：</span><span style="font-weight:600;color:#fff;background:rgba(168,85,247,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(168,85,247,0.3);">${escHtml(batch)}</span></span>${batchRemark?`<span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">备注：</span><span style="color:var(--text-secondary);">${escHtml(batchRemark)}</span></span>`:''}</div>
-                <div class="school-majors-bar" style="padding:10px 20px;background:rgba(10,25,70,0.2);border-bottom:1px solid rgba(59,159,232,0.08);">
+                <div class="school-code-bar" style="padding:8px 20px;background:#B5BAC7;border-bottom:1px solid rgba(59,159,232,0.08);color:var(--text-secondary);font-size:0.85rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">院校代码：</span><span style="font-family:'Courier New',monospace;font-weight:700;color:#fff;background:rgba(59,159,232,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(59,159,232,0.3);">${escHtml(String(schoolCode))}</span></span><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">地址：</span>${locationTags}</span><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">批次：</span><span style="font-weight:600;color:#fff;background:rgba(168,85,247,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(168,85,247,0.3);">${escHtml(batch)}</span></span>${batchRemark?`<span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">备注：</span><span style="color:var(--text-secondary);">${escHtml(batchRemark)}</span></span>`:''}</div>
+                <div class="school-majors-bar" style="padding:10px 20px;background:#D1D5DB;border-bottom:1px solid rgba(59,159,232,0.08);">
                     ${majorNamesHtml}
                 </div>
                 <div class="major-body" data-school-key="${escHtml((school.school_code||'')+'|'+(school.name||''))}">`;
 
             // 显示专业组按钮（可点击筛选）
             if(hasGroups){
-                html+=`<div class="group-buttons" style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 20px;background:rgba(10,25,70,0.3);border-bottom:1px solid rgba(59,159,232,0.12);">`;
+                html+=`<div class="group-buttons" style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 20px;background:#E5E7EB;border-bottom:1px solid rgba(59,159,232,0.12);">`;
                 groupKeys.forEach((gk, idx)=>{
                     const label=gk==='__nogroup__'?'未分组':`第 ${gk} 组`;
                     const groupMajors = groupMap.get(gk);
@@ -1176,6 +1269,68 @@
     // 移除 mousemove 监听，因为不再跟随鼠标
     document.addEventListener('mouseout',e=>{if(e.target.closest('.major-name-result'))hideTooltip();});
 
+    // ====================================================
+    // 院校描述 Tooltip（结果页）
+    // ====================================================
+    const schoolTooltip=document.getElementById('schoolTooltip');
+    const schoolTtTitle=document.getElementById('schoolTtTitle');
+    const schoolTtBody=document.getElementById('schoolTtBody');
+    const schoolCache={};
+    let schoolHideTimer=null, pendingSchool='';
+
+    function showTooltipSchool(e, schoolName){
+        clearTimeout(schoolHideTimer);pendingSchool=schoolName;
+        schoolTtTitle.textContent=schoolName;
+        document.getElementById('schoolTtMeta').innerHTML = '';
+        positionSchoolTooltip();
+        schoolTooltip.classList.add('visible');
+        if(schoolCache[schoolName]!==undefined){renderSchoolTooltipContent(schoolCache[schoolName]);return;}
+        schoolTtBody.innerHTML='<div class="school-tooltip-loading">加载中…</div>';
+        fetch(`${API_BASE}/school-detail?schoolName=${encodeURIComponent(schoolName)}`)
+            .then(r=>r.json())
+            .then(res=>{
+                if(res.success&&res.data)schoolCache[schoolName]=res.data;
+                if(pendingSchool===schoolName){renderSchoolTooltipContent(res.success?res.data:null);schoolTooltip.classList.add('visible');}
+            })
+            .catch(err=>{if(pendingSchool===schoolName)schoolTtBody.innerHTML=`<div class="school-tooltip-none">加载失败</div>`;});
+    }
+    function renderSchoolTooltipContent(data){
+        if(!data){schoolTtBody.innerHTML='<div class="school-tooltip-none">暂无院校介绍</div>';return;}
+        
+        // 渲染摘要信息（标题下方）
+        const schoolTtMeta = document.getElementById('schoolTtMeta');
+        let metaHtml = '';
+        if(data.affiliation){
+            metaHtml += `<span class="school-tooltip-meta-item"><span class="school-tooltip-meta-label">隶属单位</span><span class="school-tooltip-meta-value">${escHtml(data.affiliation)}</span></span>`;
+        }
+        if(data.school_type){
+            metaHtml += `<span class="school-tooltip-meta-item"><span class="school-tooltip-meta-label">院校类型</span><span class="school-tooltip-meta-value">${escHtml(data.school_type)}</span></span>`;
+        }
+        if(data.established_date){
+            metaHtml += `<span class="school-tooltip-meta-item"><span class="school-tooltip-meta-label">创办时间</span><span class="school-tooltip-meta-value">${escHtml(data.established_date)}</span></span>`;
+        }
+        schoolTtMeta.innerHTML = metaHtml;
+        
+        // 渲染正文内容
+        let h='';
+        // 院校描述（description字段）
+        if(data.description){
+            h+=`<div class="school-tooltip-section"><div class="school-tooltip-section-label">院校简介</div><div class="school-tooltip-section-body">${formatContent(data.description)}</div></div>`;
+        }
+        if(!h)h='<div class="school-tooltip-none">暂无院校介绍</div>';
+        schoolTtBody.innerHTML=h;
+    }
+    function positionSchoolTooltip(){
+        schoolTooltip.style.left='50%';
+        schoolTooltip.style.top='50%';
+        schoolTooltip.style.transform='translate(-50%, -50%)';
+    }
+    function hideSchoolTooltip(){schoolHideTimer=setTimeout(()=>schoolTooltip.classList.remove('visible'),300);}
+    schoolTooltip.addEventListener('mouseenter',()=>clearTimeout(schoolHideTimer));
+    schoolTooltip.addEventListener('mouseleave',()=>hideSchoolTooltip());
+    document.addEventListener('mouseover',e=>{const el=e.target.closest('.school-link');if(el){e.preventDefault();showTooltipSchool(e,el.textContent.trim());}});
+    document.addEventListener('mouseout',e=>{if(e.target.closest('.school-link'))hideSchoolTooltip();});
+
     // 显示专业组模态框
     async function showGroupModal(schoolCode, schoolName, groupCode, groupLabel) {
         const modal = document.getElementById('groupModal');
@@ -1188,7 +1343,30 @@
         
         try {
             const region = document.getElementById('region').value || '河南';
-            const resp = await fetch(`${API_BASE}/school-group-majors?schoolCode=${encodeURIComponent(schoolCode)}&groupCode=${encodeURIComponent(groupCode)}&region=${encodeURIComponent(region)}`);
+            let subjectCombination = document.getElementById('subjectCombination').value || '';
+            
+            // 如果subjectCombination为空，尝试从已选标签中提取必选科目（物理/历史）
+            if (!subjectCombination) {
+                const requiredTag = document.querySelector('[data-type="required"].selected');
+                if (requiredTag) {
+                    // 用户至少选了必选科目，用它来筛选
+                    subjectCombination = requiredTag.dataset.value;
+                    console.log(`⚠️ 用户未完整选择选科组合，仅使用必选科目筛选: ${subjectCombination}`);
+                } else {
+                    console.log('⚠️ 用户未选择任何选科组合，将返回该专业组所有专业');
+                }
+            }
+            
+            // 构建查询参数
+            const params = new URLSearchParams({
+                schoolCode: schoolCode,
+                groupCode: groupCode,
+                region: region,
+                subjectCombination: subjectCombination,
+                schoolName: schoolName
+            });
+            
+            const resp = await fetch(`${API_BASE}/school-group-majors?${params.toString()}`);
             const result = await resp.json();
             
             if (!result.success) {

@@ -927,6 +927,22 @@
                 return `<span style="display:inline-block;font-size:0.7rem;padding:2px 8px;border-radius:5px;background:${bgColor};border:1px solid ${borderColor};color:${textColor};white-space:nowrap;font-weight:600;margin-left:6px;">${escHtml(f)}</span>`;
             }).join('') : '';
 
+            // 获取专业组信息（用于显示组按钮）- 提前计算
+            const groupMap=new Map();
+            majors.forEach(row=>{const gk=row.major_group_code!=null?String(row.major_group_code):'__nogroup__';if(!groupMap.has(gk))groupMap.set(gk,[]);groupMap.get(gk).push(row);});
+            const groupKeys=[...groupMap.keys()].sort((a,b)=>{if(a==='__nogroup__')return 1;if(b==='__nogroup__')return -1;return Number(a)-Number(b);});
+            const hasGroups=groupKeys.length>1||(groupKeys.length===1&&groupKeys[0]!=='__nogroup__');
+
+            // 显示院校代码、批次、批次备注、地址区域 - 提前计算
+            const schoolCode = school.school_code || majors[0]?.school_code || '-';
+            const batch = school.batch || majors[0]?.batch || '-';
+            const batchRemark = school.batch_remark || majors[0]?.batch_remark || '';
+            const collegeProvince = school.province || school.college_province || majors[0]?.province || majors[0]?.college_province || '';
+            const collegeCity = school.college_city || majors[0]?.college_city || '';
+            const provinceTag = collegeProvince ? `<span style="cursor:default;font-weight:600;color:#fff;background:rgba(244,114,182,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(244,114,182,0.3);">${escHtml(collegeProvince)}</span>` : '';
+            const cityTag = collegeCity ? `<span style="cursor:default;font-weight:600;color:#fff;background:rgba(244,114,182,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(244,114,182,0.3);">${escHtml(collegeCity)}</span>` : '';
+            const locationTags = (provinceTag || cityTag) ? `${provinceTag}${collegeProvince && collegeCity ? ' ' : ''}${cityTag}` : '<span style="color:var(--text-secondary);">-</span>';
+
             html+=`
             <div class="school-card collapsed">
                 <div class="school-header" onclick="this.closest('.school-card').classList.toggle('collapsed')">
@@ -942,24 +958,8 @@
                 <div class="school-majors-bar" style="padding:10px 20px;background:rgba(10,25,70,0.2);border-bottom:1px solid rgba(59,159,232,0.08);">
                     ${majorNamesHtml}
                 </div>
+                <div class="school-code-bar" style="padding:8px 20px;background:rgba(10,25,70,0.2);border-bottom:1px solid rgba(59,159,232,0.08);color:var(--text-secondary);font-size:0.85rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">院校代码：</span><span style="font-family:'Courier New',monospace;font-weight:700;color:#fff;background:rgba(59,159,232,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(59,159,232,0.3);">${escHtml(String(schoolCode))}</span></span><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">地址：</span>${locationTags}</span><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">批次：</span><span style="font-weight:600;color:#fff;background:rgba(168,85,247,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(168,85,247,0.3);">${escHtml(batch)}</span></span>${batchRemark?`<span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">备注：</span><span style="color:var(--text-secondary);">${escHtml(batchRemark)}</span></span>`:''}</div>
                 <div class="major-body" data-school-key="${escHtml((school.school_code||'')+'|'+(school.name||''))}">`;
-
-            // 获取专业组信息（用于显示组按钮）
-            const groupMap=new Map();
-            majors.forEach(row=>{const gk=row.major_group_code!=null?String(row.major_group_code):'__nogroup__';if(!groupMap.has(gk))groupMap.set(gk,[]);groupMap.get(gk).push(row);});
-            const groupKeys=[...groupMap.keys()].sort((a,b)=>{if(a==='__nogroup__')return 1;if(b==='__nogroup__')return -1;return Number(a)-Number(b);});
-            const hasGroups=groupKeys.length>1||(groupKeys.length===1&&groupKeys[0]!=='__nogroup__');
-
-            // 显示院校代码、批次、批次备注、地址区域
-            const schoolCode = school.school_code || majors[0]?.school_code || '-';
-            const batch = school.batch || majors[0]?.batch || '-';
-            const batchRemark = school.batch_remark || majors[0]?.batch_remark || '';
-            const collegeProvince = school.province || school.college_province || majors[0]?.province || majors[0]?.college_province || '';
-            const collegeCity = school.college_city || majors[0]?.college_city || '';
-            const provinceTag = collegeProvince ? `<span style="cursor:default;font-weight:600;color:#fff;background:rgba(244,114,182,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(244,114,182,0.3);">${escHtml(collegeProvince)}</span>` : '';
-            const cityTag = collegeCity ? `<span style="cursor:default;font-weight:600;color:#fff;background:rgba(244,114,182,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(244,114,182,0.3);">${escHtml(collegeCity)}</span>` : '';
-            const locationTags = (provinceTag || cityTag) ? `${provinceTag}${collegeProvince && collegeCity ? ' ' : ''}${cityTag}` : '<span style="color:var(--text-secondary);">-</span>';
-            html+=`<div class="school-code-bar" style="padding:8px 20px;background:rgba(10,25,70,0.2);border-bottom:1px solid rgba(59,159,232,0.08);color:var(--text-secondary);font-size:0.85rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">院校代码：</span><span style="font-family:'Courier New',monospace;font-weight:700;color:#fff;background:rgba(59,159,232,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(59,159,232,0.3);">${escHtml(String(schoolCode))}</span></span><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">地址：</span>${locationTags}</span><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">批次：</span><span style="font-weight:600;color:#fff;background:rgba(168,85,247,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(168,85,247,0.3);">${escHtml(batch)}</span></span>${batchRemark?`<span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent-cyan);font-weight:600;">备注：</span><span style="color:var(--text-secondary);">${escHtml(batchRemark)}</span></span>`:''}</div>`;
 
             // 显示专业组按钮（可点击筛选）
             if(hasGroups){

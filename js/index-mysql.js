@@ -778,34 +778,49 @@
         const schoolMap=new Map();
         data.forEach(row=>{const key=(row.school_code||'')+'|'+(row.name||'');if(!schoolMap.has(key))schoolMap.set(key,[]);schoolMap.get(key).push(row);});
 
-        function getLvPrio(lv){if(!lv)return 99;if(lv==='985'||lv.includes('985'))return 1;if(lv==='211'||lv.includes('211'))return 2;if(lv.includes('双一流')||lv.includes('一流'))return 3;if(lv.includes('公办'))return 4;if(lv.includes('民办'))return 5;return 99;}
+        // 院校层次优先级：985 > 211 > 双一流 > 公办本科 > 民办本科 > 公办专科 > 民办专科
+        function getLvPrio(lv){
+            if(!lv) return 99;
+            if(lv==='985'||lv.includes('985')) return 1;
+            if(lv==='211'||lv.includes('211')) return 2;
+            if(lv.includes('双一流')||lv.includes('一流')) return 3;
+            // 公办本科
+            if(lv.includes('公办')&&lv.includes('本科')) return 4;
+            if(lv==='公办') return 4; // 兼容旧数据
+            // 民办本科
+            if(lv.includes('民办')&&lv.includes('本科')) return 5;
+            if(lv==='民办') return 5; // 兼容旧数据
+            // 公办专科
+            if(lv.includes('公办')&&lv.includes('专科')) return 6;
+            // 民办专科
+            if(lv.includes('民办')&&lv.includes('专科')) return 7;
+            return 99;
+        }
         
-        // 计算院校的大拇指数量（特色专业数量）
-        function getThumbCount(majors, schoolFeatures) {
-            let count = 0;
-            majors.forEach(m => {
+        // 计算院校是否有大拇指（特色专业）
+        function hasThumb(majors, schoolFeatures) {
+            for (const m of majors) {
                 const majorCategory = m.major_category || '';
                 for (const feature of schoolFeatures) {
                     if (featuredMajorsMap[feature] && featuredMajorsMap[feature].includes(majorCategory)) {
-                        count++;
-                        break;
+                        return true;
                     }
                 }
-            });
-            return count;
+            }
+            return false;
         }
         
-        // 排序：1.大拇指数量降序 2.特色标签数量降序 3.院校层次优先级
+        // 排序：1.有大拇指排前面 2.特色标签数量降序 3.院校层次优先级
         const groups=[...schoolMap.values()].sort((ga,gb)=>{
             const schoolNameA = ga[0].name || '';
             const schoolNameB = gb[0].name || '';
             const schoolFeaturesA = collegeFeaturesMap[schoolNameA] || [];
             const schoolFeaturesB = collegeFeaturesMap[schoolNameB] || [];
             
-            // 1. 大拇指数量降序
-            const thumbCountA = getThumbCount(ga, schoolFeaturesA);
-            const thumbCountB = getThumbCount(gb, schoolFeaturesB);
-            if(thumbCountA !== thumbCountB) return thumbCountB - thumbCountA;
+            // 1. 有大拇指的排前面
+            const hasThumbA = hasThumb(ga, schoolFeaturesA);
+            const hasThumbB = hasThumb(gb, schoolFeaturesB);
+            if(hasThumbA !== hasThumbB) return hasThumbB ? 1 : -1;
             
             // 2. 特色标签数量降序
             const featureCountA = schoolFeaturesA.length;

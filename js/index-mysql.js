@@ -1337,7 +1337,7 @@
             infoTags.push(`<div class="info-tag"><span class="info-tag-icon">📖</span><span class="info-tag-text">博士点 <strong>${escHtml(data.doctor_points)}</strong>个</span></div>`);
         }
         if(data.graduate_school_rate){
-            infoTags.push(`<div class="info-tag"><span class="info-tag-icon">📈</span><span class="info-tag-text">升学率 <strong>${escHtml(data.graduate_school_rate)}</strong></span></div>`);
+            infoTags.push(`<div class="info-tag"><span class="info-tag-icon">📈</span><span class="info-tag-text">保研率 <strong>${escHtml(data.graduate_school_rate)}</strong></span></div>`);
         }
         if(infoTags.length > 0){
             h += `<div class="school-tooltip-section"><div class="school-tooltip-section-label">办学实力</div><div class="school-tooltip-section-body info-tags-wrap">${infoTags.join('')}</div></div>`;

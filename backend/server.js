@@ -687,6 +687,7 @@ app.post('/api/recommend-from-db', async (req, res) => {
             OR subject_require = ''
           )
         ORDER BY match_priority ASC, ${orderCondition}, min_score DESC
+        LIMIT 200
       `;
 
       queryParams = [
@@ -739,6 +740,7 @@ app.post('/api/recommend-from-db', async (req, res) => {
           AND subject_type = ?
           ${whereCondition}
         ORDER BY ${orderCondition}, min_score_1 DESC
+        LIMIT 200
       `;
 
       queryParams = [
@@ -820,6 +822,7 @@ app.post('/api/recommend-from-db', async (req, res) => {
           ${subjectRequireClause}
           ${whereCondition}
         ORDER BY ${orderCondition}, min_score_1 DESC
+        LIMIT 200
       `;
 
       queryParams = [

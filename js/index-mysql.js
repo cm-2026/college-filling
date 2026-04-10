@@ -1300,24 +1300,60 @@
         // 渲染摘要信息（标题下方）
         const schoolTtMeta = document.getElementById('schoolTtMeta');
         let metaHtml = '';
-        if(data.affiliation){
-            metaHtml += `<span class="school-tooltip-meta-item"><span class="school-tooltip-meta-label">隶属单位</span><span class="school-tooltip-meta-value">${escHtml(data.affiliation)}</span></span>`;
+        if(data.undergraduate_graduate){
+            metaHtml += `<span class="school-tooltip-meta-item"><span class="school-tooltip-meta-label">办学层次</span><span class="school-tooltip-meta-value">${escHtml(data.undergraduate_graduate)}</span></span>`;
         }
-        if(data.school_type){
-            metaHtml += `<span class="school-tooltip-meta-item"><span class="school-tooltip-meta-label">院校类型</span><span class="school-tooltip-meta-value">${escHtml(data.school_type)}</span></span>`;
+        if(data.public_private){
+            metaHtml += `<span class="school-tooltip-meta-item"><span class="school-tooltip-meta-label">办学性质</span><span class="school-tooltip-meta-value">${escHtml(data.public_private)}</span></span>`;
         }
-        if(data.established_date){
-            metaHtml += `<span class="school-tooltip-meta-item"><span class="school-tooltip-meta-label">创办时间</span><span class="school-tooltip-meta-value">${escHtml(data.established_date)}</span></span>`;
+        if(data.national_or_provincial){
+            metaHtml += `<span class="school-tooltip-meta-item"><span class="school-tooltip-meta-label">隶属关系</span><span class="school-tooltip-meta-value">${escHtml(data.national_or_provincial)}</span></span>`;
         }
         schoolTtMeta.innerHTML = metaHtml;
         
+        // 智能截取description前500字（到句号）
+        function truncateDescription(text, maxLen=500){
+            if(!text) return '';
+            let result = text.substring(0, maxLen);
+            // 如果结尾不是句号，继续截取到最近的句号
+            if(result.length < text.length && !result.endsWith('。')){
+                const lastPeriod = text.indexOf('。', maxLen);
+                if(lastPeriod > -1 && lastPeriod < maxLen + 100){ // 最多再取100字
+                    result = text.substring(0, lastPeriod + 1);
+                }
+            }
+            return result;
+        }
+        
         // 渲染正文内容
         let h='';
-        // 院校描述（description字段）
-        if(data.description){
-            h+=`<div class="school-tooltip-section"><div class="school-tooltip-section-label">院校简介</div><div class="school-tooltip-section-body">${formatContent(data.description)}</div></div>`;
+        
+        // 硕士点、博士点、升学率
+        let infoItems = [];
+        if(data.master_points) infoItems.push(`硕士点: ${escHtml(data.master_points)}`);
+        if(data.doctor_points) infoItems.push(`博士点: ${escHtml(data.doctor_points)}`);
+        if(data.graduate_school_rate) infoItems.push(`升学率: ${escHtml(data.graduate_school_rate)}`);
+        if(infoItems.length > 0){
+            h += `<div class="school-tooltip-section"><div class="school-tooltip-section-label">办学实力</div><div class="school-tooltip-section-body">${infoItems.join(' | ')}</div></div>`;
         }
-        if(!h)h='<div class="school-tooltip-none">暂无院校介绍</div>';
+        
+        // 国家特色专业
+        if(data.national_major_features){
+            h += `<div class="school-tooltip-section"><div class="school-tooltip-section-label">国家特色专业</div><div class="school-tooltip-section-body">${formatContent(data.national_major_features)}</div></div>`;
+        }
+        
+        // 省级特色专业
+        if(data.provincial_major_features){
+            h += `<div class="school-tooltip-section"><div class="school-tooltip-section-label">省级特色专业</div><div class="school-tooltip-section-body">${formatContent(data.provincial_major_features)}</div></div>`;
+        }
+        
+        // 院校描述（description字段，智能截取前500字）
+        if(data.description){
+            const shortDesc = truncateDescription(data.description, 500);
+            h += `<div class="school-tooltip-section"><div class="school-tooltip-section-label">院校简介</div><div class="school-tooltip-section-body">${formatContent(shortDesc)}</div></div>`;
+        }
+        
+        if(!h) h='<div class="school-tooltip-none">暂无院校介绍</div>';
         schoolTtBody.innerHTML=h;
     }
     function positionSchoolTooltip(){

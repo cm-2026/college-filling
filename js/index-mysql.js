@@ -1328,19 +1328,19 @@
         // 渲染正文内容
         let h='';
         
-        // 硕士点、博士点、升学率 - 卡片式设计
-        let infoCards = [];
+        // 硕士点、博士点、升学率 - 紧凑标签式设计
+        let infoTags = [];
         if(data.master_points){
-            infoCards.push(`<div class="info-card"><div class="info-card-label">硕士点</div><div class="info-card-value">${escHtml(data.master_points)}</div></div>`);
+            infoTags.push(`<div class="info-tag"><span class="info-tag-icon">🎓</span><span class="info-tag-text">硕士点 <strong>${escHtml(data.master_points)}</strong>个</span></div>`);
         }
         if(data.doctor_points){
-            infoCards.push(`<div class="info-card"><div class="info-card-label">博士点</div><div class="info-card-value">${escHtml(data.doctor_points)}</div></div>`);
+            infoTags.push(`<div class="info-tag"><span class="info-tag-icon">📖</span><span class="info-tag-text">博士点 <strong>${escHtml(data.doctor_points)}</strong>个</span></div>`);
         }
         if(data.graduate_school_rate){
-            infoCards.push(`<div class="info-card"><div class="info-card-label">升学率</div><div class="info-card-value">${escHtml(data.graduate_school_rate)}</div></div>`);
+            infoTags.push(`<div class="info-tag"><span class="info-tag-icon">📈</span><span class="info-tag-text">升学率 <strong>${escHtml(data.graduate_school_rate)}</strong></span></div>`);
         }
-        if(infoCards.length > 0){
-            h += `<div class="school-tooltip-section"><div class="school-tooltip-section-label">办学实力</div><div class="school-tooltip-section-body info-cards-wrap">${infoCards.join('')}</div></div>`;
+        if(infoTags.length > 0){
+            h += `<div class="school-tooltip-section"><div class="school-tooltip-section-label">办学实力</div><div class="school-tooltip-section-body info-tags-wrap">${infoTags.join('')}</div></div>`;
         }
         
         // 将特色专业字符串转换为标签

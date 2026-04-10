@@ -1482,39 +1482,42 @@
             text-align: center; 
         }
 
-        /* 办学实力卡片样式 */
-        .info-cards-wrap {
+        /* 办学实力标签样式 */
+        .info-tags-wrap {
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
-        }
-        .info-card {
-            flex: 1;
-            min-width: 120px;
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            border: 1px solid #3b82f6;
-            border-radius: 12px;
-            padding: 14px 16px;
-            text-align: center;
-            transition: all 0.2s ease;
-        }
-        .info-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.25);
-        }
-        .info-card-label {
-            font-size: 0.85rem;
-            color: #6b7280;
-            font-weight: 500;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .info-card-value {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #1e40af;
             line-height: 1;
+        }
+        .info-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 24px;
+            padding: 8px 16px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .info-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+        }
+        .info-tag-icon {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+        .info-tag-text {
+            font-size: 0.9rem;
+            color: #374151;
+        }
+        .info-tag-text strong {
+            color: #1e40af;
+            font-weight: 700;
+            font-size: 1rem;
+            margin: 0 2px;
         }
 
         /* 特色专业标签样式 */

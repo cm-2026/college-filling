@@ -599,37 +599,21 @@ app.post('/api/recommend-from-db', async (req, res) => {
     }
     
     // 设置查询条件：使用位次范围
-    if (userRank && rankMinus10) {
-      // 位次越小排名越高，所以查询范围是 [userRank, rankMinus10]
-      const minRank = Math.min(userRank, rankMinus10);
-      const maxRank = Math.max(userRank, rankMinus10);
-      
-      whereCondition = `AND min_rank_1 >= ? AND min_rank_1 <= ?`;
+    if (userRank) {
+      // 只查询专业最低位次 >= 用户位次的数据（录取概率较高的院校）
+      whereCondition = `AND min_rank_1 >= ?`;
       orderCondition = `min_rank_1 ASC`;
-      rangeParams = [minRank, maxRank];
+      rangeParams = [userRank];
       
-      console.log(`✅ 使用位次查询: ${minRank} ~ ${maxRank}`);
+      console.log(`✅ 使用位次查询: 专业最低位次 >= ${userRank}`);
     } else {
-      // 降级方案：使用原有分数查询逻辑
-      const useRankQuery = scoreMode === 'rank' && rank;
+      // 降级方案：使用分数查询
+      // 分数查询：分数范围（上10分下20分）
+      whereCondition = `AND COALESCE(group_min_score_1, min_score_1) >= ? AND COALESCE(group_min_score_1, min_score_1) <= ?`;
+      orderCondition = `COALESCE(group_min_score_1, min_score_1) DESC`;
+      rangeParams = [score - 20, score + 10];
       
-      if (useRankQuery && rank) {
-        const minRank = rank;
-        const maxRank = Math.floor(rank * 1.5);
-        
-        whereCondition = `AND min_rank_1 >= ? AND min_rank_1 <= ?`;
-        orderCondition = `min_rank_1 ASC`;
-        rangeParams = [minRank, maxRank];
-        
-        console.log(`⚠️ 降级使用位次范围: ${minRank} ~ ${maxRank}`);
-      } else {
-        // 分数查询：分数范围（上10分下20分）
-        whereCondition = `AND COALESCE(group_min_score_1, min_score_1) >= ? AND COALESCE(group_min_score_1, min_score_1) <= ?`;
-        orderCondition = `COALESCE(group_min_score_1, min_score_1) DESC`;
-        rangeParams = [score - 20, score + 10];
-        
-        console.log(`⚠️ 降级使用分数范围: ${score - 20} ~ ${score + 10}`);
-      }
+      console.log(`⚠️ 无位次数据，使用分数范围: ${score - 20} ~ ${score + 10}`);
     }
 
     let query, queryParams;
@@ -869,73 +853,42 @@ app.post('/api/recommend-from-db', async (req, res) => {
 
     // 转换为前端格式
     const recommendations = rows.map(row => {
-      // 录取概率计算：优先使用位次差，降级使用分数差
+      // 录取概率计算：基于位次差
       let probability;
       let type;
-      const effectiveScore = row.min_score || row.min_score_1;
       const majorRank = row.min_rank; // 专业最低位次
 
-      // 优先使用位次差计算概率（更准确）
+      // 使用位次差计算概率
       if (userRank && majorRank && majorRank > 0) {
         // 位次差 = 专业最低位次 - 用户位次
-        // 位次差为正：用户位次领先（位次数字越小越好）
-        // 位次差为负：用户位次落后
+        // 位次差 >= 0（已通过查询条件保证）
         const rankDiff = majorRank - userRank;
 
-        // 基于指数衰减模型的概率计算
-        // P = 99 × e^(-位次差 / k)
-        // k = 1831（校准参数，使效果符合实际）
+        // 概率计算：指数增长模型
+        // P = 50 + 49 × (1 - e^(-位次差/k))
         // 效果：
-        // - 位次差 = 0（压线）：P ≈ 99%
-        // - 位次差 = 1500（领先1500位）：P ≈ 60%
-        // - 位次差 = 3000（领先3000位）：P ≈ 36%
-        // - 位次差 = 6000（领先6000位）：P ≈ 13%
-        const k = 1831;
+        // - 位次差 = 0（压线）：P = 50%
+        // - 位次差 = 3000：P ≈ 90%
+        // - 位次差 = 6000：P ≈ 95%
+        // - 位次差 -> 无穷大：P -> 99%
+        const k = 3000;
+        probability = 50 + 49 * (1 - Math.exp(-rankDiff / k));
 
-        if (rankDiff >= 0) {
-          // 用户位次领先或压线：使用指数衰减
-          probability = 99 * Math.exp(-rankDiff / k);
-          // 确保概率 >= 1%
-          probability = Math.max(1, Math.min(99, probability));
-        } else {
-          // 用户位次落后：录取概率极低
-          // 位次差为负，位次每落后1000位，概率降为约1/3
-          probability = 99 * Math.exp(rankDiff / (k * 0.3));
-          // 确保概率 >= 1%
-          probability = Math.max(1, Math.min(99, probability));
-        }
+        // 确保概率在合理范围
+        probability = Math.max(50, Math.min(99, probability));
 
         // 推荐类型：基于位次差判断
         if (rankDiff >= 3000) {
-          type = '保'; // 领先3000位以上，概率约36%以下，极稳妥
-        } else if (rankDiff >= 0) {
-          type = '稳'; // 压线到领先3000位，概率36%-99%，较稳妥
+          type = '保'; // 领先3000位以上，概率约90%以上，极稳妥
+        } else if (rankDiff >= 1000) {
+          type = '稳'; // 领先1000-3000位，概率约70%-90%，较稳妥
         } else {
-          type = '冲'; // 位次落后，录取概率低，需要冲刺
+          type = '冲'; // 领先1000位以内，概率约50%-70%，需要冲刺
         }
       } else {
-        // 降级方案：使用分数差计算（旧逻辑）
-        const scoreDiff = score - effectiveScore;
-
-        // 推荐类型：根据分差判断
-        if (scoreDiff < 0) type = '冲';
-        else if (scoreDiff > 10) type = '保';
-        else type = '稳';
-
-        // 录取概率：基于分数差值的分段线性函数
-        if (scoreDiff <= -20) {
-          probability = 5;
-        } else if (scoreDiff <= -10) {
-          probability = 5 + (scoreDiff + 20) * 0.5;
-        } else if (scoreDiff <= 0) {
-          probability = 10 + (scoreDiff + 10) * 4;
-        } else if (scoreDiff <= 10) {
-          probability = 50 + scoreDiff * 4.7;
-        } else if (scoreDiff <= 20) {
-          probability = 90 + (scoreDiff - 10) * 0.5;
-        } else {
-          probability = 95;
-        }
+        // 无位次数据：使用默认值
+        probability = 50;
+        type = '稳';
       }
 
       // 四舍五入并格式化

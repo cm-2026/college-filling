@@ -703,6 +703,316 @@
         applyFilter();
     }
 
+    // 导出为 HTML 页面
+    function exportToExcel(){
+        if(filteredData.length === 0){
+            alert('没有数据可导出');
+            return;
+        }
+
+        // 按院校分组（与 renderTable 相同逻辑）
+        const schoolMap = new Map();
+        filteredData.forEach(row => {
+            const key = (row.school_code || '') + '|' + (row.name || '');
+            if (!schoolMap.has(key)) schoolMap.set(key, []);
+            schoolMap.get(key).push(row);
+        });
+
+        // 院校层次优先级
+        function getLvPrio(lv) {
+            if (!lv) return 99;
+            if (lv === '985' || lv.includes('985')) return 1;
+            if (lv === '211' || lv.includes('211')) return 2;
+            if (lv.includes('双一流') || lv.includes('一流')) return 3;
+            if (lv.includes('公办') && lv.includes('本科')) return 4;
+            if (lv === '公办') return 4;
+            if (lv.includes('民办') && lv.includes('本科')) return 5;
+            if (lv === '民办') return 5;
+            if (lv.includes('公办') && lv.includes('专科')) return 6;
+            if (lv.includes('民办') && lv.includes('专科')) return 7;
+            return 99;
+        }
+
+        // 计算大拇指数量
+        function countThumbs(majors, schoolFeatures) {
+            let count = 0;
+            for (const m of majors) {
+                const majorCategory = m.major_category || '';
+                for (const feature of schoolFeatures) {
+                    if (featuredMajorsMap[feature] && featuredMajorsMap[feature].includes(majorCategory)) {
+                        count++;
+                        break;
+                    }
+                }
+            }
+            return count;
+        }
+
+        // 排序（与 renderTable 相同逻辑）
+        const sortedGroups = [...schoolMap.values()].sort((ga, gb) => {
+            const schoolNameA = ga[0].name || '';
+            const schoolNameB = gb[0].name || '';
+            const schoolFeaturesA = collegeFeaturesMap[schoolNameA] || [];
+            const schoolFeaturesB = collegeFeaturesMap[schoolNameB] || [];
+
+            const thumbCountA = countThumbs(ga, schoolFeaturesA);
+            const thumbCountB = countThumbs(gb, schoolFeaturesB);
+
+            // 1. 有大拇指的排前面
+            const hasThumbA = thumbCountA > 0;
+            const hasThumbB = thumbCountB > 0;
+            if (hasThumbA !== hasThumbB) return hasThumbB ? 1 : -1;
+
+            // 2. 特色标签数量降序
+            const featureCountA = schoolFeaturesA.length;
+            const featureCountB = schoolFeaturesB.length;
+            if (featureCountA !== featureCountB) return featureCountB - featureCountA;
+
+            // 3. 大拇指数量降序
+            if (thumbCountA !== thumbCountB) return thumbCountB - thumbCountA;
+
+            // 4. 院校层次优先级
+            return getLvPrio(ga[0].college_level || '') - getLvPrio(gb[0].college_level || '');
+        });
+
+        // 只取前10个院校
+        const top10Groups = sortedGroups.slice(0, 10);
+        const top10Data = top10Groups.flat();
+
+        // 生成时间戳
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+        // 获取当前查询信息
+        const region = document.getElementById('infoRegion')?.textContent || '';
+        const score = document.getElementById('infoScore')?.textContent || '';
+        const rank = document.getElementById('infoRank')?.textContent || '';
+        const subject = document.getElementById('infoSubject')?.textContent || '';
+
+        // 生成HTML
+        let html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高考志愿推荐结果</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            height: 100%;
+        }
+        body {
+            padding-top: 72px; /* 为固定头部留出空间 */
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        /* 顶部导航栏 - 固定在顶部 */
+        .header {
+            background: #fff;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e8ecf0;
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 1200px;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #64748b;
+        }
+        .info-item strong {
+            color: #3b82f6;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #6366f1;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        /* 表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead {
+            background: #f1f5f9;
+            position: sticky;
+            top: 72px;
+            z-index: 50;
+        }
+        th {
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            font-size: 14px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+        }
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+        .school-name {
+            font-weight: 600;
+            color: #1e40af;
+        }
+        .score {
+            font-weight: 600;
+            color: #059669;
+        }
+        .rank {
+            color: #64748b;
+        }
+        .footer {
+            padding: 20px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 12px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+        @media print {
+            body { background: #fff; padding: 0; }
+            .header { position: static; }
+            .container { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <div class="info-item">
+                    <span>生源地：</span>
+                    <strong>${escapeHtml(region)}</strong>
+                </div>
+                <div class="info-item">
+                    <span>分数：</span>
+                    <strong>${escapeHtml(score)}</strong>
+                </div>
+                <div class="info-item">
+                    <span>位次：</span>
+                    <strong>${escapeHtml(rank)}</strong>
+                </div>
+                <div class="info-item">
+                    <span>选科：</span>
+                    <strong>${escapeHtml(subject)}</strong>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="stat-item">
+                    <div class="stat-value">${top10Groups.length}</div>
+                    <div class="stat-label">院校数量</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${top10Data.length}</div>
+                    <div class="stat-label">专业数量</div>
+                </div>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 30%;">院校名称</th>
+                    <th style="width: 25%;">专业名称</th>
+                    <th style="width: 15%;">专业门类</th>
+                    <th style="width: 15%;">最低分</th>
+                    <th style="width: 15%;">最低位次</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        // 按排序后的前10个院校顺序导出
+        top10Groups.forEach(group => {
+            group.forEach(row => {
+                const minScore = row.min_score || row.group_min_score_1 || '-';
+                const minRank = row.min_rank || row.group_min_rank_1 || '-';
+                html += `
+                <tr>
+                    <td class="school-name">${escapeHtml(row.name || '')}</td>
+                    <td>${escapeHtml(row.major || '')}</td>
+                    <td>${escapeHtml(row.major_category || '-')}</td>
+                    <td class="score">${minScore}</td>
+                    <td class="rank">${minRank}</td>
+                </tr>`;
+            });
+        });
+
+        html += `
+            </tbody>
+        </table>
+        <div class="footer">
+            本数据仅供参考，请以官方发布信息为准
+        </div>
+    </div>
+</body>
+</html>`;
+
+        // 辅助函数：HTML转义
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // 创建下载链接
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        const fileName = `志愿推荐_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.html`;
+        link.setAttribute('href', url);
+        link.setAttribute('download', fileName);
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     function closeFilterPanel(){
         // 关闭筛选面板
         const filterBar = document.getElementById('filterBar');

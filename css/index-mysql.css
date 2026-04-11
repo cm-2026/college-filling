@@ -719,6 +719,32 @@
             transform: rotate(180deg);
         }
 
+        /* 导出按钮 */
+        .export-btn-inline {
+            height: 32px;
+            padding: 0 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: 0.875rem;
+            background: var(--accent-500);
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .export-btn-inline:hover {
+            background: var(--accent-600);
+            transform: translateY(-1px);
+        }
+        .export-btn-inline svg {
+            width: 14px;
+            height: 14px;
+        }
+
         /* 页面标题（结果页） */
         .page-title {
             font-size: 1.75rem;
@@ -1899,6 +1925,17 @@
             }
 
             .filter-toggle-btn-inline svg {
+                width: 12px;
+                height: 12px;
+            }
+
+            .export-btn-inline {
+                height: 28px;
+                padding: 0 12px;
+                font-size: 0.75rem;
+            }
+
+            .export-btn-inline svg {
                 width: 12px;
                 height: 12px;
             }

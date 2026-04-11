@@ -1037,7 +1037,7 @@ app.get('/api/colleges', async (req, res) => {
 
     const [rows] = await pool.execute(
       `SELECT id, school_name, province as location, city, school_type, affiliation,
-              is_985, is_211, is_double_first_class, ranking
+              is_985, is_211, is_double_first_class, ranking, public_private, undergraduate_graduate
        FROM dxmessage
        ORDER BY ranking ASC, school_name ASC`
     );

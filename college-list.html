@@ -1,60 +1,219 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <!-- 基础元信息 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>权鼎教育-升学规划师系统</title>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <!-- SEO元信息 -->
+    <title>院校名录 - 权鼎教育升学规划师系统</title>
+    <meta name="description" content="权鼎教育院校名录系统，提供全国3000+院校信息查询，支持按省份、类型、特色、性质等多维度筛选，帮助考生和家长快速找到目标院校。">
+    <meta name="keywords" content="院校名录,大学查询,院校筛选,高考志愿,权鼎教育">
+    <meta name="author" content="权鼎教育">
+    
+    <!-- 性能优化 -->
+    <link rel="preconnect" href="http://localhost:3000">
+    <link rel="dns-prefetch" href="http://localhost:3000">
+    
+    <!-- 登录验证 -->
     <script>
-        // 登录验证 - 未登录跳转到登录页
+        (function() {
+            'use strict';
             var userId = localStorage.getItem('qd_userId');
             if (!userId) {
                 window.location.href = 'login.html';
             }
         })();
     </script>
+    
+    <!-- 样式表 -->
     <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="css/college-list.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <div class="page-header">
-            <h1 class="page-title">📚 全国院校名录</h1>
-            <p class="page-subtitle">共收录全国3317所高等院校信息</p>
-
-            <div class="search-box">
-                <input type="text" class="search-input" id="searchInput" placeholder="搜索院校名称、城市、地区、类型...">
-                <button class="search-btn" onclick="searchColleges()">🔍</button>
-            </div>
-
-            <div class="stats-bar" id="statsBar">
-                <div class="stat-item">
-                    <div class="stat-value" id="totalCount">0</div>
-                    <div class="stat-label">收录院校</div>
+    <!-- 
+        筛选面板 - 固定在顶部
+        功能：Logo展示、统计信息、搜索、筛选、已选条件显示
+    -->
+    <header class="filter-panel-fixed" id="filterPanel" role="banner">
+        <div class="container">
+            <!-- 第一行：Logo + 统计信息 + 展开按钮 -->
+            <div class="filter-panel-top-row">
+                <!-- Logo -->
+                <div class="logo-section-header">
+                    <img src="images/权鼎教育.png" alt="权鼎教育Logo" class="logo-image-header" loading="lazy">
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="filteredCount">0</div>
-                    <div class="stat-label">当前显示</div>
+                
+                <!-- 统计信息 -->
+                <div class="filter-header-center" aria-label="院校统计信息">
+                    <div class="header-stat">
+                        <span class="header-stat-value" id="totalCount" aria-label="总院校数">0</span>
+                        <span class="header-stat-label">收录院校</span>
+                    </div>
+                    <div class="header-stat-divider" role="separator"></div>
+                    <div class="header-stat">
+                        <span class="header-stat-value" id="filteredCount" aria-label="当前显示数">0</span>
+                        <span class="header-stat-label">当前显示</span>
+                    </div>
+                </div>
+                
+                <!-- 展开筛选按钮 -->
+                <button class="filter-header-right" onclick="toggleFilterPanel()" aria-label="展开筛选面板" aria-expanded="false" aria-controls="filterPanelBody">
+                    <svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    <span class="filter-hint" id="filterHint">筛选</span>
+                    <svg class="filter-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- 第二行：搜索框 -->
+            <div class="search-box-wrapper">
+                <div class="search-box" role="search">
+                    <label for="searchInput" class="visually-hidden">搜索院校</label>
+                    <input type="search" 
+                           class="search-input" 
+                           id="searchInput" 
+                           placeholder="搜索院校名称、城市、地区、类型..."
+                           aria-label="搜索院校"
+                           autocomplete="off">
+                    <button class="search-btn" onclick="searchColleges()" aria-label="搜索">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 第三行：已选筛选标签 -->
+            <div class="filter-selected" id="filterSelected" aria-live="polite" aria-label="已选筛选条件">
+                <span class="filter-selected-empty" id="filterSelectedEmpty">当前无筛选条件</span>
+                <span class="filter-selected-tags" id="filterSelectedTags"></span>
+            </div>
+        </div>
+        
+        <!-- 可折叠的区域：详细筛选条件 -->
+        <div class="filter-panel-body" id="filterPanelBody" role="region" aria-label="筛选条件">
+            <div class="container">
+                <!-- 筛选框区域 -->
+                <div class="filter-section">
+                    <!-- 院校省份 -->
+                    <div class="filter-row" role="group" aria-labelledby="provinceLabel">
+                        <div class="filter-label" id="provinceLabel">院校省份</div>
+                        <div class="filter-tags" id="provinceFilters">
+                            <span class="filter-tag active" data-value="" role="button" tabindex="0" aria-pressed="true">全部</span>
+                            <span class="filter-tag" data-value="北京" role="button" tabindex="0" aria-pressed="false">北京</span>
+                            <span class="filter-tag" data-value="天津" role="button" tabindex="0" aria-pressed="false">天津</span>
+                            <span class="filter-tag" data-value="河北" role="button" tabindex="0" aria-pressed="false">河北</span>
+                            <span class="filter-tag" data-value="山西" role="button" tabindex="0" aria-pressed="false">山西</span>
+                            <span class="filter-tag" data-value="内蒙古" role="button" tabindex="0" aria-pressed="false">内蒙古</span>
+                            <span class="filter-tag" data-value="辽宁" role="button" tabindex="0" aria-pressed="false">辽宁</span>
+                            <span class="filter-tag" data-value="吉林" role="button" tabindex="0" aria-pressed="false">吉林</span>
+                            <span class="filter-tag" data-value="黑龙江" role="button" tabindex="0" aria-pressed="false">黑龙江</span>
+                            <span class="filter-tag" data-value="上海" role="button" tabindex="0" aria-pressed="false">上海</span>
+                            <span class="filter-tag" data-value="江苏" role="button" tabindex="0" aria-pressed="false">江苏</span>
+                            <span class="filter-tag" data-value="浙江" role="button" tabindex="0" aria-pressed="false">浙江</span>
+                            <span class="filter-tag" data-value="安徽" role="button" tabindex="0" aria-pressed="false">安徽</span>
+                            <span class="filter-tag" data-value="福建" role="button" tabindex="0" aria-pressed="false">福建</span>
+                            <span class="filter-tag" data-value="江西" role="button" tabindex="0" aria-pressed="false">江西</span>
+                            <span class="filter-tag" data-value="山东" role="button" tabindex="0" aria-pressed="false">山东</span>
+                            <span class="filter-tag" data-value="河南" role="button" tabindex="0" aria-pressed="false">河南</span>
+                            <span class="filter-tag" data-value="湖北" role="button" tabindex="0" aria-pressed="false">湖北</span>
+                            <span class="filter-tag" data-value="湖南" role="button" tabindex="0" aria-pressed="false">湖南</span>
+                            <span class="filter-tag" data-value="广东" role="button" tabindex="0" aria-pressed="false">广东</span>
+                            <span class="filter-tag" data-value="广西" role="button" tabindex="0" aria-pressed="false">广西</span>
+                            <span class="filter-tag" data-value="海南" role="button" tabindex="0" aria-pressed="false">海南</span>
+                            <span class="filter-tag" data-value="重庆" role="button" tabindex="0" aria-pressed="false">重庆</span>
+                            <span class="filter-tag" data-value="四川" role="button" tabindex="0" aria-pressed="false">四川</span>
+                            <span class="filter-tag" data-value="贵州" role="button" tabindex="0" aria-pressed="false">贵州</span>
+                            <span class="filter-tag" data-value="云南" role="button" tabindex="0" aria-pressed="false">云南</span>
+                            <span class="filter-tag" data-value="西藏" role="button" tabindex="0" aria-pressed="false">西藏</span>
+                            <span class="filter-tag" data-value="陕西" role="button" tabindex="0" aria-pressed="false">陕西</span>
+                            <span class="filter-tag" data-value="甘肃" role="button" tabindex="0" aria-pressed="false">甘肃</span>
+                            <span class="filter-tag" data-value="青海" role="button" tabindex="0" aria-pressed="false">青海</span>
+                            <span class="filter-tag" data-value="宁夏" role="button" tabindex="0" aria-pressed="false">宁夏</span>
+                            <span class="filter-tag" data-value="新疆" role="button" tabindex="0" aria-pressed="false">新疆</span>
+                        </div>
+                    </div>
+
+                    <!-- 院校类型 -->
+                    <div class="filter-row" role="group" aria-labelledby="typeLabel">
+                        <div class="filter-label" id="typeLabel">院校类型</div>
+                        <div class="filter-tags" id="typeFilters">
+                            <span class="filter-tag active" data-value="" role="button" tabindex="0" aria-pressed="true">全部</span>
+                            <span class="filter-tag" data-value="综合类" role="button" tabindex="0" aria-pressed="false">综合类</span>
+                            <span class="filter-tag" data-value="理工类" role="button" tabindex="0" aria-pressed="false">理工类</span>
+                            <span class="filter-tag" data-value="师范类" role="button" tabindex="0" aria-pressed="false">师范类</span>
+                            <span class="filter-tag" data-value="农林类" role="button" tabindex="0" aria-pressed="false">农林类</span>
+                            <span class="filter-tag" data-value="医药类" role="button" tabindex="0" aria-pressed="false">医药类</span>
+                            <span class="filter-tag" data-value="语言类" role="button" tabindex="0" aria-pressed="false">语言类</span>
+                            <span class="filter-tag" data-value="财经类" role="button" tabindex="0" aria-pressed="false">财经类</span>
+                            <span class="filter-tag" data-value="政法类" role="button" tabindex="0" aria-pressed="false">政法类</span>
+                            <span class="filter-tag" data-value="体育类" role="button" tabindex="0" aria-pressed="false">体育类</span>
+                            <span class="filter-tag" data-value="艺术类" role="button" tabindex="0" aria-pressed="false">艺术类</span>
+                            <span class="filter-tag" data-value="民族类" role="button" tabindex="0" aria-pressed="false">民族类</span>
+                            <span class="filter-tag" data-value="军事类" role="button" tabindex="0" aria-pressed="false">军事类</span>
+                        </div>
+                    </div>
+
+                    <!-- 院校特色（动态加载） -->
+                    <div class="filter-row" role="group" aria-labelledby="featureLabel">
+                        <div class="filter-label" id="featureLabel">院校特色</div>
+                        <div class="filter-tags" id="featureFilters">
+                            <span class="filter-tag active" data-value="" role="button" tabindex="0" aria-pressed="true">全部</span>
+                            <!-- 动态从API加载 -->
+                        </div>
+                    </div>
+
+                    <!-- 院校性质 -->
+                    <div class="filter-row" role="group" aria-labelledby="natureLabel">
+                        <div class="filter-label" id="natureLabel">院校性质</div>
+                        <div class="filter-tags" id="natureFilters">
+                            <span class="filter-tag active" data-value="" role="button" tabindex="0" aria-pressed="true">全部</span>
+                            <span class="filter-tag" data-value="公办" role="button" tabindex="0" aria-pressed="false">公办</span>
+                            <span class="filter-tag" data-value="民办" role="button" tabindex="0" aria-pressed="false">民办</span>
+                            <span class="filter-tag" data-value="本科" role="button" tabindex="0" aria-pressed="false">本科</span>
+                            <span class="filter-tag" data-value="专科" role="button" tabindex="0" aria-pressed="false">专科</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 筛选操作按钮 -->
+                <div class="filter-actions" role="group" aria-label="筛选操作">
+                    <button class="filter-btn filter-btn-reset" onclick="resetFilters()" type="button">重置筛选</button>
+                    <button class="filter-btn filter-btn-confirm" onclick="confirmFilters()" type="button">确认筛选</button>
                 </div>
             </div>
         </div>
+    </header>
 
-        <div id="loading" class="loading">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">加载中...</span>
-            </div>
+    <!-- 页面主内容区域 -->
+    <main class="container main-content" role="main">
+        <!-- 加载状态 -->
+        <div id="loading" class="loading" role="status" aria-live="polite">
+            <div class="spinner-border" aria-hidden="true"></div>
             <h4 class="mt-3">正在加载院校数据...</h4>
         </div>
 
-        <div id="error" style="display: none;" class="error-alert">
-            <div class="error-icon">❌</div>
+        <!-- 错误状态 -->
+        <div id="error" style="display: none;" class="error-alert" role="alert">
+            <div class="error-icon" aria-hidden="true">❌</div>
             <h3 class="error-title">加载失败</h3>
             <p class="error-message" id="errorMessage">无法连接到服务器</p>
-            <button class="retry-btn" onclick="loadColleges()">重新加载</button>
+            <button class="retry-btn" onclick="loadColleges()" type="button">重新加载</button>
         </div>
 
-        <div id="collegeList" class="college-grid"></div>
-    </div>
+        <!-- 院校列表 -->
+        <section id="collegeList" class="college-grid" aria-label="院校列表">
+            <!-- 动态加载 -->
+        </section>
+    </main>
 
+    <!-- 脚本（放在body底部优化加载性能） -->
     <script src="js/college-list.js"></script>
 </body>
 </html>

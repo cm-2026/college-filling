@@ -599,13 +599,14 @@ app.post('/api/recommend-from-db', async (req, res) => {
     }
     
     // 设置查询条件：使用位次范围
-    if (userRank) {
-      // 只查询专业最低位次 >= 用户位次的数据（录取概率较高的院校）
-      whereCondition = `AND min_rank_1 >= ?`;
+    if (userRank && rankMinus10) {
+      // 位次范围：用户位次 ~ 用户分数-10对应的位次
+      // 注意：位次越小分数越高，所以 rankMinus10 > userRank
+      whereCondition = `AND min_rank_1 >= ? AND min_rank_1 <= ?`;
       orderCondition = `min_rank_1 ASC`;
-      rangeParams = [userRank];
-      
-      console.log(`✅ 使用位次查询: 专业最低位次 >= ${userRank}`);
+      rangeParams = [userRank, rankMinus10];
+
+      console.log(`✅ 使用位次查询: 专业最低位次 ${userRank} ~ ${rankMinus10}（分数${score} ~ ${score - 10}）`);
     } else {
       // 降级方案：使用分数查询
       // 分数查询：分数范围（上10分下20分）
@@ -687,7 +688,6 @@ app.post('/api/recommend-from-db', async (req, res) => {
             OR subject_require = ''
           )
         ORDER BY match_priority ASC, ${orderCondition}, min_score DESC
-        LIMIT 200
       `;
 
       queryParams = [
@@ -740,7 +740,6 @@ app.post('/api/recommend-from-db', async (req, res) => {
           AND subject_type = ?
           ${whereCondition}
         ORDER BY ${orderCondition}, min_score_1 DESC
-        LIMIT 200
       `;
 
       queryParams = [
@@ -822,7 +821,6 @@ app.post('/api/recommend-from-db', async (req, res) => {
           ${subjectRequireClause}
           ${whereCondition}
         ORDER BY ${orderCondition}, min_score_1 DESC
-        LIMIT 200
       `;
 
       queryParams = [
@@ -1585,6 +1583,7 @@ app.get('/api/college-features', async (req, res) => {
         }
       }
       
+      // 精确匹配：只用原始名称
       featuresMap[row.school_name] = features;
     });
     
@@ -1606,6 +1605,31 @@ app.get('/api/college-features', async (req, res) => {
     res.json({ success: false, message: '服务器错误' });
   }
 });
+
+// 生成院校简化名称（用于模糊匹配）
+function generateSimplifiedNames(fullName) {
+  const names = new Set();
+  
+  // 去掉"中国人民解放军"前缀
+  let simplified = fullName.replace(/^中国人民解放军/, '');
+  if (simplified !== fullName) {
+    names.add(simplified);
+  }
+  
+  // 去掉"(男)"、"(女)"、"(定向)"等后缀
+  simplified = fullName.replace(/\([^)]+\)$/, '');
+  if (simplified !== fullName) {
+    names.add(simplified);
+  }
+  
+  // 同时去掉前缀和后缀
+  let combined = fullName.replace(/^中国人民解放军/, '').replace(/\([^)]+\)$/, '');
+  if (combined !== fullName && combined.length > 0) {
+    names.add(combined);
+  }
+  
+  return [...names];
+}
 
 // 获取特色专业数据
 app.get('/api/featured-majors', async (req, res) => {

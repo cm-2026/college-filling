@@ -439,7 +439,7 @@
                     return minScore != null && minScore <= userScore;
                 });
             }
-            
+
             document.getElementById('infoTotal').textContent = new Set(allData.map(r=>r.name)).size;
             document.getElementById('infoMajorTotal').textContent = new Set(allData.map(r=>r.major)).size; // 专业名称去重
 
@@ -869,7 +869,11 @@
             document.getElementById('paginationBar').style.display='none';return;
         }
         const schoolMap=new Map();
-        data.forEach(row=>{const key=(row.school_code||'')+'|'+(row.name||'');if(!schoolMap.has(key))schoolMap.set(key,[]);schoolMap.get(key).push(row);});
+        data.forEach(row=>{
+            const key=(row.school_code||'')+'|'+(row.name||'');
+            if(!schoolMap.has(key))schoolMap.set(key,[]);
+            schoolMap.get(key).push(row);
+        });
 
         // 院校层次优先级：985 > 211 > 双一流 > 公办本科 > 民办本科 > 公办专科 > 民办专科
         function getLvPrio(lv){
@@ -890,37 +894,46 @@
             return 99;
         }
         
-        // 计算院校是否有大拇指（特色专业）
-        function hasThumb(majors, schoolFeatures) {
+        // 计算院校大拇指数量（特色专业数量）
+        function countThumbs(majors, schoolFeatures) {
+            let count = 0;
             for (const m of majors) {
                 const majorCategory = m.major_category || '';
                 for (const feature of schoolFeatures) {
                     if (featuredMajorsMap[feature] && featuredMajorsMap[feature].includes(majorCategory)) {
-                        return true;
+                        count++;
+                        break; // 每个专业只计数一次
                     }
                 }
             }
-            return false;
+            return count;
         }
-        
-        // 排序：1.有大拇指排前面 2.特色标签数量降序 3.院校层次优先级
+
+        // 排序：1.有大拇指排前面 2.特色标签数量降序 3.大拇指数量降序 4.院校层次优先级
         const groups=[...schoolMap.values()].sort((ga,gb)=>{
             const schoolNameA = ga[0].name || '';
             const schoolNameB = gb[0].name || '';
             const schoolFeaturesA = collegeFeaturesMap[schoolNameA] || [];
             const schoolFeaturesB = collegeFeaturesMap[schoolNameB] || [];
-            
+
+            // 计算大拇指数量
+            const thumbCountA = countThumbs(ga, schoolFeaturesA);
+            const thumbCountB = countThumbs(gb, schoolFeaturesB);
+
             // 1. 有大拇指的排前面
-            const hasThumbA = hasThumb(ga, schoolFeaturesA);
-            const hasThumbB = hasThumb(gb, schoolFeaturesB);
-            if(hasThumbA !== hasThumbB) return hasThumbB ? 1 : -1;
-            
+            const hasThumbA = thumbCountA > 0;
+            const hasThumbB = thumbCountB > 0;
+            if (hasThumbA !== hasThumbB) return hasThumbB ? 1 : -1;
+
             // 2. 特色标签数量降序
             const featureCountA = schoolFeaturesA.length;
             const featureCountB = schoolFeaturesB.length;
-            if(featureCountA !== featureCountB) return featureCountB - featureCountA;
-            
-            // 3. 院校层次优先级
+            if (featureCountA !== featureCountB) return featureCountB - featureCountA;
+
+            // 3. 大拇指数量降序
+            if (thumbCountA !== thumbCountB) return thumbCountB - thumbCountA;
+
+            // 4. 院校层次优先级
             return getLvPrio(ga[0].college_level||'') - getLvPrio(gb[0].college_level||'');
         });
 
@@ -1042,7 +1055,7 @@
                     <div class="school-header-left">
                         <div class="school-name-row">
                             <div class="school-name-wrapper">
-                                <a class="school-link" onclick="event.stopPropagation();window.open('school-detail.html?schoolName=${encodeURIComponent(school.name)}','_blank')" href="#">${escHtml(school.name||'-')}</a>
+                                                                <a class="school-link" onclick="event.stopPropagation();window.open('school-detail.html?schoolName=${encodeURIComponent(school.name)}','_blank')" href="#">${escHtml(school.name||'-')}</a>
                                 ${majorCountTag}${featuresHtml}
                             </div>
                         </div>

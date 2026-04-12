@@ -1662,6 +1662,90 @@ app.get('/api/featured-majors', async (req, res) => {
   }
 });
 
+// 导出Excel API
+app.post('/api/export-excel', async (req, res) => {
+  try {
+    const { region, score, rank, subject, schools } = req.body;
+    
+    console.log('📊 导出Excel请求:', { region, score, rank, subject, schoolCount: schools?.length });
+    
+    if (!schools || schools.length === 0) {
+      return res.json({ success: false, message: '没有数据可导出' });
+    }
+    
+    const { execSync } = require('child_process');
+    const path = require('path');
+    const fs = require('fs');
+    
+    // 使用时间戳生成唯一文件名，避免并发冲突
+    const timestamp = Date.now();
+    const tempJsonPath = path.join(__dirname, `temp_export_data_${timestamp}.json`);
+    const tempExcelPath = path.join(__dirname, `temp_export_${timestamp}.xlsx`);
+    
+    const exportData = {
+      region,
+      score,
+      rank,
+      subject,
+      schools
+    };
+    
+    // 写入JSON数据
+    fs.writeFileSync(tempJsonPath, JSON.stringify(exportData, null, 2), 'utf8');
+    console.log('📝 已写入JSON数据:', tempJsonPath);
+    
+    // 同步调用Python脚本生成Excel
+    const pythonScript = path.join(__dirname, 'export_excel.py');
+    try {
+      const result = execSync(`python "${pythonScript}" "${tempJsonPath}" "${tempExcelPath}"`, {
+        encoding: 'utf8',
+        timeout: 30000  // 30秒超时
+      });
+      console.log('✅ Python脚本输出:', result);
+    } catch (pyError) {
+      console.error('❌ Python执行失败:', pyError.message);
+      if (fs.existsSync(tempJsonPath)) fs.unlinkSync(tempJsonPath);
+      return res.json({ success: false, message: 'Excel生成失败: ' + pyError.message });
+    }
+    
+    // 检查文件是否生成成功
+    if (!fs.existsSync(tempExcelPath)) {
+      console.error('❌ Excel文件未生成');
+      if (fs.existsSync(tempJsonPath)) fs.unlinkSync(tempJsonPath);
+      return res.json({ success: false, message: 'Excel文件未生成' });
+    }
+    
+    // 检查文件大小
+    const stats = fs.statSync(tempExcelPath);
+    console.log(`📊 Excel文件已生成: ${tempExcelPath}, 大小: ${stats.size} bytes`);
+    
+    if (stats.size < 100) {
+      console.error('❌ Excel文件太小，可能损坏');
+      fs.unlinkSync(tempJsonPath);
+      fs.unlinkSync(tempExcelPath);
+      return res.json({ success: false, message: 'Excel文件生成异常' });
+    }
+    
+    // 发送文件
+    const fileName = `志愿推荐_${new Date().toISOString().slice(0,10)}.xlsx`;
+    res.download(tempExcelPath, fileName, (err) => {
+      // 清理临时文件
+      try {
+        if (fs.existsSync(tempJsonPath)) fs.unlinkSync(tempJsonPath);
+        if (fs.existsSync(tempExcelPath)) fs.unlinkSync(tempExcelPath);
+        console.log('🧹 临时文件已清理');
+      } catch (e) {
+        console.error('清理临时文件失败:', e);
+      }
+      if (err) console.error('下载失败:', err);
+    });
+    
+  } catch (err) {
+    console.error('❌ 导出Excel失败:', err.message);
+    res.json({ success: false, message: '服务器错误: ' + err.message });
+  }
+});
+
 // 提供静态文件服务
 app.use(express.static(path.join(__dirname, '../')));
 

@@ -432,13 +432,8 @@
 
             allData = result.data || [];
             
-            // 如果是分数模式，仍然需要按分数过滤
-            if (scoreMode === 'score') {
-                allData = allData.filter(r => {
-                    const minScore = r.min_score != null ? parseInt(r.min_score) : null;
-                    return minScore != null && minScore <= userScore;
-                });
-            }
+            // 后端已根据位次范围查询，前端不再进行分数过滤
+            // 直接显示所有匹配的数据
 
             document.getElementById('infoTotal').textContent = new Set(allData.map(r=>r.name)).size;
             document.getElementById('infoMajorTotal').textContent = new Set(allData.map(r=>r.major)).size; // 专业名称去重

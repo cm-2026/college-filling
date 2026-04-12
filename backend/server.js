@@ -1696,12 +1696,14 @@ app.post('/api/export-excel', async (req, res) => {
     
     // 同步调用Python脚本生成Excel
     const pythonScript = path.join(__dirname, 'export_excel.py');
+    // Linux服务器使用python3，Windows使用python
+    const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
     try {
-      const result = execSync(`python "${pythonScript}" "${tempJsonPath}" "${tempExcelPath}"`, {
+      const result = execSync(`"${pythonCmd}" "${pythonScript}" "${tempJsonPath}" "${tempExcelPath}"`, {
         encoding: 'utf8',
         timeout: 30000  // 30秒超时
       });
-      console.log('✅ Python脚本输出:', result);
+      console.log('[OK] Python脚本输出:', result);
     } catch (pyError) {
       console.error('❌ Python执行失败:', pyError.message);
       if (fs.existsSync(tempJsonPath)) fs.unlinkSync(tempJsonPath);

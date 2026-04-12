@@ -8,6 +8,9 @@ const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 3000;
 
+// 院校信息缓存（省份、城市）
+let collegeInfoCache = new Map(); // key: school_name, value: {province, city}
+
 // MySQL数据库配置
 const dbConfig = {
   host: 'localhost',
@@ -41,6 +44,27 @@ async function createPool() {
   } catch (error) {
     console.error('❌ 数据库连接失败:', error.message);
     console.log('请检查数据库配置是否正确，并确保MySQL服务已启动');
+  }
+}
+
+// 加载院校信息缓存（省份、城市）
+async function loadCollegeInfo() {
+  try {
+    console.log('📊 正在加载院校信息缓存...');
+    const [rows] = await pool.execute(
+      'SELECT school_name, province, city FROM dxmessage WHERE school_name IS NOT NULL'
+    );
+    
+    rows.forEach(row => {
+      collegeInfoCache.set(row.school_name, {
+        province: row.province || '',
+        city: row.city || ''
+      });
+    });
+    
+    console.log(`[OK] 已加载 ${collegeInfoCache.size} 所院校信息到缓存`);
+  } catch (error) {
+    console.error('[ERROR] 加载院校信息失败:', error.message);
   }
 }
 
@@ -656,10 +680,9 @@ app.post('/api/recommend-from-db', async (req, res) => {
         group_min_score_1, group_min_rank_1, group_admit_count_1,
         min_score_1 AS min_score, min_rank_1 AS min_rank,
         avg_score_1, avg_rank_1, plan_count_1, admit_count_1,
-        college_province AS province, college_city, batch, batch_remark, subject_type, subject_require,
+        batch, batch_remark, subject_type, subject_require,
         category, major_category,
-        major_remark, major_sector, group_position,
-        recommend_reason`;
+        major_remark`;
 
       // 优化：使用CASE WHEN替代UNION ALL，减少表扫描次数
       const hasTriples = triples3.length > 0;
@@ -730,10 +753,9 @@ app.post('/api/recommend-from-db', async (req, res) => {
           group_min_score_1, group_min_rank_1, group_admit_count_1,
           min_score_1 AS min_score, min_rank_1 AS min_rank,
           avg_score_1, avg_rank_1, plan_count_1, admit_count_1,
-          college_province AS province, college_city, batch, batch_remark, subject_type, subject_require,
+          batch, batch_remark, subject_type, subject_require,
           category, major_category,
-          major_remark, major_sector, group_position,
-          recommend_reason,
+          major_remark,
           COALESCE(group_min_score_1, min_score_1) AS effective_score
         FROM admission_plan
         WHERE source_province = ?
@@ -810,10 +832,9 @@ app.post('/api/recommend-from-db', async (req, res) => {
           group_min_score_1, group_min_rank_1, group_admit_count_1,
           min_score_1 AS min_score, min_rank_1 AS min_rank,
           avg_score_1, avg_rank_1, plan_count_1, admit_count_1,
-          college_province AS province, college_city, batch, batch_remark, subject_type, subject_require,
+          batch, batch_remark, subject_type, subject_require,
           category, major_category,
-          major_remark, major_sector, group_position,
-          recommend_reason,
+          major_remark,
           COALESCE(group_min_score_1, min_score_1) AS effective_score
         FROM admission_plan
         WHERE source_province = ?
@@ -933,17 +954,14 @@ app.post('/api/recommend-from-db', async (req, res) => {
         avg_rank: row.avg_rank_1,
         plan_count: row.plan_count_1,
         admit_count: row.admit_count_1,
-        province: row.province,
-        college_city: row.college_city || '',
+        province: collegeInfoCache.get(row.college_name)?.province || '',
+        college_city: collegeInfoCache.get(row.college_name)?.city || '',
         batch: row.batch || '',
         batch_remark: row.batch_remark || '',
         category: row.category || '',
         major_category: row.major_category || '',
-        college_level: row.recommend_reason ? row.recommend_reason.split('/')[0].trim() : '',
         subject_require: row.subject_require,
         major_remark: row.major_remark || '',
-        major_sector: row.major_sector || '',
-        group_position: row.group_position || '',
         major_code: row.major_code,
         major_group: row.major_group,
         major_group_code: row.major_group_code || '',
@@ -1115,8 +1133,6 @@ app.get('/api/major-detail', async (req, res) => {
       SELECT
         college_name AS school_name,
         college_code AS school_code,
-        college_type AS school_type,
-        college_province AS province,
         subject_type,
         subject_require,
         major_remark,
@@ -1183,10 +1199,7 @@ app.get('/api/school-group-majors', async (req, res) => {
         min_rank_1 AS \`rank\`,
         admit_count_1 AS admit_count,
         batch,
-        batch_remark,
-        college_province,
-        college_city,
-        recommend_reason
+        batch_remark
       FROM admission_plan
       WHERE college_code = ? AND major_group_code = ?
     `;
@@ -1755,6 +1768,9 @@ app.use(express.static(path.join(__dirname, '../')));
 // 启动服务器
 async function startServer() {
   await createPool();
+  
+  // 加载院校信息缓存
+  await loadCollegeInfo();
   
   app.listen(PORT, '0.0.0.0', () => {
     const { networkInterfaces } = require('os');

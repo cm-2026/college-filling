@@ -159,8 +159,6 @@ async function toggleCard(idx, majorName) {
                 <tr>
                     <td><strong>${escapeHtml(r.school_name)}</strong></td>
                     <td>${r.province || '-'}</td>
-                    <td>${r.school_type || '-'}</td>
-                    <td>${r.college_level || '-'}</td>
                     <td>${r.subject_type || '-'}</td>
                     <td>${r.subject_require || '-'}</td>
                     <td>${r.batch || '-'}${r.batch_remark ? ' · ' + r.batch_remark : ''}</td>
@@ -173,7 +171,7 @@ async function toggleCard(idx, majorName) {
                 <table class="admit-table">
                     <thead>
                         <tr>
-                            <th>院校名称</th><th>省份</th><th>办学性质</th><th>院校层次</th>
+                            <th>院校名称</th><th>省份</th>
                             <th>科类</th><th>选科要求</th><th>批次</th>
                             <th>最低分</th><th>最低位次</th>
                             <th>备注</th>

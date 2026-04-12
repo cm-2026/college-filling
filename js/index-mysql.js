@@ -713,19 +713,13 @@
             schoolMap.get(key).push(row);
         });
 
-        // 院校层次优先级
-        function getLvPrio(lv) {
-            if (!lv) return 99;
-            if (lv === '985' || lv.includes('985')) return 1;
-            if (lv === '211' || lv.includes('211')) return 2;
-            if (lv.includes('双一流') || lv.includes('一流')) return 3;
-            if (lv.includes('公办') && lv.includes('本科')) return 4;
-            if (lv === '公办') return 4;
-            if (lv.includes('民办') && lv.includes('本科')) return 5;
-            if (lv === '民办') return 5;
-            if (lv.includes('公办') && lv.includes('专科')) return 6;
-            if (lv.includes('民办') && lv.includes('专科')) return 7;
-            return 99;
+        // 院校层次优先级（从collegeFeaturesMap获取）
+        function getLvPrio(schoolName) {
+            const features = collegeFeaturesMap[schoolName] || [];
+            if (features.includes('985')) return 1;
+            if (features.includes('211')) return 2;
+            if (features.includes('双一流')) return 3;
+            return 99; // 其他
         }
 
         // 计算大拇指数量
@@ -767,7 +761,7 @@
             if (thumbCountA !== thumbCountB) return thumbCountB - thumbCountA;
 
             // 4. 院校层次优先级
-            return getLvPrio(ga[0].college_level || '') - getLvPrio(gb[0].college_level || '');
+            return getLvPrio(ga[0].name) - getLvPrio(gb[0].name);
         });
 
         // 只取前10个院校
@@ -1002,23 +996,13 @@
             schoolMap.get(key).push(row);
         });
 
-        // 院校层次优先级：985 > 211 > 双一流 > 公办本科 > 民办本科 > 公办专科 > 民办专科
-        function getLvPrio(lv){
-            if(!lv) return 99;
-            if(lv==='985'||lv.includes('985')) return 1;
-            if(lv==='211'||lv.includes('211')) return 2;
-            if(lv.includes('双一流')||lv.includes('一流')) return 3;
-            // 公办本科
-            if(lv.includes('公办')&&lv.includes('本科')) return 4;
-            if(lv==='公办') return 4; // 兼容旧数据
-            // 民办本科
-            if(lv.includes('民办')&&lv.includes('本科')) return 5;
-            if(lv==='民办') return 5; // 兼容旧数据
-            // 公办专科
-            if(lv.includes('公办')&&lv.includes('专科')) return 6;
-            // 民办专科
-            if(lv.includes('民办')&&lv.includes('专科')) return 7;
-            return 99;
+        // 院校层次优先级（从collegeFeaturesMap获取）
+        function getLvPrio(schoolName){
+            const features = collegeFeaturesMap[schoolName] || [];
+            if (features.includes('985')) return 1;
+            if (features.includes('211')) return 2;
+            if (features.includes('双一流')) return 3;
+            return 99; // 其他
         }
         
         // 计算院校大拇指数量（特色专业数量）
@@ -1061,7 +1045,7 @@
             if (thumbCountA !== thumbCountB) return thumbCountB - thumbCountA;
 
             // 4. 院校层次优先级
-            return getLvPrio(ga[0].college_level||'') - getLvPrio(gb[0].college_level||'');
+            return getLvPrio(ga[0].name) - getLvPrio(gb[0].name);
         });
 
         const ps=pageSize===0?groups.length:pageSize;
@@ -1170,8 +1154,8 @@
             const schoolCode = school.school_code || majors[0]?.school_code || '-';
             const batch = school.batch || majors[0]?.batch || '-';
             const batchRemark = school.batch_remark || majors[0]?.batch_remark || '';
-            const collegeProvince = school.province || school.college_province || majors[0]?.province || majors[0]?.college_province || '';
-            const collegeCity = school.college_city || majors[0]?.college_city || '';
+            const collegeProvince = school.province || '';
+            const collegeCity = school.college_city || '';
             const provinceTag = collegeProvince ? `<span style="cursor:default;font-weight:600;color:#fff;background:rgba(244,114,182,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(244,114,182,0.3);">${escHtml(collegeProvince)}</span>` : '';
             const cityTag = collegeCity ? `<span style="cursor:default;font-weight:600;color:#fff;background:rgba(244,114,182,0.15);padding:2px 10px;border-radius:4px;border:1px solid rgba(244,114,182,0.3);">${escHtml(collegeCity)}</span>` : '';
             const locationTags = (provinceTag || cityTag) ? `${provinceTag}${collegeProvince && collegeCity ? ' ' : ''}${cityTag}` : '<span style="color:var(--text-secondary);">-</span>';

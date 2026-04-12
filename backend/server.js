@@ -652,7 +652,7 @@ app.post('/api/recommend-from-db', async (req, res) => {
 
       const SELECT_COLS = `
         college_name, college_code, major_name, major_code,
-        major_group_name AS major_group, major_group_code,
+        major_group_code AS major_group, major_group_code,
         group_min_score_1, group_min_rank_1, group_admit_count_1,
         min_score_1 AS min_score, min_rank_1 AS min_rank,
         avg_score_1, avg_rank_1, plan_count_1, admit_count_1,
@@ -726,7 +726,7 @@ app.post('/api/recommend-from-db', async (req, res) => {
       query = `
         SELECT
           college_name, college_code, major_name, major_code,
-          major_group_name AS major_group, major_group_code,
+          major_group_code AS major_group, major_group_code,
           group_min_score_1, group_min_rank_1, group_admit_count_1,
           min_score_1 AS min_score, min_rank_1 AS min_rank,
           avg_score_1, avg_rank_1, plan_count_1, admit_count_1,
@@ -806,7 +806,7 @@ app.post('/api/recommend-from-db', async (req, res) => {
       query = `
         SELECT
           college_name, college_code, major_name, major_code,
-          major_group_name AS major_group, major_group_code,
+          major_group_code AS major_group, major_group_code,
           group_min_score_1, group_min_rank_1, group_admit_count_1,
           min_score_1 AS min_score, min_rank_1 AS min_rank,
           avg_score_1, avg_rank_1, plan_count_1, admit_count_1,
@@ -858,6 +858,8 @@ app.post('/api/recommend-from-db', async (req, res) => {
       let probability;
       let type;
       const majorRank = row.min_rank; // 专业最低位次
+
+      console.log(`📊 推荐计算: userRank=${userRank}, majorRank=${majorRank}, college=${row.college_name}, major=${row.major_name}`);
 
       // 使用位次差计算概率
       if (userRank && majorRank && majorRank > 0) {
@@ -1175,7 +1177,6 @@ app.get('/api/school-group-majors', async (req, res) => {
         major_code,
         major_category,
         major_group_code,
-        major_group_name,
         subject_require,
         subject_type,
         min_score_1 AS min_score,

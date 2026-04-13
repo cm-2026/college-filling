@@ -375,7 +375,7 @@ function renderProvinceMap(d) {
         devicePixelRatio: window.devicePixelRatio || 2
     });
     
-    fetch('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json')
+    fetch('china.json')
         .then(res => res.json())
         .then(geoJson => {
             echarts.registerMap('china', geoJson);

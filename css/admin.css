@@ -76,20 +76,6 @@ body {
     gap: 16px;
 }
 
-.brand-logo {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
-    border-radius: var(--radius-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: 1.25rem;
-    box-shadow: var(--shadow-md);
-}
-
 .brand-info h1 {
     font-size: 1.75rem;
     font-weight: 700;
@@ -748,5 +734,4 @@ select.role-select:focus {
 @media (max-width: 480px) {
     .stats { grid-template-columns: 1fr; }
     .user-card-info { grid-template-columns: 1fr; }
-    .brand-logo { width: 40px; height: 40px; font-size: 1rem; }
 }

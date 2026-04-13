@@ -211,8 +211,6 @@ async function loadDashboard() {
 }
 
 function renderDashboard(d) {
-    const today = new Date();
-    document.getElementById('currentDate').textContent = today.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
     document.getElementById('dashTodayPv').textContent = d.today.pv;
     document.getElementById('dashTodayUv').textContent = d.today.uv;
     document.getElementById('dashTodayRecommend').textContent = d.today.recommendations;

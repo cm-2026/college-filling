@@ -11,6 +11,35 @@ const PORT = 3000;
 // 院校信息缓存（省份、城市）
 let collegeInfoCache = new Map(); // key: school_name, value: {province, city}
 
+// 用户行为记录函数
+async function recordBehavior(userId, behaviorType, behaviorData, req) {
+  try {
+    const ip = req.ip || req.connection.remoteAddress || '';
+    const userAgent = req.get('User-Agent') || '';
+    
+    await pool.execute(
+      'INSERT INTO user_behaviors (user_id, behavior_type, behavior_data, ip, user_agent) VALUES (?, ?, ?, ?, ?)',
+      [userId, behaviorType, JSON.stringify(behaviorData), ip, userAgent.substring(0, 500)]
+    );
+  } catch (error) {
+    console.error('[WARN] 记录行为失败:', error.message);
+  }
+}
+
+// 管理员操作日志函数
+async function recordAdminLog(adminId, adminName, action, targetType, targetId, detail, req) {
+  try {
+    const ip = req.ip || req.connection.remoteAddress || '';
+    
+    await pool.execute(
+      'INSERT INTO admin_logs (admin_id, admin_name, action, target_type, target_id, detail, ip) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [adminId, adminName, action, targetType, targetId, JSON.stringify(detail), ip]
+    );
+  } catch (error) {
+    console.error('[WARN] 记录管理员日志失败:', error.message);
+  }
+}
+
 // MySQL数据库配置
 const dbConfig = {
   host: 'localhost',
@@ -161,6 +190,9 @@ app.post('/api/auth/login', async (req, res) => {
 
     // 更新最后登录时间
     await pool.execute('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
+
+    // 记录登录行为
+    await recordBehavior(user.id, 'login', { username: user.username }, req);
 
     console.log(`✅ 用户登录：${user.username} (角色: ${user.role || 'user'})`);
     res.json({ 
@@ -973,6 +1005,18 @@ app.post('/api/recommend-from-db', async (req, res) => {
       };
     });
 
+    // 记录推荐查询行为（如果有用户ID）
+    const userId = req.body.userId || null;
+    if (userId || score || region) {
+      await recordBehavior(userId, 'recommend', {
+        score,
+        rank,
+        region,
+        subjectCombination,
+        resultCount: recommendations.length
+      }, req);
+    }
+
     res.json({ success: true, data: recommendations });
   } catch (error) {
     console.error('查询院校数据失败:', error);
@@ -1552,6 +1596,122 @@ app.get('/api/admin/stats', async (req, res) => {
   }
 });
 
+// 数据看板API
+app.get('/api/admin/dashboard', async (req, res) => {
+  try {
+    const dashboard = {};
+
+    // 1. 今日数据
+    const [todayBehaviors] = await pool.execute(`
+      SELECT 
+        behavior_type,
+        COUNT(*) as count,
+        COUNT(DISTINCT user_id) as unique_users
+      FROM user_behaviors 
+      WHERE DATE(created_at) = CURDATE()
+      GROUP BY behavior_type
+    `);
+
+    // 查询今日UV(唯一访客数)
+    const [todayUv] = await pool.execute(
+      'SELECT COUNT(DISTINCT user_id) as count FROM user_behaviors WHERE DATE(created_at) = CURDATE() AND user_id IS NOT NULL'
+    );
+
+    const todayStats = {
+      pv: todayBehaviors.reduce((sum, b) => sum + b.count, 0),
+      uv: todayUv[0].count,
+      searches: todayBehaviors.find(b => b.behavior_type === 'search')?.count || 0,
+      recommendations: todayBehaviors.find(b => b.behavior_type === 'recommend')?.count || 0,
+      exports: todayBehaviors.find(b => b.behavior_type === 'export')?.count || 0
+    };
+
+    // 今日新增用户
+    const [todayUsers] = await pool.execute(
+      'SELECT COUNT(*) as count FROM users WHERE DATE(created_at) = CURDATE()'
+    );
+    todayStats.newUsers = todayUsers[0].count;
+
+    dashboard.today = todayStats;
+
+    // 2. 实时在线用户（5分钟内活跃）
+    const [onlineUsers] = await pool.execute(`
+      SELECT COUNT(DISTINCT user_id) as count
+      FROM user_behaviors
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+      AND user_id IS NOT NULL
+    `);
+    dashboard.realtime = { onlineUsers: onlineUsers[0].count };
+
+    // 3. 省份查询排行榜 - 返回所有31个省份（或数据库中有的所有省份）
+    const [provinceRank] = await pool.execute(`
+      SELECT 
+        JSON_EXTRACT(behavior_data, '$.region') as keyword,
+        COUNT(*) as count
+      FROM user_behaviors
+      WHERE behavior_type = 'recommend'
+      AND behavior_data IS NOT NULL
+      AND JSON_EXTRACT(behavior_data, '$.region') IS NOT NULL
+      GROUP BY keyword
+      ORDER BY count DESC
+      LIMIT 34
+    `);
+    dashboard.rankings = { 
+      hotSearches: provinceRank
+        .filter(s => s.keyword && s.keyword !== 'null')
+        .map(s => ({
+          keyword: s.keyword.replace(/"/g, ''),
+          count: s.count
+        }))
+    };
+
+    // 6. 热门院校Top10（从推荐查询的college提取）
+    const [hotColleges] = await pool.execute(`
+      SELECT 
+        JSON_EXTRACT(behavior_data, '$.college') as college_name,
+        COUNT(*) as count
+      FROM user_behaviors
+      WHERE behavior_type = 'recommend'
+      AND behavior_data IS NOT NULL
+      AND JSON_EXTRACT(behavior_data, '$.college') IS NOT NULL
+      GROUP BY college_name
+      ORDER BY count DESC
+      LIMIT 10
+    `);
+    dashboard.rankings.popularColleges = hotColleges
+      .filter(c => c.college_name && c.college_name !== 'null')
+      .map(c => ({
+        college_name: c.college_name.replace(/"/g, ''),
+        count: c.count
+      }));
+
+    // 7. 地区分布（保留用于备选显示）
+    const [regionDist] = await pool.execute(`
+      SELECT 
+        JSON_EXTRACT(behavior_data, '$.region') as province,
+        COUNT(*) as count
+      FROM user_behaviors
+      WHERE behavior_type = 'recommend'
+      AND behavior_data IS NOT NULL
+      GROUP BY province
+      ORDER BY count DESC
+      LIMIT 10
+    `);
+    dashboard.distributions = {
+      regions: regionDist
+        .filter(r => r.province && r.province !== 'null')
+        .map(r => ({
+          province: r.province.replace(/"/g, ''),
+          count: r.count
+        }))
+    };
+
+    res.json({ success: true, data: dashboard });
+  } catch (err) {
+    console.error('❌ 获取数据看板失败:', err.message);
+    res.json({ success: false, message: '服务器错误' });
+  }
+});
+
 // 获取专业推荐顺序
 app.get('/api/major-recommend-order', async (req, res) => {
   try {
@@ -1742,6 +1902,14 @@ app.post('/api/export-excel', async (req, res) => {
       return res.json({ success: false, message: 'Excel文件生成异常' });
     }
     
+    // 记录导出行为
+    const userId = req.body.userId || null;
+    await recordBehavior(userId, 'export', {
+      region,
+      score,
+      schoolCount: schools.length
+    }, req);
+
     // 发送文件
     const fileName = `志愿推荐_${new Date().toISOString().slice(0,10)}.xlsx`;
     res.download(tempExcelPath, fileName, (err) => {

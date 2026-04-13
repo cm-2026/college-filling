@@ -1340,10 +1340,14 @@ app.get('/api/test-connection', async (req, res) => {
 // 获取所有用户列表
 app.get('/api/admin/users', async (req, res) => {
   try {
-    const { search, status, page = 1, pageSize = 20, viewerRole, viewerId } = req.query;
+    const { search, status, page = 1, pageSize = 20, viewerRole, viewerId, sortField, sortOrder } = req.query;
     const pageNum = parseInt(page);
     const pageSizeNum = parseInt(pageSize);
     const offset = (pageNum - 1) * pageSizeNum;
+    
+    const allowedSortFields = ['id', 'created_at', 'last_login'];
+    const validSortField = allowedSortFields.includes(sortField) ? sortField : 'created_at';
+    const validSortOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
     let sql = 'SELECT id, phone, username, password, status, role, created_at, last_login FROM users';
     let countSql = 'SELECT COUNT(*) as total FROM users';
@@ -1391,7 +1395,7 @@ app.get('/api/admin/users', async (req, res) => {
     const total = countRows[0].total;
 
     // 查询用户列表（使用模板字符串避免LIMIT/OFFSET参数绑定问题）
-    sql += ` ORDER BY created_at DESC LIMIT ${pageSizeNum} OFFSET ${offset}`;
+    sql += ` ORDER BY ${validSortField} ${validSortOrder} LIMIT ${pageSizeNum} OFFSET ${offset}`;
     const [rows] = await pool.execute(sql, params);
 
     res.json({

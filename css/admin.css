@@ -391,6 +391,46 @@ body {
     box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
 }
 
+/* ===== Table Sortable ===== */
+.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.sortable:hover {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.sort-icon {
+    display: inline-block;
+    margin-left: 6px;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+    vertical-align: middle;
+}
+
+.sort-icon::after {
+    content: '⇅';
+    font-size: 0.85em;
+}
+
+.sortable:hover .sort-icon {
+    opacity: 0.6;
+}
+
+.sort-icon.asc::after {
+    content: '↑';
+    opacity: 1;
+    color: var(--primary-600);
+}
+
+.sort-icon.desc::after {
+    content: '↓';
+    opacity: 1;
+    color: var(--primary-600);
+}
+
 /* ===== Table ===== */
 .table-desktop {
     display: block;

@@ -149,14 +149,23 @@
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th class="sortable" onclick="sortBy('id')">
+                            ID
+                            <span class="sort-icon" id="sort-id"></span>
+                        </th>
                         <th>用户名</th>
                         <th>手机号</th>
                         <th>密码</th>
                         <th>状态</th>
                         <th>身份</th>
-                        <th>注册时间</th>
-                        <th>最后登录</th>
+                        <th class="sortable" onclick="sortBy('created_at')">
+                            注册时间
+                            <span class="sort-icon" id="sort-created_at"></span>
+                        </th>
+                        <th class="sortable" onclick="sortBy('last_login')">
+                            最后登录
+                            <span class="sort-icon" id="sort-last_login"></span>
+                        </th>
                         <th>操作</th>
                     </tr>
                 </thead>

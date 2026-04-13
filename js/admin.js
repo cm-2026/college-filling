@@ -4,6 +4,29 @@ var pageSize = 20;
 var totalUsers = 0;
 var totalPages = 0;
 var currentTab = 'users';
+var sortField = '';
+var sortOrder = '';
+
+function sortBy(field) {
+    if (sortField === field) {
+        sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortField = field;
+        sortOrder = 'desc';
+    }
+    
+    document.querySelectorAll('.sort-icon').forEach(icon => {
+        icon.classList.remove('asc', 'desc');
+    });
+    
+    var currentIcon = document.getElementById('sort-' + field);
+    if (currentIcon) {
+        currentIcon.classList.add(sortOrder);
+    }
+    
+    currentPage = 1;
+    loadUsers();
+}
 
 function switchTab(tab) {
     currentTab = tab;
@@ -39,6 +62,8 @@ async function loadUsers() {
     params += '&viewerId=' + encodeURIComponent(viewerId);
     if (search) params += '&search=' + encodeURIComponent(search);
     if (status !== '') params += '&status=' + status;
+    if (sortField) params += '&sortField=' + encodeURIComponent(sortField);
+    if (sortOrder) params += '&sortOrder=' + encodeURIComponent(sortOrder);
 
     try {
         var res = await fetch(API_BASE + '/admin/users?' + params);

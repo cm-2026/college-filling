@@ -21,12 +21,36 @@
     <div class="container">
         <!-- 页面头部 -->
         <header class="page-header">
+            <!-- 标签页切换 -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('users')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    用户管理
+                </button>
+                <button class="tab-btn" onclick="switchTab('dashboard')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    数据看板
+                </button>
+            </div>
+            
+            <!-- 账户名称 -->
             <div class="brand-section">
                 <div class="brand-info">
                     <h1 id="pageTitle">后台管理系统</h1>
-                    <p class="subtitle">权鼎教育 · 升学规划师系统</p>
                 </div>
             </div>
+            
+            <!-- 退出按钮 -->
             <div class="header-actions">
                 <button class="btn btn-secondary" onclick="logout()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -38,28 +62,6 @@
                 </button>
             </div>
         </header>
-        
-        <!-- 标签页切换 -->
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('users')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                用户管理
-            </button>
-            <button class="tab-btn" onclick="switchTab('dashboard')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                </svg>
-                数据看板
-            </button>
-        </div>
 
         <!-- 用户管理标签页 -->
         <div id="usersTab" class="tab-content">

@@ -63,9 +63,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 8px;
+    gap: 24px;
+    margin-bottom: 32px;
     padding-bottom: 24px;
     border-bottom: 1px solid var(--border-light);
 }
@@ -73,20 +72,15 @@ body {
 .brand-section {
     display: flex;
     align-items: center;
-    gap: 16px;
+    flex: 1;
+    justify-content: center;
 }
 
 .brand-info h1 {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: -0.025em;
     color: var(--text-primary);
-    margin-bottom: 4px;
-}
-
-.brand-info .subtitle {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
     margin: 0;
 }
 
@@ -100,12 +94,10 @@ body {
 .tabs {
     display: flex;
     gap: 4px;
-    margin: 24px 0 32px;
     align-items: center;
     background: var(--bg-card);
     padding: 6px;
     border-radius: var(--radius-full);
-    width: fit-content;
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
 }
@@ -698,16 +690,28 @@ select.role-select:focus {
 
 @media (max-width: 768px) {
     .container { padding: 20px 16px; }
-    .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
-    .brand-section { width: 100%; }
-    .brand-info h1 { font-size: 1.5rem; }
-    .header-actions { width: 100%; justify-content: flex-end; }
+    .page-header { 
+        flex-direction: column; 
+        align-items: stretch; 
+        gap: 16px;
+    }
+    .tabs { 
+        width: 100%; 
+        justify-content: center;
+    }
+    .brand-section { 
+        justify-content: center; 
+    }
+    .brand-info h1 { font-size: 1.25rem; text-align: center; }
+    .header-actions { 
+        width: 100%; 
+        justify-content: center; 
+    }
     .stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .stat-card { padding: 16px; }
     .stat-icon { width: 32px; height: 32px; }
     .stat-icon svg { width: 16px; height: 16px; }
     .stat-value { font-size: 1.5rem; }
-    .tabs { width: 100%; }
     .tab-btn { padding: 10px 16px; font-size: 0.85rem; flex: 1; justify-content: center; }
     .toolbar { flex-direction: column; align-items: stretch; gap: 12px; padding: 12px 16px; }
     .search-box { min-width: auto; }

@@ -64,70 +64,60 @@
 
         <!-- 用户管理标签页 -->
         <div id="usersTab" class="tab-content">
-            <div class="stats">
-                <div class="stat-card primary">
-                    <div class="stat-header">
+            <div class="stats-grid">
+                <div class="stat-card-modern">
+                    <div class="stat-icon-wrap blue">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
                         <div class="stat-label">总用户数</div>
-                        <div class="stat-icon primary">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="stat-value" id="statTotal">-</div>
-                    <div class="stat-trend up">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                            <polyline points="17 6 23 6 23 12"></polyline>
-                        </svg>
-                        持续增长
+                        <div class="stat-value-large" id="statTotal">-</div>
+                        <div class="stat-desc">持续增长</div>
                     </div>
                 </div>
-                <div class="stat-card success">
-                    <div class="stat-header">
+                <div class="stat-card-modern">
+                    <div class="stat-icon-wrap green">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
                         <div class="stat-label">今日新增</div>
-                        <div class="stat-icon success">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                        </div>
+                        <div class="stat-value-large" id="statToday">-</div>
+                        <div class="stat-desc">今日实时</div>
                     </div>
-                    <div class="stat-value" id="statToday">-</div>
-                    <div class="stat-trend neutral">今日实时</div>
                 </div>
-                <div class="stat-card info">
-                    <div class="stat-header">
-                        <div class="stat-label">活跃用户</div>
-                        <div class="stat-icon info">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="stat-value" id="statActive">-</div>
-                    <div class="stat-trend up">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
-                            <polyline points="17 18 23 18 23 12"></polyline>
+                <div class="stat-card-modern">
+                    <div class="stat-icon-wrap purple">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                         </svg>
-                        活跃度高
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">活跃用户</div>
+                        <div class="stat-value-large" id="statActive">-</div>
+                        <div class="stat-desc">活跃度高</div>
                     </div>
                 </div>
-                <div class="stat-card danger">
-                    <div class="stat-header">
-                        <div class="stat-label">已禁用</div>
-                        <div class="stat-icon danger">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="15" y1="9" x2="9" y2="15"></line>
-                                <line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                        </div>
+                <div class="stat-card-modern">
+                    <div class="stat-icon-wrap red">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
                     </div>
-                    <div class="stat-value" id="statDisabled">-</div>
-                    <div class="stat-trend neutral">需要关注</div>
+                    <div class="stat-content">
+                        <div class="stat-label">已禁用</div>
+                        <div class="stat-value-large" id="statDisabled">-</div>
+                        <div class="stat-desc">需要关注</div>
+                    </div>
                 </div>
             </div>
 

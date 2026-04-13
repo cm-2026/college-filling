@@ -1533,7 +1533,6 @@ app.get('/api/admin/stats', async (req, res) => {
   try {
     const { viewerRole, viewerId } = req.query;
 
-    // 根据身份构建WHERE条件
     let roleCondition = '';
     let params = [];
     if (viewerRole === 'admin') {
@@ -1549,49 +1548,27 @@ app.get('/api/admin/stats', async (req, res) => {
       }
     }
 
-    // 总用户数
-    let totalSql = 'SELECT COUNT(*) as total FROM users';
-    let totalParams = [];
-    if (roleCondition) {
-      totalSql += ' WHERE ' + roleCondition;
-      totalParams = [...params];
-    }
-    const [totalRows] = await pool.execute(totalSql, totalParams);
-
-    // 今日新增
-    let todaySql = 'SELECT COUNT(*) as total FROM users WHERE DATE(created_at) = CURDATE()';
-    let todayParams = [];
-    if (roleCondition) {
-      todaySql = 'SELECT COUNT(*) as total FROM users WHERE ' + roleCondition + ' AND DATE(created_at) = CURDATE()';
-      todayParams = [...params];
-    }
-    const [todayRows] = await pool.execute(todaySql, todayParams);
-
-    // 活跃用户（最近7天登录）
-    let activeSql = 'SELECT COUNT(*) as total FROM users WHERE last_login >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
-    let activeParams = [];
-    if (roleCondition) {
-      activeSql = 'SELECT COUNT(*) as total FROM users WHERE ' + roleCondition + ' AND last_login >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
-      activeParams = [...params];
-    }
-    const [activeRows] = await pool.execute(activeSql, activeParams);
-
-    // 被禁用用户
-    let disabledSql = 'SELECT COUNT(*) as total FROM users WHERE status = 0';
-    let disabledParams = [];
-    if (roleCondition) {
-      disabledSql = 'SELECT COUNT(*) as total FROM users WHERE ' + roleCondition + ' AND status = 0';
-      disabledParams = [...params];
-    }
-    const [disabledRows] = await pool.execute(disabledSql, disabledParams);
+    let whereClause = roleCondition ? ' WHERE ' + roleCondition : '';
+    let sql = `
+      SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as todayNew,
+        SUM(CASE WHEN last_login >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as active,
+        SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as disabled
+      FROM users
+      ${whereClause}
+    `;
+    
+    const [rows] = await pool.execute(sql, params);
+    const stats = rows[0];
 
     res.json({
       success: true,
       data: {
-        total: totalRows[0].total,
-        todayNew: todayRows[0].total,
-        active: activeRows[0].total,
-        disabled: disabledRows[0].total
+        total: stats.total,
+        todayNew: stats.todayNew || 0,
+        active: stats.active || 0,
+        disabled: stats.disabled || 0
       }
     });
   } catch (err) {

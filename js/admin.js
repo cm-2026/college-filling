@@ -6,6 +6,22 @@ var totalPages = 0;
 var currentTab = 'users';
 var sortField = '';
 var sortOrder = '';
+var echartsLoaded = false;
+
+function loadEcharts(callback) {
+    if (window.echarts) {
+        echartsLoaded = true;
+        if (callback) callback();
+        return;
+    }
+    var script = document.createElement('script');
+    script.src = 'https://cdn.bootcdn.net/ajax/libs/echarts/5.4.3/echarts.min.js';
+    script.onload = function() {
+        echartsLoaded = true;
+        if (callback) callback();
+    };
+    document.head.appendChild(script);
+}
 
 function sortBy(field) {
     if (sortField === field) {
@@ -34,7 +50,13 @@ function switchTab(tab) {
     event.target.classList.add('active');
     document.getElementById('usersTab').style.display = tab === 'users' ? 'block' : 'none';
     document.getElementById('dashboardTab').style.display = tab === 'dashboard' ? 'block' : 'none';
-    if (tab === 'dashboard') { loadDashboard(); }
+    if (tab === 'dashboard') {
+        if (!echartsLoaded) {
+            loadEcharts(loadDashboard);
+        } else {
+            loadDashboard();
+        }
+    }
 }
 
 async function loadStats() {

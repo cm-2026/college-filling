@@ -50,12 +50,21 @@ function switchTab(tab) {
     event.target.classList.add('active');
     document.getElementById('usersTab').style.display = tab === 'users' ? 'block' : 'none';
     document.getElementById('dashboardTab').style.display = tab === 'dashboard' ? 'block' : 'none';
+    document.getElementById('majorCategoryTab').style.display = tab === 'majorCategory' ? 'block' : 'none';
+    document.getElementById('admissionPlanTab').style.display = tab === 'admissionPlan' ? 'block' : 'none';
     if (tab === 'dashboard') {
         if (!echartsLoaded) {
             loadEcharts(loadDashboard);
         } else {
             loadDashboard();
         }
+    }
+    if (tab === 'majorCategory') {
+        loadMajorCategory();
+    }
+    if (tab === 'admissionPlan') {
+        loadAdmissionPlanProvinces();
+        loadAdmissionPlan();
     }
 }
 
@@ -146,8 +155,8 @@ function renderUsers(users) {
 }
 
 function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    if (str == null) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function formatDate(dateStr) {
@@ -496,7 +505,620 @@ window.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    // 只有 root 身份才能看到专业分类面板
+    if (role !== 'root') {
+        var mcBtns = document.querySelectorAll('[onclick="switchTab(\'majorCategory\')"]');
+        mcBtns.forEach(function(btn) {
+            btn.style.display = 'none';
+        });
+    }
+
     showLoginInfo();
     loadStats();
     loadUsers();
+});
+
+// ====================================================
+// 专业分类管理
+// ====================================================
+var mcData = [];
+var mcAllData = [];
+var mcExpandedNodes = new Set(); // 记录展开的节点ID
+
+async function loadMajorCategory() {
+    try {
+        var res = await fetch(API_BASE + '/major-category');
+        var data = await res.json();
+        if (data.success) {
+            mcAllData = data.data || [];
+            mcData = buildTree(mcAllData);
+            renderMajorCategoryTree();
+        } else {
+            document.getElementById('majorCategoryTree').innerHTML = '<div class="loading">加载失败: ' + (data.error || '未知错误') + '</div>';
+        }
+    } catch (e) {
+        console.error('加载专业分类失败:', e);
+        document.getElementById('majorCategoryTree').innerHTML = '<div class="loading">网络错误</div>';
+    }
+}
+
+function buildTree(data) {
+    var map = {};
+    var roots = [];
+    
+    data.forEach(function(item) {
+        map[item.id] = item;
+        item.children = [];
+    });
+    
+    data.forEach(function(item) {
+        if (item.parent_id && map[item.parent_id]) {
+            map[item.parent_id].children.push(item);
+        } else if (item.level === 1) {
+            roots.push(item);
+        }
+    });
+    
+    return roots;
+}
+
+function renderMajorCategoryTree() {
+    var container = document.getElementById('majorCategoryTree');
+    if (!mcData || mcData.length === 0) {
+        container.innerHTML = '<div class="loading">暂无数据</div>';
+        return;
+    }
+    
+    container.innerHTML = renderTreeNode(mcData, 0);
+}
+
+function renderTreeNode(nodes, depth) {
+    var html = '';
+    nodes.forEach(function(node) {
+        var hasChildren = node.children && node.children.length > 0;
+        var levelName = ['', '顶层', '学科门类', '专业类', '专业'][node.level] || '未知';
+        var indent = depth * 24;
+        var statusClass = node.status === 1 ? 'status-active' : 'status-disabled';
+        
+        html += '<div class="tree-node" data-id="' + node.id + '" style="padding-left:' + indent + 'px;">';
+        html += '<div class="tree-node-content">';
+        
+        var isExpanded = mcExpandedNodes.has(node.id);
+        
+        if (hasChildren) {
+            html += '<span class="tree-toggle ' + (isExpanded ? 'expanded' : 'collapsed') + '" onclick="toggleTreeNode(this)">▶</span>';
+        } else {
+            html += '<span class="tree-toggle"></span>';
+        }
+        
+        html += '<span class="tree-code">' + escapeHtml(node.code) + '</span>';
+        html += '<span class="tree-name">' + escapeHtml(node.name) + '</span>';
+        html += '<span class="tree-level">' + levelName + '</span>';
+        html += '<span class="tree-status ' + statusClass + '">' + (node.status === 1 ? '正常' : '禁用') + '</span>';
+        
+        if (node.category_name) {
+            html += '<span class="tree-extra">门类: ' + escapeHtml(node.category_name) + '</span>';
+        }
+        if (node.class_name) {
+            html += '<span class="tree-extra">类: ' + escapeHtml(node.class_name) + '</span>';
+        }
+        
+        html += '<div class="tree-actions">';
+        if (node.level < 4) {
+            html += '<button class="btn btn-sm btn-success" onclick="addChildMajorCategory(' + node.id + ', ' + node.level + ')">添加子节点</button>';
+        }
+        html += '<button class="btn btn-sm btn-primary" onclick="editMajorCategory(' + node.id + ')">编辑</button>';
+        html += '<button class="btn btn-sm btn-danger" onclick="deleteMajorCategory(' + node.id + ')">删除</button>';
+        html += '</div>';
+        
+        html += '</div>';
+        
+        if (hasChildren) {
+            html += '<div class="tree-children" style="display:' + (isExpanded ? 'block' : 'none') + ';">';
+            html += renderTreeNode(node.children, depth + 1);
+            html += '</div>';
+        }
+        
+        html += '</div>';
+    });
+    return html;
+}
+
+function toggleTreeNode(el) {
+    var node = el.closest('.tree-node');
+    var children = node.querySelector('.tree-children');
+    if (!children) return;
+    
+    var nodeId = parseInt(node.dataset.id);
+    
+    if (el.classList.contains('expanded')) {
+        el.classList.remove('expanded');
+        el.classList.add('collapsed');
+        el.textContent = '▶';
+        children.style.display = 'none';
+        mcExpandedNodes.delete(nodeId);
+    } else {
+        el.classList.remove('collapsed');
+        el.classList.add('expanded');
+        el.textContent = '▼';
+        children.style.display = 'block';
+        mcExpandedNodes.add(nodeId);
+    }
+}
+
+function addChildMajorCategory(parentId, parentLevel) {
+    // 子节点层级 = 父节点层级 + 1
+    var childLevel = parentLevel + 1;
+    
+    // 确保父节点展开
+    mcExpandedNodes.add(parentId);
+    
+    // 根据父节点生成默认编码
+    var parent = mcAllData.find(function(i) { return i.id === parentId; });
+    var defaultCode = generateDefaultCode(parent, childLevel);
+    
+    showMajorCategoryModal(parentId, childLevel, defaultCode);
+}
+
+function generateDefaultCode(parent, childLevel) {
+    if (!parent) return '';
+    
+    // 获取同父节点下的所有子节点
+    var siblings = mcAllData.filter(function(i) { return i.parent_id === parent.id; });
+    
+    if (childLevel === 2) {
+        // 学科门类：两位数字，找最大值+1
+        var maxCode = 0;
+        siblings.forEach(function(s) {
+            var codeNum = parseInt(s.code) || 0;
+            if (codeNum > maxCode) maxCode = codeNum;
+        });
+        return String(maxCode + 1).padStart(2, '0');
+    } else if (childLevel === 3) {
+        // 专业类：父级门类编码 + 两位序号
+        var prefix = parent.code;
+        var maxSuffix = 0;
+        siblings.forEach(function(s) {
+            if (s.code && s.code.startsWith(prefix)) {
+                var suffix = parseInt(s.code.slice(prefix.length)) || 0;
+                if (suffix > maxSuffix) maxSuffix = suffix;
+            }
+        });
+        return prefix + String(maxSuffix + 1).padStart(2, '0');
+    } else if (childLevel === 4) {
+        // 专业：父级专业类编码 + 两位序号
+        var prefix = parent.code;
+        var maxSuffix = 0;
+        siblings.forEach(function(s) {
+            if (s.code && s.code.startsWith(prefix)) {
+                var suffix = parseInt(s.code.slice(prefix.length)) || 0;
+                if (suffix > maxSuffix) maxSuffix = suffix;
+            }
+        });
+        return prefix + String(maxSuffix + 1).padStart(2, '0');
+    }
+    
+    return '';
+}
+
+function showMajorCategoryModal(parentId, level, defaultCode) {
+    document.getElementById('mcModalTitle').textContent = '新增专业分类';
+    document.getElementById('mcId').value = '';
+    document.getElementById('mcCode').value = defaultCode || '';
+    document.getElementById('mcName').value = '';
+    document.getElementById('mcLevel').value = level || '2';
+    document.getElementById('mcStatus').value = '1';
+    
+    updateParentOptions();
+    
+    if (parentId) {
+        document.getElementById('mcParentId').value = parentId;
+    }
+    
+    document.getElementById('majorCategoryModal').style.display = 'flex';
+}
+
+function closeMajorCategoryModal() {
+    document.getElementById('majorCategoryModal').style.display = 'none';
+}
+
+function updateParentOptions() {
+    var level = parseInt(document.getElementById('mcLevel').value);
+    var parentLevel = level - 1;
+    var parentSelect = document.getElementById('mcParentId');
+    
+    var options = '<option value="">无</option>';
+    
+    if (parentLevel >= 1) {
+        var parents = mcAllData.filter(function(item) { return item.level === parentLevel; });
+        parents.forEach(function(p) {
+            options += '<option value="' + p.id + '">' + escapeHtml(p.code) + ' - ' + escapeHtml(p.name) + '</option>';
+        });
+    }
+    
+    parentSelect.innerHTML = options;
+    
+    // 显示/隐藏父级选择
+    document.getElementById('mcParentGroup').style.display = parentLevel >= 1 ? 'block' : 'none';
+}
+
+async function editMajorCategory(id) {
+    var item = mcAllData.find(function(i) { return i.id === id; });
+    if (!item) return;
+    
+    document.getElementById('mcModalTitle').textContent = '编辑专业分类';
+    document.getElementById('mcId').value = item.id;
+    document.getElementById('mcCode').value = item.code;
+    document.getElementById('mcName').value = item.name;
+    document.getElementById('mcLevel').value = item.level;
+    document.getElementById('mcStatus').value = item.status;
+    
+    updateParentOptions();
+    
+    if (item.parent_id) {
+        document.getElementById('mcParentId').value = item.parent_id;
+    }
+    
+    document.getElementById('majorCategoryModal').style.display = 'flex';
+}
+
+async function deleteMajorCategory(id) {
+    if (!confirm('确认删除此分类？如果存在子分类，将一并删除！')) return;
+    
+    try {
+        var res = await fetch(API_BASE + '/major-category/' + id, {
+            method: 'DELETE'
+        });
+        var data = await res.json();
+        alert(data.message || (data.success ? '删除成功' : '删除失败'));
+        if (data.success) {
+            loadMajorCategory();
+        }
+    } catch (e) {
+        alert('网络错误');
+    }
+}
+
+document.getElementById('mcForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    var id = document.getElementById('mcId').value;
+    var code = document.getElementById('mcCode').value.trim();
+    var name = document.getElementById('mcName').value.trim();
+    var level = parseInt(document.getElementById('mcLevel').value);
+    var parentId = document.getElementById('mcParentId').value;
+    var status = parseInt(document.getElementById('mcStatus').value);
+    
+    if (!code || !name) {
+        alert('请填写编码和名称');
+        return;
+    }
+    
+    var body = {
+        code: code,
+        name: name,
+        level: level,
+        status: status
+    };
+    
+    if (parentId) {
+        body.parent_id = parseInt(parentId);
+    }
+    
+    // 设置冗余字段和 top_code
+    if (level >= 2) {
+        var parent = mcAllData.find(function(i) { return i.id === parseInt(parentId); });
+        if (parent) {
+            // 设置 top_code
+            body.top_code = parent.top_code || parent.code;
+            
+            if (level === 2) {
+                body.category_code = code;
+                body.category_name = name;
+            } else if (level === 3) {
+                body.category_code = parent.category_code || parent.code;
+                body.category_name = parent.category_name || parent.name;
+                body.class_code = code;
+                body.class_name = name;
+            } else if (level === 4) {
+                body.category_code = parent.category_code || parent.code;
+                body.category_name = parent.category_name || parent.name;
+                body.class_code = parent.class_code || parent.code;
+                body.class_name = parent.class_name || parent.name;
+            }
+        }
+    } else if (level === 1) {
+        // 顶层节点，top_code 就是自己的 code
+        body.top_code = code;
+    }
+    
+    try {
+        var url = API_BASE + '/major-category' + (id ? '/' + id : '');
+        var method = id ? 'PUT' : 'POST';
+        
+        var res = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body)
+        });
+        var data = await res.json();
+        if (data.success) {
+            closeMajorCategoryModal();
+            loadMajorCategory();
+        } else {
+            alert(data.message || '保存失败');
+        }
+    } catch (e) {
+        alert('网络错误');
+    }
+});
+
+// ====================================================
+// 招生计划管理
+// ====================================================
+var apCurrentPage = 1;
+var apPageSize = 10; // 每页显示10条
+var apTotalPages = 0;
+var apTotalCount = 0; // 总数据量
+
+async function loadAdmissionPlanProvinces() {
+    try {
+        var res = await fetch(API_BASE + '/admission-plan/provinces');
+        var data = await res.json();
+        if (data.success) {
+            var select = document.getElementById('apProvinceFilter');
+            select.innerHTML = '<option value="">全部省份</option>';
+            data.data.forEach(function(province) {
+                select.innerHTML += '<option value="' + escapeHtml(province) + '">' + escapeHtml(province) + '</option>';
+            });
+        }
+    } catch (e) {
+        console.error('加载省份列表失败:', e);
+    }
+}
+
+async function loadAdmissionPlan() {
+    var province = document.getElementById('apProvinceFilter').value;
+    var subjectType = document.getElementById('apSubjectTypeFilter').value;
+    var search = document.getElementById('apSearchInput').value;
+    
+    var params = 'page=' + apCurrentPage + '&pageSize=' + apPageSize;
+    if (province) params += '&province=' + encodeURIComponent(province);
+    if (subjectType) params += '&subject_type=' + encodeURIComponent(subjectType);
+    if (search) params += '&search=' + encodeURIComponent(search);
+
+    try {
+        var res = await fetch(API_BASE + '/admission-plan?' + params);
+        var data = await res.json();
+        if (data.success) {
+            renderAdmissionPlan(data.data);
+            apTotalPages = data.pagination.totalPages;
+            apTotalCount = data.pagination.total;
+            renderAdmissionPlanPagination();
+        } else {
+            document.getElementById('admissionPlanBody').innerHTML = '<tr><td colspan="26" class="loading">' + (data.message || '加载失败') + '</td></tr>';
+        }
+    } catch (e) {
+        console.error('加载招生计划失败:', e);
+        document.getElementById('admissionPlanBody').innerHTML = '<tr><td colspan="26" class="loading">网络错误</td></tr>';
+    }
+}
+
+function renderAdmissionPlan(data) {
+    if (!data || data.length === 0) {
+        document.getElementById('admissionPlanBody').innerHTML = '<tr><td colspan="26" class="loading">暂无数据</td></tr>';
+        return;
+    }
+
+    var html = '';
+    data.forEach(function(item) {
+        html += '<tr>';
+        html += '<td>' + escapeHtml(item.id || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.year || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.college_code || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.college_name || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.major_name || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.major_code || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.major_group_code || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.subject_type || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.subject_require || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.major_level || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.source_province || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.category || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.major_category || '-') + '</td>';
+        html += '<td>' + (item.min_score_1 != null ? item.min_score_1 : '-') + '</td>';
+        html += '<td>' + (item.min_rank_1 != null ? Number(item.min_rank_1).toLocaleString() : '-') + '</td>';
+        html += '<td>' + (item.group_min_score_1 != null ? item.group_min_score_1 : '-') + '</td>';
+        html += '<td>' + (item.group_min_rank_1 != null ? Number(item.group_min_rank_1).toLocaleString() : '-') + '</td>';
+        html += '<td>' + (item.avg_score_1 != null ? item.avg_score_1 : '-') + '</td>';
+        html += '<td>' + (item.avg_rank_1 != null ? Number(item.avg_rank_1).toLocaleString() : '-') + '</td>';
+        html += '<td>' + (item.plan_count_1 != null ? item.plan_count_1 : '-') + '</td>';
+        html += '<td>' + (item.admit_count_1 != null ? item.admit_count_1 : '-') + '</td>';
+        html += '<td>' + (item.group_admit_count_1 != null ? item.group_admit_count_1 : '-') + '</td>';
+        html += '<td>' + escapeHtml(item.batch || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.batch_remark || '-') + '</td>';
+        html += '<td>' + escapeHtml(item.major_remark || '-') + '</td>';
+        html += '<td>';
+        html += '<button class="btn btn-sm btn-primary" onclick="editAdmissionPlan(' + item.id + ')">编辑</button>';
+        html += '<button class="btn btn-sm btn-danger" onclick="deleteAdmissionPlan(' + item.id + ')">删除</button>';
+        html += '</td>';
+        html += '</tr>';
+    });
+    
+    document.getElementById('admissionPlanBody').innerHTML = html;
+}
+
+function renderAdmissionPlanPagination() {
+    if (apTotalPages <= 1) {
+        var oldPagination = document.getElementById('apPagination');
+        if (oldPagination) oldPagination.innerHTML = '<span class="pagination-info">共 ' + apTotalCount + ' 条记录</span>';
+        return;
+    }
+    
+    var paginationHtml = '<span class="pagination-info">第' + apCurrentPage + '/' + apTotalPages + '页，共 ' + apTotalCount + ' 条</span>';
+    paginationHtml += '<button class="btn btn-secondary" onclick="goToAdmissionPlanPage(1)" ' + (apCurrentPage === 1 ? 'disabled' : '') + '>首页</button>';
+    paginationHtml += '<button class="btn btn-secondary" onclick="goToAdmissionPlanPage(' + (apCurrentPage - 1) + ')" ' + (apCurrentPage === 1 ? 'disabled' : '') + '>上一页</button>';
+    paginationHtml += '<button class="btn btn-secondary" onclick="goToAdmissionPlanPage(' + (apCurrentPage + 1) + ')" ' + (apCurrentPage >= apTotalPages ? 'disabled' : '') + '>下一页</button>';
+    paginationHtml += '<button class="btn btn-secondary" onclick="goToAdmissionPlanPage(' + apTotalPages + ')" ' + (apCurrentPage >= apTotalPages ? 'disabled' : '') + '>末页</button>';
+
+    document.getElementById('apPagination').innerHTML = paginationHtml;
+}
+
+function goToAdmissionPlanPage(page) {
+    if (page < 1 || page > apTotalPages) return;
+    apCurrentPage = page;
+    loadAdmissionPlan();
+}
+
+function showAdmissionPlanModal(id) {
+    document.getElementById('apModalTitle').textContent = id ? '编辑招生计划' : '新增招生计划';
+    document.getElementById('apId').value = '';
+    document.getElementById('apYear').value = '2025';
+    document.getElementById('apCollegeCode').value = '';
+    document.getElementById('apCollegeName').value = '';
+    document.getElementById('apMajorCode').value = '';
+    document.getElementById('apMajorName').value = '';
+    document.getElementById('apMajorGroupCode').value = '';
+    document.getElementById('apSourceProvince').value = '河北';
+    document.getElementById('apSubjectType').value = '物理';
+    document.getElementById('apSubjectRequire').value = '';
+    document.getElementById('apMajorLevel').value = '本科';
+    document.getElementById('apCategory').value = '';
+    document.getElementById('apMajorCategory').value = '';
+    document.getElementById('apMinScore').value = '';
+    document.getElementById('apMinRank').value = '';
+    document.getElementById('apGroupMinScore').value = '';
+    document.getElementById('apGroupMinRank').value = '';
+    document.getElementById('apAvgScore').value = '';
+    document.getElementById('apAvgRank').value = '';
+    document.getElementById('apPlanCount').value = '';
+    document.getElementById('apAdmitCount').value = '';
+    document.getElementById('apGroupAdmitCount').value = '';
+    document.getElementById('apBatch').value = '';
+    document.getElementById('apBatchRemark').value = '';
+    document.getElementById('apMajorRemark').value = '';
+    
+    document.getElementById('admissionPlanModal').style.display = 'flex';
+}
+
+function closeAdmissionPlanModal() {
+    document.getElementById('admissionPlanModal').style.display = 'none';
+}
+
+async function editAdmissionPlan(id) {
+    // 直接通过ID查询该条记录
+    try {
+        var res = await fetch(API_BASE + '/admission-plan/' + id);
+        var data = await res.json();
+        if (data.success) {
+            var item = data.data;
+            
+            document.getElementById('apModalTitle').textContent = '编辑招生计划';
+            document.getElementById('apId').value = item.id;
+            document.getElementById('apYear').value = item.year || '2025';
+            document.getElementById('apCollegeCode').value = item.college_code || '';
+            document.getElementById('apCollegeName').value = item.college_name || '';
+            document.getElementById('apMajorCode').value = item.major_code || '';
+            document.getElementById('apMajorName').value = item.major_name || '';
+            document.getElementById('apMajorGroupCode').value = item.major_group_code || '';
+            document.getElementById('apSourceProvince').value = item.source_province || '河北';
+            document.getElementById('apSubjectType').value = item.subject_type || '物理';
+            document.getElementById('apSubjectRequire').value = item.subject_require || '';
+            document.getElementById('apMajorLevel').value = item.major_level || '本科';
+            document.getElementById('apCategory').value = item.category || '';
+            document.getElementById('apMajorCategory').value = item.major_category || '';
+            document.getElementById('apMinScore').value = item.min_score_1 || '';
+            document.getElementById('apMinRank').value = item.min_rank_1 || '';
+            document.getElementById('apGroupMinScore').value = item.group_min_score_1 || '';
+            document.getElementById('apGroupMinRank').value = item.group_min_rank_1 || '';
+            document.getElementById('apAvgScore').value = item.avg_score_1 || '';
+            document.getElementById('apAvgRank').value = item.avg_rank_1 || '';
+            document.getElementById('apPlanCount').value = item.plan_count_1 || '';
+            document.getElementById('apAdmitCount').value = item.admit_count_1 || '';
+            document.getElementById('apGroupAdmitCount').value = item.group_admit_count_1 || '';
+            document.getElementById('apBatch').value = item.batch || '';
+            document.getElementById('apBatchRemark').value = item.batch_remark || '';
+            document.getElementById('apMajorRemark').value = item.major_remark || '';
+            
+            document.getElementById('admissionPlanModal').style.display = 'flex';
+        } else {
+            alert('未找到记录');
+        }
+    } catch (e) {
+        alert('网络错误');
+    }
+}
+
+async function deleteAdmissionPlan(id) {
+    if (!confirm('确认删除此招生计划？')) return;
+    
+    try {
+        var res = await fetch(API_BASE + '/admission-plan/' + id, {
+            method: 'DELETE'
+        });
+        var data = await res.json();
+        alert(data.message || (data.success ? '删除成功' : '删除失败'));
+        if (data.success) {
+            loadAdmissionPlan();
+        }
+    } catch (e) {
+        alert('网络错误');
+    }
+}
+
+document.getElementById('apForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    var id = document.getElementById('apId').value;
+    var body = {
+        year: document.getElementById('apYear').value || 2025,
+        college_code: document.getElementById('apCollegeCode').value.trim(),
+        college_name: document.getElementById('apCollegeName').value.trim(),
+        major_code: document.getElementById('apMajorCode').value.trim() || null,
+        major_name: document.getElementById('apMajorName').value.trim(),
+        major_group_code: document.getElementById('apMajorGroupCode').value.trim() || null,
+        subject_type: document.getElementById('apSubjectType').value,
+        subject_require: document.getElementById('apSubjectRequire').value.trim() || null,
+        major_level: document.getElementById('apMajorLevel').value || '本科',
+        source_province: document.getElementById('apSourceProvince').value.trim() || '河北',
+        category: document.getElementById('apCategory').value.trim() || null,
+        major_category: document.getElementById('apMajorCategory').value.trim() || null,
+        min_score_1: document.getElementById('apMinScore').value || null,
+        min_rank_1: document.getElementById('apMinRank').value || null,
+        group_min_score_1: document.getElementById('apGroupMinScore').value || null,
+        group_min_rank_1: document.getElementById('apGroupMinRank').value || null,
+        avg_score_1: document.getElementById('apAvgScore').value || null,
+        avg_rank_1: document.getElementById('apAvgRank').value || null,
+        plan_count_1: document.getElementById('apPlanCount').value || null,
+        admit_count_1: document.getElementById('apAdmitCount').value || null,
+        group_admit_count_1: document.getElementById('apGroupAdmitCount').value || null,
+        batch: document.getElementById('apBatch').value.trim() || null,
+        batch_remark: document.getElementById('apBatchRemark').value.trim() || null,
+        major_remark: document.getElementById('apMajorRemark').value.trim() || null
+    };
+    
+    if (!body.college_code || !body.college_name || !body.major_name) {
+        alert('院校代码、院校名称、专业名称不能为空');
+        return;
+    }
+    
+    try {
+        var url = API_BASE + '/admission-plan' + (id ? '/' + id : '');
+        var method = id ? 'PUT' : 'POST';
+        
+        var res = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body)
+        });
+        var data = await res.json();
+        if (data.success) {
+            closeAdmissionPlanModal();
+            loadAdmissionPlan();
+        } else {
+            alert(data.message || '保存失败');
+        }
+    } catch (e) {
+        alert('网络错误');
+    }
 });

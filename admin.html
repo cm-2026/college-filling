@@ -15,6 +15,7 @@
         })();
     </script>
     <link href="css/admin.css" rel="stylesheet">
+    <link href="css/global-enhancements.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -39,6 +40,22 @@
                         <rect x="3" y="14" width="7" height="7"></rect>
                     </svg>
                     数据看板
+                </button>
+                <button class="tab-btn" onclick="switchTab('majorCategory')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    专业分类
+                </button>
+                <button class="tab-btn" onclick="switchTab('admissionPlan')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    招生计划
                 </button>
             </div>
             
@@ -312,8 +329,280 @@
                 </div>
             </div>
         </div>
+
+        <!-- 专业分类管理标签页 -->
+        <div id="majorCategoryTab" class="tab-content" style="display:none;">
+            <!-- 树形结构展示 -->
+            <div class="major-category-tree" id="majorCategoryTree">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+
+        <!-- 招生计划管理标签页 -->
+        <div id="admissionPlanTab" class="tab-content" style="display:none;">
+            <div class="admission-header">
+                <div class="admission-actions">
+                    <select id="apProvinceFilter" onchange="apCurrentPage=1;loadAdmissionPlan()">
+                        <option value="">全部省份</option>
+                    </select>
+                    <select id="apSubjectTypeFilter" onchange="apCurrentPage=1;loadAdmissionPlan()">
+                        <option value="">全部科类</option>
+                        <option value="物理">物理</option>
+                        <option value="历史">历史</option>
+                    </select>
+                    <input type="text" id="apSearchInput" placeholder="搜索院校/专业..." onkeyup="if(event.key==='Enter')loadAdmissionPlan()">
+                    <button class="btn btn-primary" onclick="showAdmissionPlanModal()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        新增
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadAdmissionPlan()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        刷新
+                    </button>
+                </div>
+            </div>
+            <div class="admission-table-container">
+                <table class="admission-table" id="admissionPlanTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>年份</th>
+                            <th>院校代码</th>
+                            <th>院校名称</th>
+                            <th>专业名称</th>
+                            <th>专业代码</th>
+                            <th>专业组</th>
+                            <th>科类</th>
+                            <th>选科要求</th>
+                            <th>专业层次</th>
+                            <th>生源地</th>
+                            <th>院校类型</th>
+                            <th>专业类别</th>
+                            <th>最低分</th>
+                            <th>最低位次</th>
+                            <th>组最低分</th>
+                            <th>组最低位次</th>
+                            <th>平均分</th>
+                            <th>平均位次</th>
+                            <th>计划数</th>
+                            <th>录取数</th>
+                            <th>组录取数</th>
+                            <th>批次</th>
+                            <th>批次备注</th>
+                            <th>专业备注</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admissionPlanBody">
+                        <tr><td colspan="26" class="loading">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="apPagination"></div>
+        </div>
     </div>
 
+    <!-- 专业分类编辑模态框 -->
+    <div id="majorCategoryModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h3 id="mcModalTitle">新增专业分类</h3>
+                <button class="modal-close-btn" onclick="closeMajorCategoryModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="mcForm">
+                    <input type="hidden" id="mcId">
+                    <div class="form-group">
+                        <label>编码 *</label>
+                        <input type="text" id="mcCode" class="form-control" placeholder="如：010101" required>
+                    </div>
+                    <div class="form-group">
+                        <label>名称 *</label>
+                        <input type="text" id="mcName" class="form-control" placeholder="如：哲学" required>
+                    </div>
+                    <div class="form-group">
+                        <label>层级 *</label>
+                        <select id="mcLevel" class="form-control" required onchange="updateParentOptions()">
+                            <option value="1">顶层</option>
+                            <option value="2">学科门类</option>
+                            <option value="3">专业类</option>
+                            <option value="4">专业</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="mcParentGroup">
+                        <label>父级</label>
+                        <select id="mcParentId" class="form-control">
+                            <option value="">无</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>状态</label>
+                        <select id="mcStatus" class="form-control">
+                            <option value="1">正常</option>
+                            <option value="0">禁用</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeMajorCategoryModal()">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 招生计划编辑模态框 -->
+    <div id="admissionPlanModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content" style="max-width:800px;">
+            <div class="modal-header">
+                <h3 id="apModalTitle">新增招生计划</h3>
+                <button class="modal-close-btn" onclick="closeAdmissionPlanModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="apForm">
+                    <input type="hidden" id="apId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>年份</label>
+                            <input type="number" id="apYear" class="form-control" value="2025">
+                        </div>
+                        <div class="form-group">
+                            <label>院校代码 *</label>
+                            <input type="text" id="apCollegeCode" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>院校名称 *</label>
+                            <input type="text" id="apCollegeName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>专业代码</label>
+                            <input type="text" id="apMajorCode" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>专业名称 *</label>
+                            <input type="text" id="apMajorName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>专业组代码</label>
+                            <input type="text" id="apMajorGroupCode" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>科类</label>
+                            <select id="apSubjectType" class="form-control">
+                                <option value="物理">物理</option>
+                                <option value="历史">历史</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>选科要求</label>
+                            <input type="text" id="apSubjectRequire" class="form-control" placeholder="如：物理+化学">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>专业层次</label>
+                            <select id="apMajorLevel" class="form-control">
+                                <option value="本科">本科</option>
+                                <option value="专科">专科</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>生源地省份</label>
+                            <input type="text" id="apSourceProvince" class="form-control" value="河北">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>院校类型</label>
+                            <input type="text" id="apCategory" class="form-control" placeholder="如：综合类、理工类">
+                        </div>
+                        <div class="form-group">
+                            <label>专业类别</label>
+                            <input type="text" id="apMajorCategory" class="form-control" placeholder="如：工学、理学">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>最低分</label>
+                            <input type="number" id="apMinScore" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>最低位次</label>
+                            <input type="number" id="apMinRank" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>组最低分</label>
+                            <input type="number" id="apGroupMinScore" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>组最低位次</label>
+                            <input type="number" id="apGroupMinRank" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>平均分</label>
+                            <input type="number" id="apAvgScore" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>平均位次</label>
+                            <input type="number" id="apAvgRank" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>计划数</label>
+                            <input type="number" id="apPlanCount" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>录取数</label>
+                            <input type="number" id="apAdmitCount" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>组录取数</label>
+                            <input type="number" id="apGroupAdmitCount" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>批次</label>
+                            <input type="text" id="apBatch" class="form-control" placeholder="如：本科批">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>批次备注</label>
+                            <input type="text" id="apBatchRemark" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>专业备注</label>
+                            <input type="text" id="apMajorRemark" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeAdmissionPlanModal()">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/ui-enhancements.js"></script>
     <script src="js/admin.js"></script>
 </body>
 </html>

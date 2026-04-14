@@ -1192,15 +1192,9 @@
                     const groupMajors = groupMap.get(gk);
                     const cnt = groupMajors.length;
 
-                    // 计算专业组统计信息（使用实际数据）
-                    const groupMinScore = groupMajors.reduce((min, r) => {
-                        const score = r.min_score || r.min_score_1;
-                        return score != null && (min === null || score < min) ? score : min;
-                    }, null);
-                    const groupMinRank = groupMajors.reduce((min, r) => {
-                        const rank = r.rank || r.min_rank || r.min_rank_1;
-                        return rank != null && (min === null || rank < min) ? rank : min;
-                    }, null);
+                    // 专业组统计信息：直接使用 admission_plan 表的 group_min_score_1 和 group_min_rank_1
+                    const groupMinScore = groupMajors[0]?.group_min_score_1;
+                    const groupMinRank = groupMajors[0]?.group_min_rank_1;
 
                     const stats = [];
                     stats.push(`${cnt}个专业`);
@@ -1571,10 +1565,10 @@
                 return;
             }
             
-            // 计算专业组的统计信息
+            // 计算专业组的统计信息（使用 admission_plan 表的 group_min_score_1 和 group_min_rank_1）
             const totalMajors = majors.length;
-            const minScore = majors.reduce((min, r) => r.min_score != null && (min === null || r.min_score < min) ? r.min_score : min, null);
-            const minRank = majors.reduce((min, r) => r.rank != null && (min === null || r.rank < min) ? r.rank : min, null);
+            const minScore = majors[0]?.group_min_score_1;
+            const minRank = majors[0]?.group_min_rank_1;
             
             // 构建统计信息文本
             const stats = [];

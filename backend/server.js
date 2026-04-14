@@ -1243,7 +1243,9 @@ app.get('/api/school-group-majors', async (req, res) => {
         min_rank_1 AS \`rank\`,
         admit_count_1 AS admit_count,
         batch,
-        batch_remark
+        batch_remark,
+        group_min_score_1,
+        group_min_rank_1
       FROM admission_plan
       WHERE college_code = ? AND major_group_code = ?
     `;
@@ -1908,6 +1910,388 @@ app.post('/api/export-excel', async (req, res) => {
   } catch (err) {
     console.error('❌ 导出Excel失败:', err.message);
     res.json({ success: false, message: '服务器错误: ' + err.message });
+  }
+});
+
+// ===== 专业分类管理 API =====
+// 获取专业分类列表
+app.get('/api/major-category', async (req, res) => {
+  try {
+    const { level, category_code, search } = req.query;
+    
+    let sql = 'SELECT * FROM major_category WHERE 1=1';
+    const params = [];
+    
+    if (level) {
+      sql += ' AND level = ?';
+      params.push(parseInt(level));
+    }
+    
+    if (category_code) {
+      sql += ' AND category_code = ?';
+      params.push(category_code);
+    }
+    
+    if (search) {
+      sql += ' AND (name LIKE ? OR code LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`);
+    }
+    
+    sql += ' ORDER BY level, code';
+    
+    const [rows] = await pool.execute(sql, params);
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('获取专业分类失败:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 新增专业分类
+app.post('/api/major-category', async (req, res) => {
+  try {
+    const { code, name, level, parent_id, category_code, category_name, class_code, class_name, status, top_code } = req.body;
+    
+    if (!code || !name || !level) {
+      return res.status(400).json({ success: false, message: '编码、名称和层级不能为空' });
+    }
+    
+    // 检查编码是否重复
+    const [existing] = await pool.execute('SELECT id FROM major_category WHERE code = ?', [code]);
+    if (existing.length > 0) {
+      return res.status(400).json({ success: false, message: '编码已存在' });
+    }
+    
+    // 确定 top_code
+    let finalTopCode = top_code;
+    if (!finalTopCode && parent_id) {
+      // 从父节点获取 top_code
+      const [parentRows] = await pool.execute('SELECT top_code, code, level FROM major_category WHERE id = ?', [parent_id]);
+      if (parentRows.length > 0) {
+        finalTopCode = parentRows[0].top_code || parentRows[0].code;
+      }
+    }
+    
+    const sql = `
+      INSERT INTO major_category (code, name, level, parent_id, category_code, category_name, class_code, class_name, status, top_code)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const params = [code, name, level, parent_id || null, category_code || null, category_name || null, class_code || null, class_name || null, status || 1, finalTopCode || null];
+    
+    const [result] = await pool.execute(sql, params);
+    res.json({ success: true, message: '新增成功', data: { id: result.insertId, code, name } });
+  } catch (err) {
+    console.error('新增专业分类失败:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 更新专业分类
+app.put('/api/major-category/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { code, name, level, parent_id, category_code, category_name, class_code, class_name, status, top_code } = req.body;
+    
+    if (!code || !name || !level) {
+      return res.status(400).json({ success: false, message: '编码、名称和层级不能为空' });
+    }
+    
+    // 检查编码是否与其他记录重复
+    const [existing] = await pool.execute('SELECT id FROM major_category WHERE code = ? AND id != ?', [code, id]);
+    if (existing.length > 0) {
+      return res.status(400).json({ success: false, message: '编码已被其他记录使用' });
+    }
+    
+    // 确定 top_code
+    let finalTopCode = top_code;
+    if (!finalTopCode && parent_id) {
+      const [parentRows] = await pool.execute('SELECT top_code, code, level FROM major_category WHERE id = ?', [parent_id]);
+      if (parentRows.length > 0) {
+        finalTopCode = parentRows[0].top_code || parentRows[0].code;
+      }
+    }
+    
+    const sql = `
+      UPDATE major_category 
+      SET code = ?, name = ?, level = ?, parent_id = ?, category_code = ?, category_name = ?, class_code = ?, class_name = ?, status = ?, top_code = ?
+      WHERE id = ?
+    `;
+    const params = [code, name, level, parent_id || null, category_code || null, category_name || null, class_code || null, class_name || null, status || 1, finalTopCode || null, id];
+    
+    await pool.execute(sql, params);
+    res.json({ success: true, message: '更新成功' });
+  } catch (err) {
+    console.error('更新专业分类失败:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 删除专业分类（级联删除子节点）
+app.delete('/api/major-category/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // 递归获取所有子节点ID
+    const getChildIds = async (parentId) => {
+      const [children] = await pool.execute('SELECT id FROM major_category WHERE parent_id = ?', [parentId]);
+      let ids = children.map(c => c.id);
+      for (const childId of ids) {
+        const childIds = await getChildIds(childId);
+        ids = ids.concat(childIds);
+      }
+      return ids;
+    };
+    
+    const childIds = await getChildIds(id);
+    const allIds = [parseInt(id), ...childIds];
+    
+    // 批量删除
+    if (allIds.length > 0) {
+      const placeholders = allIds.map(() => '?').join(',');
+      await pool.execute(`DELETE FROM major_category WHERE id IN (${placeholders})`, allIds);
+    }
+    
+    res.json({ success: true, message: `已删除 ${allIds.length} 条记录` });
+  } catch (err) {
+    console.error('删除专业分类失败:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ===== 招生计划管理 API =====
+// 获取招生计划列表（分页）
+app.get('/api/admission-plan', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 20;
+    const { province, subject_type, search } = req.query;
+    const offset = (page - 1) * pageSize;
+
+    let whereClause = 'WHERE 1=1';
+    const params = [];
+
+    if (province) {
+      whereClause += ' AND source_province = ?';
+      params.push(province);
+    }
+
+    if (subject_type) {
+      whereClause += ' AND subject_type = ?';
+      params.push(subject_type);
+    }
+
+    if (search) {
+      whereClause += ' AND (college_name LIKE ? OR major_name LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    // 查询总数
+    const [countRows] = await pool.execute(
+      `SELECT COUNT(*) as total FROM admission_plan ${whereClause}`,
+      params
+    );
+    const total = countRows[0].total;
+
+    // 确保页码和页面大小有效
+    const validPageSize = Math.max(1, Math.min(100, pageSize));
+    const validOffset = Math.max(0, (page - 1) * validPageSize);
+
+    // 查询数据 - 返回所有字段
+    const sql = `
+      SELECT
+        id, year, college_code, college_name, major_name, major_code,
+        major_group_code, subject_type, subject_require, major_level,
+        min_score_1, min_rank_1, plan_count_1, admit_count_1,
+        batch, batch_remark, major_remark, source_province,
+        category, major_category,
+        group_min_score_1, group_min_rank_1, group_admit_count_1,
+        avg_score_1, avg_rank_1
+      FROM admission_plan
+      ${whereClause}
+      ORDER BY id DESC
+      LIMIT ${validPageSize} OFFSET ${validOffset}
+    `;
+
+    const [rows] = await pool.execute(sql, params);
+
+    res.json({
+      success: true,
+      data: rows,
+      pagination: {
+        page: page,
+        pageSize: pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize)
+      }
+    });
+  } catch (err) {
+    console.error('获取招生计划失败:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 获取省份列表（用于筛选）- 添加缓存
+let provincesCache = null;
+let provincesCacheTime = 0;
+app.get('/api/admission-plan/provinces', async (req, res) => {
+  try {
+    // 使用缓存（10分钟有效期）
+    const now = Date.now();
+    if (provincesCache && (now - provincesCacheTime) < 600000) {
+      return res.json({ success: true, data: provincesCache });
+    }
+
+    const [rows] = await pool.execute(
+      'SELECT DISTINCT source_province FROM admission_plan WHERE source_province IS NOT NULL ORDER BY source_province'
+    );
+    provincesCache = rows.map(r => r.source_province);
+    provincesCacheTime = now;
+    res.json({ success: true, data: provincesCache });
+  } catch (err) {
+    console.error('获取省份列表失败:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 新增招生计划
+app.post('/api/admission-plan', async (req, res) => {
+  try {
+    const {
+      year, college_code, college_name, major_name, major_code,
+      major_group_code, subject_type, subject_require, major_level,
+      source_province, category, major_category,
+      min_score_1, min_rank_1, plan_count_1, admit_count_1,
+      batch, batch_remark, major_remark,
+      group_min_score_1, group_min_rank_1, group_admit_count_1,
+      avg_score_1, avg_rank_1
+    } = req.body;
+
+    if (!college_code || !college_name || !major_name) {
+      return res.status(400).json({ success: false, message: '院校代码、院校名称、专业名称不能为空' });
+    }
+
+    // 获取当前最大ID
+    const [maxIdRows] = await pool.execute('SELECT MAX(id) as maxId FROM admission_plan');
+    const nextId = (maxIdRows[0].maxId || 0) + 1;
+
+    const sql = `
+      INSERT INTO admission_plan (
+        id, year, college_code, college_name, major_name, major_code,
+        major_group_code, subject_type, subject_require, major_level,
+        min_score_1, min_rank_1, plan_count_1, admit_count_1,
+        batch, batch_remark, major_remark, source_province,
+        category, major_category,
+        group_min_score_1, group_min_rank_1, group_admit_count_1,
+        avg_score_1, avg_rank_1
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    await pool.execute(sql, [
+      nextId, year || 2025, college_code, college_name, major_name, major_code || null,
+      major_group_code || null, subject_type || '物理', subject_require || '不限', major_level || '本科',
+      min_score_1 || null, min_rank_1 || null, plan_count_1 || null, admit_count_1 || null,
+      batch || '本科批', batch_remark || null, major_remark || null, source_province || '河北',
+      category || null, major_category || null,
+      group_min_score_1 || null, group_min_rank_1 || null, group_admit_count_1 || null,
+      avg_score_1 || null, avg_rank_1 || null
+    ]);
+
+    res.json({ success: true, message: '新增成功' });
+  } catch (err) {
+    console.error('新增招生计划失败:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 更新招生计划
+app.put('/api/admission-plan/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      year, college_code, college_name, major_name, major_code,
+      major_group_code, subject_type, subject_require, major_level,
+      source_province, category, major_category,
+      min_score_1, min_rank_1, plan_count_1, admit_count_1,
+      batch, batch_remark, major_remark,
+      group_min_score_1, group_min_rank_1, group_admit_count_1,
+      avg_score_1, avg_rank_1
+    } = req.body;
+
+    if (!college_code || !college_name || !major_name) {
+      return res.status(400).json({ success: false, message: '院校代码、院校名称、专业名称不能为空' });
+    }
+
+    const sql = `
+      UPDATE admission_plan SET
+        year = ?, college_code = ?, college_name = ?, major_name = ?, major_code = ?,
+        major_group_code = ?, subject_type = ?, subject_require = ?, major_level = ?,
+        source_province = ?, category = ?, major_category = ?,
+        min_score_1 = ?, min_rank_1 = ?, plan_count_1 = ?, admit_count_1 = ?,
+        batch = ?, batch_remark = ?, major_remark = ?,
+        group_min_score_1 = ?, group_min_rank_1 = ?, group_admit_count_1 = ?,
+        avg_score_1 = ?, avg_rank_1 = ?
+      WHERE id = ?
+    `;
+
+    const [result] = await pool.execute(sql, [
+      year || 2025, college_code, college_name, major_name, major_code || null,
+      major_group_code || null, subject_type || '物理', subject_require || '不限', major_level || '本科',
+      source_province || '河北', category || null, major_category || null,
+      min_score_1 || null, min_rank_1 || null, plan_count_1 || null, admit_count_1 || null,
+      batch || '本科批', batch_remark || null, major_remark || null,
+      group_min_score_1 || null, group_min_rank_1 || null, group_admit_count_1 || null,
+      avg_score_1 || null, avg_rank_1 || null,
+      id
+    ]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: '记录不存在' });
+    }
+
+    res.json({ success: true, message: '更新成功' });
+  } catch (err) {
+    console.error('更新招生计划失败:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 删除招生计划
+app.delete('/api/admission-plan/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.execute('DELETE FROM admission_plan WHERE id = ?', [id]);
+    res.json({ success: true, message: '删除成功' });
+  } catch (err) {
+    console.error('删除招生计划失败:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 获取单条招生计划详情
+app.get('/api/admission-plan/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await pool.execute(
+      `SELECT
+        id, year, college_code, college_name, major_name, major_code,
+        major_group_code, subject_type, subject_require, major_level,
+        min_score_1, min_rank_1, plan_count_1, admit_count_1,
+        batch, batch_remark, major_remark, source_province,
+        category, major_category,
+        group_min_score_1, group_min_rank_1, group_admit_count_1,
+        avg_score_1, avg_rank_1
+      FROM admission_plan WHERE id = ?`,
+      [id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: '记录不存在' });
+    }
+    
+    res.json({ success: true, data: rows[0] });
+  } catch (err) {
+    console.error('获取招生计划详情失败:', err);
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 

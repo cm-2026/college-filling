@@ -1188,7 +1188,7 @@
             if(hasGroups){
                 html+=`<div class="group-buttons" style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 20px;background:#E5E7EB;border-bottom:1px solid rgba(59,159,232,0.12);">`;
                 groupKeys.forEach((gk, idx)=>{
-                    const label=gk==='__nogroup__'?'未分组':`第 ${gk} 组`;
+                    const label=gk==='__nogroup__'?'未分组':gk;
                     const groupMajors = groupMap.get(gk);
                     const cnt = groupMajors.length;
 
@@ -1287,7 +1287,7 @@
         const pBar=document.getElementById('paginationBar');
         if(totalPages>1||pageSize===0){
             pBar.style.display='flex';
-            document.getElementById('pageInfo').textContent = `第 ${currentPage} / ${totalPages} 页`;
+            document.getElementById('pageInfo').textContent = `${currentPage}/${totalPages}`;
             document.getElementById('btnFirst').disabled=currentPage===1;
             document.getElementById('btnPrev').disabled=currentPage===1;
             document.getElementById('btnNext').disabled=currentPage===totalPages;

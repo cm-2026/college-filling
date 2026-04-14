@@ -795,7 +795,17 @@ body {
     .filter-selected {
         padding-bottom: var(--spacing-sm);
     }
-    
+
+    /* 筛选面板展开时支持滚动 */
+    .filter-panel-fixed.expanded {
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+    .filter-panel-fixed.expanded .filter-panel-body {
+        max-height: none;
+        overflow: visible;
+    }
+
     .page-header {
         padding: 20px 0 10px;
         margin-bottom: var(--spacing-sm);

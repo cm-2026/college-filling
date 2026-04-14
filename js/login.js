@@ -136,6 +136,8 @@ function closePageChoice() {
     if (overlay) {
         overlay.remove();
     }
+    // 关闭选择框时默认跳转到首页
+    window.location.href = 'index-mysql.html';
 }
 
 function goToPage(page) {

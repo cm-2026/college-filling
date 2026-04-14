@@ -1,0 +1,1048 @@
+/* ============================================
+   权鼎教育 - 移动端专用样式 (<768px)
+   仅在手机端加载，与 index-mysql.css 配合使用
+   ============================================ */
+
+/* ========== 移动端响应式优化 ========== */
+
+/* 小屏幕优化 (768px以下) */
+@media (max-width: 767.98px) {
+    /* 表单视图优化 */
+    .form-view-wrap {
+        min-height: 100vh;
+        padding: 0;
+        padding-top: 5px;
+    }
+
+    .main-container {
+        margin: 0 auto;
+        padding: 10px 10px;
+        border-radius: 12px;
+        width: calc(100% - 16px);
+        max-width: 600px;
+    }
+
+    .form-header-bar {
+        margin-bottom: 0 !important;
+        padding: 0 !important;
+    }
+
+    .form-header-logo-small {
+        height: 80px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 80px !important;
+    }
+
+    .form-logo {
+        height: 64px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        vertical-align: middle !important;
+    }
+    
+    .section-card {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .section-title {
+        font-size: 1.4rem;
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+    }
+    
+    .form-label {
+        font-size: 15px;
+    }
+    
+    .form-control, .form-select {
+        height: 46px;
+        font-size: 15px;
+    }
+    
+    /* 按钮优化 - 触摸友好 */
+    .btn {
+        width: 100%;
+        margin: 6px 0;
+        height: 50px;
+        line-height: 50px;
+        font-size: 16px;
+        padding: 0 24px;
+    }
+    
+    /* 选科标签优化 */
+    .subject-tags {
+        gap: 10px;
+        justify-content: flex-start;
+    }
+    
+    .subject-tag {
+        padding: 0;
+        height: 44px;
+        font-size: 15px;
+        flex: none;
+        width: calc(50% - 5px);
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+    }
+    
+    /* ====== 结果视图重构 ====== */
+    .result-view-wrap {
+        padding: 140px 12px 20px;
+        min-height: 100vh;
+        background: #f8fafc;
+    }
+    
+    /* 顶部容器 - 更紧凑 */
+    .top-bar-container {
+        width: 100%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    /* 顶部栏 - 两行布局 */
+    .top-bar {
+        padding: 10px 12px;
+        background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+    }
+    .top-bar-inner {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 6px;
+    }
+
+    /* 第一行整体 */
+    .left-section {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .logo-section {
+        flex-shrink: 0;
+    }
+    .logo-large img {
+        height: 36px;
+        filter: brightness(0) invert(1);
+        display: block;
+    }
+
+    /* basic-info在Logo右侧，分两行 */
+    .basic-info {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+    }
+    /* 顺序：河南 → 分数 → 位次 → 选科 */
+    .basic-info .info-item:nth-child(1) { order: 1; width: calc(50% - 3px); }
+    .basic-info .info-item:nth-child(2) { order: 2; width: calc(50% - 3px); }
+    .basic-info .info-item:nth-child(3) { order: 3; width: calc(50% - 3px); }
+    .basic-info .info-item:nth-child(4) { order: 4; width: calc(50% - 3px); }
+    .basic-info .info-item {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 4px;
+        background: rgba(255,255,255,0.1);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        white-space: nowrap;
+        box-sizing: border-box;
+    }
+    .basic-info .info-label {
+        display: inline;
+        color: rgba(255,255,255,0.6);
+        font-size: 9px;
+    }
+    .basic-info .info-label::after {
+        content: '：';
+    }
+    /* 选科只显示值，不显示标签 */
+    .basic-info .info-item:nth-child(4) .info-label {
+        display: none;
+    }
+    .basic-info .info-value {
+        color: #fff !important;
+        font-weight: 600 !important;
+        font-size: 10px !important;
+    }
+    .basic-info .info-value.highlight {
+        color: #60d9fa !important;
+        font-weight: 700 !important;
+        font-size: 11px !important;
+    }
+
+    /* 统计区域 - 隐藏 */
+    .stats-section {
+        display: none !important;
+    }
+
+    /* 分页 - 独立第三行 */
+    .pagination-section {
+        order: 20;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        background: transparent;
+        padding: 8px 0 0;
+        border-bottom: none;
+    }
+    .pagination-inline {
+        gap: 4px;
+    }
+    .page-btn {
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+        font-size: 14px;
+        border-radius: 6px;
+    }
+    .pagination-info {
+        font-size: 12px;
+        min-width: 80px;
+    }
+    
+    /* ====== 工具栏 - 紧凑单行布局 ====== */
+    .toolbar-bar {
+        padding: 6px 8px;
+        background: #fff;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .toolbar-inner {
+        position: relative;
+        width: 100%;
+        height: 40px;
+    }
+
+    /* 隐藏返回按钮 */
+    .back-btn {
+        display: none !important;
+    }
+
+    /* 分页在左侧 */
+    .pagination-section {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 0;
+        margin: 0;
+        border: none;
+        justify-content: flex-start !important;
+    }
+    .toolbar-inner .pagination-inline {
+        gap: 0px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        flex-wrap: nowrap !important;
+    }
+    .toolbar-inner .pagination-inline .page-btn {
+        margin: 0 2px !important;
+        width: 42px !important;
+        height: 32px !important;
+        min-width: 42px !important;
+        min-height: 32px !important;
+        max-height: 32px !important;
+        line-height: 32px !important;
+        font-size: 14px !important;
+        border-radius: 6px !important;
+        padding: 0 !important;
+        flex-shrink: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        outline: none !important;
+        box-shadow: none !important;
+        box-sizing: border-box !important;
+        border: 1px solid #e5e7eb !important;
+        background: #fff !important;
+    }
+    .toolbar-inner .pagination-inline .page-btn:focus,
+    .toolbar-inner .pagination-inline .page-btn:active {
+        outline: none !important;
+        box-shadow: none !important;
+        background: #f1f5f9 !important;
+    }
+    .toolbar-inner .pagination-inline .page-btn:disabled {
+        opacity: 0.5 !important;
+        background: #f8fafc !important;
+    }
+    .toolbar-inner #btnFirst,
+    .toolbar-inner #btnLast {
+        display: inline-flex !important;
+        width: 42px !important;
+        height: 32px !important;
+        min-width: 42px !important;
+        min-height: 32px !important;
+        max-height: 32px !important;
+    }
+    .pagination-info {
+        font-size: 12px;
+        min-width: auto;
+        text-align: center;
+        padding: 0 4px;
+        flex-shrink: 0;
+        line-height: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* 筛选+导出 - 绝对定位到右侧 */
+    .export-btn-inline {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 6px !important;
+        background: #22c55e !important;
+        border: none !important;
+        color: #fff !important;
+    }
+    .export-btn-inline svg {
+        stroke: #fff !important;
+        width: 16px !important;
+        height: 16px !important;
+    }
+    .filter-toggle-btn-inline {
+        position: absolute;
+        right: 36px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 6px !important;
+        background: #3b82f6 !important;
+        border: none !important;
+        color: #fff !important;
+    }
+    .filter-toggle-btn-inline svg {
+        stroke: #fff !important;
+        width: 16px !important;
+        height: 16px !important;
+    }
+    .filter-toggle-btn-inline span,
+    .export-btn-inline span {
+        display: none !important;
+    }
+
+    /* 隐藏筛选条件显示 */
+    .filter-display {
+        display: none !important;
+    }
+
+
+    }
+    .page-size-select {
+        width: 60px;
+        height: 32px;
+        font-size: 0.75rem;
+    }
+
+    /* ====== 筛选面板 - 全屏抽屉式 ====== */
+    .filter-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        max-height: none;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        z-index: 2000;
+        display: none;
+        padding: 0;
+        border-radius: 0;
+    }
+    .filter-bar.active {
+        display: flex;
+        align-items: flex-end;
+    }
+    .filter-bar-inner {
+        width: 100%;
+        max-width: none;
+        max-height: 85vh;
+        background: #fff;
+        border-radius: 20px 20px 0 0;
+        padding: 20px 16px;
+        overflow-y: auto;
+        animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+    .filter-bar-inner::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        background: #d1d5db;
+        border-radius: 2px;
+        margin: 0 auto 16px;
+    }
+    .filter-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    .filter-item {
+        min-width: 0;
+    }
+    .filter-item label {
+        font-size: 0.8rem;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+    .filter-item select,
+    .filter-item input {
+        height: 42px;
+        font-size: 0.85rem;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+    }
+    .filter-item select:focus,
+    .filter-item input:focus {
+        border-color: var(--accent-500);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    .filter-actions {
+        position: sticky;
+        bottom: 0;
+        background: #fff;
+        padding: 16px 0 0;
+        margin-top: 16px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 12px;
+    }
+    .result-count {
+        flex: 1;
+        font-size: 0.85rem;
+    }
+    .reset-btn,
+    .confirm-btn {
+        flex: 1;
+        height: 44px;
+        font-size: 0.9rem;
+        border-radius: 10px;
+    }
+
+    /* ====== 模态框 - 底部弹窗式 ====== */
+    .modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+    }
+    .modal-content {
+        width: 100%;
+        max-width: none;
+        max-height: 85vh;
+        border-radius: 20px 20px 0 0;
+        margin: 0;
+        animation: slideUp 0.3s ease;
+    }
+    .modal-header {
+        padding: 16px;
+        border-radius: 20px 20px 0 0;
+        position: relative;
+    }
+    .modal-header::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 4px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 2px;
+    }
+    .modal-header h3 {
+        font-size: 1rem;
+        padding-top: 12px;
+    }
+    .modal-close-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+    }
+    #groupModalBody {
+        max-height: calc(85vh - 70px);
+    }
+
+    /* ====== 院校卡片优化 ====== */
+    .school-card {
+        border-radius: 12px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        overflow: hidden;
+    }
+    
+    .school-header {
+        padding: 14px 14px !important;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(135deg, #334155 0%, #475569 100%) !important;
+        cursor: pointer;
+    }
+    
+    .school-header-left {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .school-name-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+    }
+    
+    .school-name-wrapper {
+        min-width: 0 !important;
+        width: 100% !important;
+        display: block !important;
+    }
+    .school-name-row {
+        width: 100%;
+    }
+    .school-major-count::after {
+        content: '' !important;
+        display: block !important;
+        height: 0 !important;
+        width: 100% !important;
+        margin-bottom: 6px !important;
+    }
+
+    .school-link {
+        font-size: 1rem;
+        color: #fff;
+        font-weight: 600;
+        display: inline !important;
+    }
+
+    .school-major-count {
+        font-size: 0.75rem;
+        color: rgba(255,255,255,0.8);
+        flex-shrink: 0;
+    }
+    .school-major-count strong {
+        color: #60d9fa;
+        font-size: 0.95rem;
+    }
+    
+    .school-header-right {
+        flex-shrink: 0;
+    }
+
+    .expand-hint {
+        display: none !important;
+    }
+    .expand-icon {
+        font-size: 0.85rem;
+    }
+    
+    /* 代码栏优化 */
+    .school-code-bar {
+        padding: 8px 14px !important;
+        background: #f8fafc !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        font-size: 0.75rem !important;
+        gap: 8px !important;
+    }
+    /* 隐藏院校代码和备注 */
+    .school-code-bar > span:first-child,
+    .school-code-bar > span:last-child {
+        display: none !important;
+    }
+    
+    /* 专业摘要栏隐藏 */
+    .school-majors-bar {
+        display: none !important;
+    }
+    
+    /* 专业组按钮 - 2列网格 */
+    .group-buttons {
+        padding: 8px 12px !important;
+        background: #f1f5f9 !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        gap: 6px !important;
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+
+    .group-buttons .group-btn {
+        width: 100% !important;
+        padding: 6px 8px !important;
+        font-size: 0.75rem !important;
+        border-radius: 6px !important;
+        font-weight: 500;
+        min-width: auto !important;
+        justify-content: center !important;
+    }
+    /* 隐藏统计信息，只显示组号 */
+    .group-buttons .group-btn > span:last-child {
+        display: none !important;
+    }
+    .group-buttons .group-btn > span:first-child {
+        min-width: auto !important;
+    }
+    
+    /* ====== 专业列表优化 - 更好的触控体验 ====== */
+    .major-list-header, .major-row {
+        grid-template-columns: 2fr 60px 55px 50px !important;
+        padding: 12px 14px !important;
+        gap: 6px !important;
+    }
+    
+    .major-list-header {
+        background: #f8fafc !important;
+        font-size: 0.75rem !important;
+        font-weight: 600;
+        color: #6b7280;
+    }
+    
+    .major-list-header span:nth-child(n+5), 
+    .major-row .major-row-cell:nth-child(n+5) { 
+        display: none !important; 
+    }
+    
+    .major-row {
+        min-height: 52px;
+        align-items: center;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .major-row:active {
+        background: #eef2ff;
+    }
+    
+    .major-name-result {
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #1f2937;
+    }
+    
+    .major-row-left {
+        min-width: 0;
+    }
+    
+    .major-remark-text {
+        display: none;
+    }
+    
+    .major-row-cell {
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .score-val {
+        font-size: 0.95rem !important;
+        color: #4f46e5 !important;
+    }
+    
+    .prob-badge {
+        font-size: 0.75rem !important;
+        padding: 4px 10px !important;
+        border-radius: 12px !important;
+    }
+
+    /* ====== 专业组弹窗优化 ====== */
+    .modal-major-list {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        padding: 8px !important;
+    }
+    .modal-major-header {
+        display: none !important;
+    }
+    /* 卡片样式 */
+    .modal-major-row {
+        display: block !important;
+        background: #fff !important;
+        border-radius: 8px !important;
+        padding: 12px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+        border: 1px solid #f1f5f9 !important;
+    }
+    .modal-major-row.within-score {
+        background: linear-gradient(135deg, rgba(16,185,129,0.06), rgba(59,159,232,0.06)) !important;
+        border-color: rgba(16,185,129,0.3) !important;
+    }
+    /* 专业名称 - 左对齐 */
+    .modal-major-name {
+        display: block !important;
+        width: 100% !important;
+        text-align: left !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        color: #1f2937 !important;
+        margin-bottom: 8px !important;
+    }
+    /* 信息区 - 第二行水平排列 */
+    .modal-major-cell {
+        display: inline-block !important;
+        font-size: 0.68rem !important;
+        padding: 4px 8px !important;
+        border-radius: 4px !important;
+        margin-right: 4px !important;
+        margin-bottom: 4px !important;
+        color: #fff !important;
+        vertical-align: middle !important;
+    }
+    /* 第2个是专业编号，隐藏 */
+    .modal-major-cell:nth-child(2) {
+        display: none !important;
+    }
+    /* 专业门类 - 蓝色 */
+    .modal-major-cell:nth-child(3) {
+        background: #3b82f6 !important;
+    }
+    /* 最低分 - 橙色 */
+    .modal-major-cell:nth-child(4) {
+        background: #f59e0b !important;
+        font-weight: 700 !important;
+    }
+    /* 最低位次 - 紫色 */
+    .modal-major-cell:nth-child(5) {
+        background: #8b5cf6 !important;
+    }
+    /* 选科要求 - 粉色 */
+    .modal-major-cell:nth-child(6) {
+        background: #ec4899 !important;
+    }
+    /* 招生计划 - 绿色 */
+    .modal-major-cell:nth-child(7) {
+        background: #10b981 !important;
+        order: 5 !important;
+    }
+    .modal-major-cell .score-val {
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        color: #fff !important;
+    }
+    .modal-major-cell .subject-badge {
+        font-size: 0.72rem !important;
+        padding: 0 !important;
+        background: transparent !important;
+        color: #fff !important;
+    }
+    /* 专业门类标签高亮 */
+    .modal-major-cell.top-major {
+        background: #1d4ed8 !important;
+        font-weight: 600 !important;
+    }
+
+    /* ====== 分组选项卡 - 卡片式 ====== */
+    .group-tabs {
+        padding: 12px;
+        gap: 10px;
+        flex-direction: column;
+        background: #f8fafc;
+    }
+    
+    .group-tab {
+        padding: 14px 16px;
+        font-size: 0.9rem;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+    
+    .group-tab.active {
+        background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+        border-color: var(--accent-400);
+    }
+    
+    .group-tab .tab-label {
+        color: #1f2937;
+    }
+    .group-tab.active .tab-label {
+        color: var(--accent-600);
+    }
+    
+    .group-tab .tab-count {
+        background: var(--accent-100);
+        color: var(--accent-600);
+    }
+    
+    .group-tab .tab-stats {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .group-tab.active .tab-stats {
+        display: flex;
+    }
+    
+    .group-tab .tab-stat {
+        font-size: 0.72rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: #f1f5f9;
+        color: #6b7280;
+    }
+    
+    .group-tab .tab-stat.stat-admit {
+        background: #d1fae5;
+        color: #059669;
+    }
+    
+    .group-tab .tab-stat.stat-score {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+    
+    .group-tab .tab-stat.stat-rank {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    /* ====== 其他优化 ====== */
+    .info-tag {
+        white-space: nowrap;
+        font-size: 0.8rem;
+    }
+
+    .info-tag strong {
+        font-size: 0.85rem;
+    }
+    
+    .batch-tag,
+    .college-level-tag,
+    .subject-badge {
+        font-size: 0.68rem !important;
+        padding: 2px 6px !important;
+    }
+    
+    /* Tooltip优化 */
+    #majorTooltip, #schoolTooltip {
+        width: 95vw;
+        max-width: 95vw;
+        max-height: 90vh;
+    }
+    #majorTooltip .tooltip-scroll-wrapper, #schoolTooltip .tooltip-scroll-wrapper {
+        padding: 20px;
+    }
+    .tooltip-title { 
+        font-size: 1.1rem; 
+        margin-bottom: 14px; 
+        padding-bottom: 10px;
+    }
+    .tooltip-section-label { 
+        font-size: 0.85rem;
+        padding: 5px 12px;
+    }
+    .tooltip-section-body { 
+        font-size: 0.95rem; 
+        line-height: 1.8; 
+    }
+}
+
+/* 超小屏幕优化 (576px以下) */
+@media (max-width: 575.98px) {
+    .main-container {
+        margin: 10px auto;
+        padding: 15px 12px;
+        border-radius: 16px;
+        width: calc(100% - 20px);
+        max-width: 100%;
+    }
+    
+    .form-header-logo-small {
+        height: 75px;
+    }
+    
+    .form-logo {
+        height: 40px;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+    }
+    
+    .form-label {
+        font-size: 14px;
+    }
+    
+    .form-control, .form-select {
+        height: 44px;
+        font-size: 14px;
+    }
+    
+    .btn {
+        height: 48px;
+        line-height: 48px;
+        font-size: 15px;
+    }
+    
+    /* 结果页超小屏优化 */
+    .result-view-wrap {
+        padding: 130px 10px 16px;
+    }
+    
+    /* 顶部信息进一步精简 */
+    .basic-info .info-value {
+        font-size: 15px;
+    }
+    .basic-info .info-value.highlight {
+        font-size: 16px;
+    }
+    .stat-item {
+        font-size: 0.65rem;
+    }
+    .stat-item strong {
+        font-size: 0.8rem;
+    }
+    
+    /* 工具栏按钮更小 */
+    .back-btn {
+        padding: 5px 8px;
+        font-size: 0.75rem;
+    }
+    .filter-toggle-btn-inline,
+    .export-btn-inline {
+        height: 30px;
+        padding: 0 10px;
+        font-size: 0.75rem;
+    }
+    
+    /* 筛选面板 */
+    .filter-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .filter-item select,
+    .filter-item input {
+        height: 40px;
+    }
+    
+    .subject-tag {
+        min-width: 70px;
+        height: 40px;
+        font-size: 14px;
+        padding: 0 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+    }
+    
+    /* 卡片更紧凑 */
+    .school-header {
+        padding: 12px !important;
+    }
+    .school-link {
+        font-size: 0.95rem;
+    }
+    
+    /* 专业列表 */
+    .major-list-header, .major-row {
+        grid-template-columns: 2fr 55px 55px 48px;
+        padding: 10px 12px;
+    }
+    .major-name-result {
+        font-size: 0.82rem;
+    }
+    .major-row-cell {
+        font-size: 0.78rem;
+    }
+    
+    .major-list-header span:last-child { 
+        text-align: center; 
+        padding-right: 0;
+    }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    /* 确保触摸目标至少44px */
+    .btn, .subject-tag, .page-btn,
+    .school-header, .group-tab, .reset-btn, .confirm-btn,
+    .group-btn, .major-row, .filter-item select, .filter-item input {
+        min-height: 44px;
+    }
+
+    .subject-tag {
+        padding: 0 16px;
+    }
+    
+    /* 专业行增大触控区域 */
+    .major-row {
+        min-height: 54px;
+    }
+    
+    /* 分组标签 */
+    .group-tab {
+        min-height: 48px;
+    }
+    .group-btn {
+        min-height: 46px;
+    }
+    
+    /* 禁用悬停效果 */
+    .btn:hover,
+    .subject-tag:hover,
+    .school-header:hover {
+        transform: none;
+    }
+    
+    /* 点击反馈效果 */
+    .btn:active,
+    .subject-tag:active,
+    .page-btn:active,
+    .group-tab:active,
+    .school-header:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+    
+    /* 滚动优化 */
+    .filter-display,
+    .filter-bar-inner,
+    #groupModalBody {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* 安全区域适配 (iPhone X 等刘海屏) */
+@supports (padding: max(0px)) {
+    .result-view-wrap {
+        padding-top: max(140px, calc(140px + env(safe-area-inset-top)));
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+    .filter-bar-inner {
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+    .modal-content {
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+}

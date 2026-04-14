@@ -217,7 +217,7 @@ function renderPagination() {
         return;
     }
     
-    var paginationHtml = '<div class="pagination"><span class="pagination-info">共 ' + totalUsers + ' 条记录，第 ' + currentPage + '/' + totalPages + ' 页</span><button class="btn btn-secondary" onclick="goToPage(1)" ' + (currentPage === 1 ? 'disabled' : '') + '>首页</button><button class="btn btn-secondary" onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>上一页</button><button class="btn btn-secondary" onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + '>下一页</button><button class="btn btn-secondary" onclick="goToPage(' + totalPages + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + '>末页</button></div>';
+    var paginationHtml = '<div class="pagination"><span class="pagination-info">' + currentPage + '/' + totalPages + '</span><button class="btn btn-secondary" onclick="goToPage(1)" ' + (currentPage === 1 ? 'disabled' : '') + '>首页</button><button class="btn btn-secondary" onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>上一页</button><button class="btn btn-secondary" onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + '>下一页</button><button class="btn btn-secondary" onclick="goToPage(' + totalPages + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + '>末页</button></div>';
 
     var oldPagination = document.getElementById('paginationContainer');
     if (oldPagination) oldPagination.remove();

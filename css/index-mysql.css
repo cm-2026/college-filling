@@ -792,6 +792,9 @@
         
         /* Logo区域 */
         .logo-section {
+            display: flex;
+            align-items: center;
+            gap: var(--space-6);
             flex-shrink: 0;
         }
         .logo-large {
@@ -1823,51 +1826,59 @@
                 width: 100%;
             }
             
-            /* 顶部栏移动端优化 */
+            /* 顶部栏移动端优化 - 改为垂直布局 */
             .top-bar {
                 padding: var(--space-2) var(--space-3);
             }
             .top-bar-inner {
-                flex-wrap: wrap;
-                gap: var(--space-3);
-                overflow-x: auto;
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-2);
             }
             
             /* Logo移动端优化 */
+            .logo-section {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
             .logo-large img {
-                height: 36px;
+                height: 32px;
             }
             
-            /* 基本信息移动端 */
-            .basic-info {
-                gap: var(--space-3);
-                flex: 1;
-                min-width: 0;
-            }
-            .basic-info .info-item {
-                flex-shrink: 0;
-                gap: 3px;
-            }
-            .basic-info .info-label {
-                font-size: 0.75rem;
-            }
-            .basic-info .info-value {
-                font-size: 0.875rem;
-            }
-            .basic-info .info-value.highlight {
-                font-size: 1rem;
-            }
-            
-            /* 统计移动端 */
+            /* 统计移动端 - 移到第一行右侧 */
             .stats-section {
+                flex-direction: row;
                 gap: var(--space-2);
-                flex-shrink: 0;
             }
             .stat-item {
                 font-size: 0.75rem;
             }
             .stat-item strong {
                 font-size: 0.875rem;
+            }
+            
+            /* 基本信息移动端 - 单独一行，网格布局 */
+            .basic-info {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: var(--space-2);
+                width: 100%;
+            }
+            .basic-info .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+            }
+            .basic-info .info-label {
+                font-size: 0.6875rem;
+                color: #94a3b8;
+            }
+            .basic-info .info-value {
+                font-size: 0.8125rem;
+            }
+            .basic-info .info-value.highlight {
+                font-size: 0.9375rem;
             }
             
             /* 工具栏移动端 */

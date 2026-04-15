@@ -1122,3 +1122,391 @@ document.getElementById('apForm').addEventListener('submit', async function(e) {
         alert('网络错误');
     }
 });
+
+// ====================================================
+// Excel批量导入招生计划
+// ====================================================
+var excelDataCache = []; // 缓存解析后的Excel数据
+
+// 显示导入模态框
+function showImportModal() {
+    document.getElementById('importModal').style.display = 'flex';
+    resetImportModal();
+}
+
+// 关闭导入模态框
+function closeImportModal() {
+    document.getElementById('importModal').style.display = 'none';
+    resetImportModal();
+}
+
+// 重置导入模态框状态
+function resetImportModal() {
+    document.getElementById('excelFile').value = '';
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('progressSection').style.display = 'none';
+    document.getElementById('resultSection').style.display = 'none';
+    document.getElementById('importBtn').disabled = true;
+    document.getElementById('progressFill').style.width = '0%';
+    document.getElementById('progressText').textContent = '0%';
+    excelDataCache = [];
+}
+
+// 切换字段映射说明展开/收起
+function toggleFieldMapping() {
+    var content = document.getElementById('fieldMappingContent');
+    var arrow = document.getElementById('fieldMappingArrow');
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        arrow.style.transform = 'rotate(180deg)';
+    } else {
+        content.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+    }
+}
+
+// 下载Excel模板（xlsx格式）
+function downloadTemplate() {
+    // 表头
+    var headers = [
+        '年份', '院校代码', '院校名称', '专业代码', '专业名称',
+        '专业组代码', '科类', '选科要求', '专业层次', '生源地省份',
+        '门类', '专业类', '最低分', '最低位次', '组最低分',
+        '组最低位次', '平均分', '平均位次', '计划数', '录取数',
+        '组录取数', '批次', '批次备注', '专业备注'
+    ];
+    
+    // 示例数据行
+    var sampleRow = [
+        2025, '10001', '北京大学', '010101', '哲学',
+        '01', '物理', '不限', '本科', '河北',
+        '综合类', '哲学', 650, 1000, 655,
+        800, 660, 900, 10, 10,
+        50, '本科批', '', ''
+    ];
+    
+    // 创建数据数组
+    var data = [headers, sampleRow];
+    
+    // 使用SheetJS生成xlsx文件
+    var ws = XLSX.utils.aoa_to_sheet(data);
+    
+    // 设置列宽
+    var colWidths = [
+        { wch: 8 },  // 年份
+        { wch: 12 }, // 院校代码
+        { wch: 20 }, // 院校名称
+        { wch: 12 }, // 专业代码
+        { wch: 20 }, // 专业名称
+        { wch: 12 }, // 专业组代码
+        { wch: 8 },  // 科类
+        { wch: 12 }, // 选科要求
+        { wch: 10 }, // 专业层次
+        { wch: 12 }, // 生源地省份
+        { wch: 12 }, // 院校类型
+        { wch: 12 }, // 专业类别
+        { wch: 8 },  // 最低分
+        { wch: 10 }, // 最低位次
+        { wch: 10 }, // 组最低分
+        { wch: 12 }, // 组最低位次
+        { wch: 8 },  // 平均分
+        { wch: 10 }, // 平均位次
+        { wch: 8 },  // 计划数
+        { wch: 8 },  // 录取数
+        { wch: 10 }, // 组录取数
+        { wch: 12 }, // 批次
+        { wch: 15 }, // 批次备注
+        { wch: 15 }  // 专业备注
+    ];
+    ws['!cols'] = colWidths;
+    
+    // 创建工作簿
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '招生计划模板');
+    
+    // 下载文件
+    XLSX.writeFile(wb, '招生计划导入模板.xlsx');
+}
+
+// 处理文件选择
+function handleFileSelect(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    
+    readExcelFile(file);
+}
+
+// 读取Excel文件
+function readExcelFile(file) {
+    var reader = new FileReader();
+    
+    reader.onload = function(e) {
+        try {
+            var data = new Uint8Array(e.target.result);
+            var workbook = XLSX.read(data, { type: 'array' });
+            
+            // 读取第一个工作表
+            var firstSheetName = workbook.SheetNames[0];
+            var worksheet = workbook.Sheets[firstSheetName];
+            
+            // 转换为JSON
+            var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            if (jsonData.length < 2) {
+                alert('Excel文件数据不完整，请至少包含表头和一行数据');
+                return;
+            }
+            
+            // 解析数据
+            var headers = jsonData[0];
+            var rows = jsonData.slice(1).filter(function(row) {
+                return row.length > 0 && row[0]; // 过滤空行
+            });
+            
+            if (rows.length === 0) {
+                alert('未找到有效数据');
+                return;
+            }
+            
+            if (rows.length > 1000) {
+                alert('单次导入不能超过1000条，请分批导入');
+                return;
+            }
+            
+            // 转换数据格式
+            excelDataCache = convertExcelData(headers, rows);
+            
+            // 显示预览
+            showPreview(headers, rows.slice(0, 5));
+            
+            // 启用导入按钮
+            document.getElementById('importBtn').disabled = false;
+            
+            alert('成功解析 ' + excelDataCache.length + ' 条数据，请预览后点击导入');
+            
+        } catch (err) {
+            console.error('解析Excel失败:', err);
+            alert('解析Excel文件失败: ' + err.message);
+        }
+    };
+    
+    reader.onerror = function() {
+        alert('读取文件失败');
+    };
+    
+    reader.readAsArrayBuffer(file);
+}
+
+// Excel列名到数据库字段的映射（支持中文和英文列名）
+var fieldMapping = {
+    // 中文列名
+    '年份': 'year',
+    '院校代码': 'college_code',
+    '院校名称': 'college_name',
+    '专业代码': 'major_code',
+    '专业名称': 'major_name',
+    '专业组代码': 'major_group_code',
+    '科类': 'subject_type',
+    '选科要求': 'subject_require',
+    '专业层次': 'major_level',
+    '生源地省份': 'source_province',
+    '院校类型': 'category',
+    '专业类别': 'major_category',
+    '最低分': 'min_score_1',
+    '最低位次': 'min_rank_1',
+    '组最低分': 'group_min_score_1',
+    '组最低位次': 'group_min_rank_1',
+    '平均分': 'avg_score_1',
+    '平均位次': 'avg_rank_1',
+    '计划数': 'plan_count_1',
+    '录取数': 'admit_count_1',
+    '组录取数': 'group_admit_count_1',
+    '批次': 'batch',
+    '批次备注': 'batch_remark',
+    '专业备注': 'major_remark',
+    // 英文列名
+    'year': 'year',
+    'college_code': 'college_code',
+    'college_name': 'college_name',
+    'major_code': 'major_code',
+    'major_name': 'major_name',
+    'major_group_code': 'major_group_code',
+    'subject_type': 'subject_type',
+    'subject_require': 'subject_require',
+    'major_level': 'major_level',
+    'source_province': 'source_province',
+    'category': 'category',
+    'major_category': 'major_category',
+    'min_score_1': 'min_score_1',
+    'min_rank_1': 'min_rank_1',
+    'group_min_score_1': 'group_min_score_1',
+    'group_min_rank_1': 'group_min_rank_1',
+    'avg_score_1': 'avg_score_1',
+    'avg_rank_1': 'avg_rank_1',
+    'plan_count_1': 'plan_count_1',
+    'admit_count_1': 'admit_count_1',
+    'group_admit_count_1': 'group_admit_count_1',
+    'batch': 'batch',
+    'batch_remark': 'batch_remark',
+    'major_remark': 'major_remark'
+};
+
+// 转换Excel数据为API所需格式
+function convertExcelData(headers, rows) {
+    return rows.map(function(row) {
+        var obj = {};
+        headers.forEach(function(header, index) {
+            var fieldName = fieldMapping[header];
+            if (fieldName) {
+                var value = row[index];
+                // 数字字段转换
+                if (['year', 'min_score_1', 'min_rank_1', 'group_min_score_1', 'group_min_rank_1',
+                     'avg_score_1', 'avg_rank_1', 'plan_count_1', 'admit_count_1', 'group_admit_count_1'].indexOf(fieldName) !== -1) {
+                    value = value !== undefined && value !== '' ? Number(value) : null;
+                } else {
+                    value = value !== undefined ? String(value).trim() : null;
+                }
+                obj[fieldName] = value;
+            }
+        });
+        return obj;
+    });
+}
+
+// 显示数据预览
+function showPreview(headers, previewRows) {
+    var thead = document.querySelector('#previewTable thead');
+    var tbody = document.querySelector('#previewTable tbody');
+    
+    // 表头
+    var headerHtml = '<tr>';
+    headers.forEach(function(h) {
+        headerHtml += '<th>' + escapeHtml(String(h)) + '</th>';
+    });
+    headerHtml += '</tr>';
+    thead.innerHTML = headerHtml;
+    
+    // 数据行
+    var bodyHtml = '';
+    previewRows.forEach(function(row) {
+        bodyHtml += '<tr>';
+        row.forEach(function(cell) {
+            bodyHtml += '<td>' + escapeHtml(String(cell !== undefined ? cell : '')) + '</td>';
+        });
+        bodyHtml += '</tr>';
+    });
+    tbody.innerHTML = bodyHtml;
+    
+    document.getElementById('previewCount').textContent = '共 ' + excelDataCache.length + ' 条';
+    document.getElementById('previewSection').style.display = 'block';
+}
+
+// 开始导入数据
+async function importExcelData() {
+    if (excelDataCache.length === 0) {
+        alert('请先选择Excel文件');
+        return;
+    }
+    
+    if (!confirm('确认导入 ' + excelDataCache.length + ' 条数据？')) {
+        return;
+    }
+    
+    document.getElementById('importBtn').disabled = true;
+    document.getElementById('progressSection').style.display = 'block';
+    
+    try {
+        var res = await fetch(API_BASE + '/admission-plan/batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: excelDataCache })
+        });
+        
+        var data = await res.json();
+        
+        // 更新进度条为100%
+        document.getElementById('progressFill').style.width = '100%';
+        document.getElementById('progressText').textContent = '100%';
+        
+        // 显示结果
+        showImportResult(data);
+        
+        if (data.success) {
+            // 刷新列表
+            loadAdmissionPlan();
+        }
+        
+    } catch (err) {
+        console.error('导入失败:', err);
+        alert('导入失败: ' + err.message);
+        document.getElementById('importBtn').disabled = false;
+    }
+}
+
+// 显示导入结果
+function showImportResult(response) {
+    var resultContent = document.getElementById('resultContent');
+    var html = '';
+    
+    if (response.success) {
+        var result = response.data;
+        html += '<div class="result-success">';
+        html += '<p>✅ ' + response.message + '</p>';
+        html += '<div class="result-stats">';
+        html += '<span class="stat-item">总计: ' + result.total + '</span>';
+        html += '<span class="stat-item success">成功: ' + result.success + '</span>';
+        if (result.failed > 0) {
+            html += '<span class="stat-item error">失败: ' + result.failed + '</span>';
+        }
+        html += '</div>';
+        
+        // 显示错误详情（如果有）
+        if (result.errorRecords && result.errorRecords.length > 0) {
+            html += '<div class="error-details">';
+            html += '<p>❌ 失败详情（前10条）:</p>';
+            html += '<ul>';
+            result.errorRecords.forEach(function(err) {
+                html += '<li>第' + err.index + '行: ' + escapeHtml(err.error) + '</li>';
+            });
+            html += '</ul>';
+            html += '</div>';
+        }
+        html += '</div>';
+    } else {
+        html += '<div class="result-error">';
+        html += '<p>❌ 导入失败: ' + escapeHtml(response.message) + '</p>';
+        html += '</div>';
+    }
+    
+    resultContent.innerHTML = html;
+    document.getElementById('resultSection').style.display = 'block';
+}
+
+// 拖拽上传支持
+var uploadArea = document.getElementById('fileUploadArea');
+if (uploadArea) {
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        var files = e.dataTransfer.files;
+        if (files.length > 0) {
+            var file = files[0];
+            if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                readExcelFile(file);
+            } else {
+                alert('请上传.xlsx或.xls格式的Excel文件');
+            }
+        }
+    });
+}

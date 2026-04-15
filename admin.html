@@ -358,6 +358,14 @@
                         </svg>
                         新增
                     </button>
+                    <button class="btn btn-success" onclick="showImportModal()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        导入Excel
+                    </button>
                     <button class="btn btn-secondary" onclick="loadAdmissionPlan()">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="23 4 23 10 17 10"></polyline>
@@ -382,8 +390,8 @@
                             <th>选科要求</th>
                             <th>专业层次</th>
                             <th>生源地</th>
-                            <th>院校类型</th>
-                            <th>专业类别</th>
+                            <th>门类</th>
+                            <th>专业类</th>
                             <th>最低分</th>
                             <th>最低位次</th>
                             <th>组最低分</th>
@@ -525,11 +533,11 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>院校类型</label>
+                            <label>门类</label>
                             <input type="text" id="apCategory" class="form-control" placeholder="如：综合类、理工类">
                         </div>
                         <div class="form-group">
-                            <label>专业类别</label>
+                            <label>专业类</label>
                             <input type="text" id="apMajorCategory" class="form-control" placeholder="如：工学、理学">
                         </div>
                     </div>
@@ -602,6 +610,127 @@
         </div>
     </div>
 
+    <!-- Excel导入模态框 -->
+    <div id="importModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content" style="max-width:900px; max-height:90vh; overflow-y:auto;">
+            <div class="modal-header">
+                <h3>批量导入招生计划</h3>
+                <button class="modal-close-btn" onclick="closeImportModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- 文件上传区域 -->
+                <div class="import-section">
+                    <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('excelFile').click()">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1890ff" stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <p class="upload-text">点击选择或拖拽Excel文件到此处</p>
+                        <p class="upload-hint">支持 .xlsx, .xls 格式，单次最多导入1000条</p>
+                        <input type="file" id="excelFile" accept=".xlsx,.xls" style="display:none;" onchange="handleFileSelect(event)">
+                    </div>
+                </div>
+
+                <!-- 模板下载 -->
+                <div class="import-section">
+                    <div class="template-download">
+                        <span class="template-title">📥 下载模板：</span>
+                        <button class="btn btn-link" onclick="downloadTemplate()">下载Excel模板文件(.xlsx)</button>
+                        <span class="template-tip">请按照模板格式填写数据</span>
+                    </div>
+                </div>
+
+                <!-- 字段映射说明 -->
+                <div class="import-section">
+                    <div class="field-mapping-title" onclick="toggleFieldMapping()">
+                        <span>📋 字段映射说明（点击展开/收起）</span>
+                        <svg id="fieldMappingArrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                    <div class="field-mapping-content" id="fieldMappingContent" style="display:none;">
+                        <table class="field-mapping-table">
+                            <thead>
+                                <tr>
+                                    <th>Excel列名（中文）</th>
+                                    <th>Excel列名（英文）</th>
+                                    <th>说明</th>
+                                    <th>必填</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>年份</td><td>year</td><td>招生年份，如：2025</td><td class="required">否（默认2025）</td></tr>
+                                <tr><td>院校代码</td><td>college_code</td><td>院校唯一代码</td><td class="required">是</td></tr>
+                                <tr><td>院校名称</td><td>college_name</td><td>院校全称</td><td class="required">是</td></tr>
+                                <tr><td>专业代码</td><td>major_code</td><td>专业代码</td><td class="required">否</td></tr>
+                                <tr><td>专业名称</td><td>major_name</td><td>专业全称</td><td class="required">是</td></tr>
+                                <tr><td>专业组代码</td><td>major_group_code</td><td>专业组代码</td><td class="required">否</td></tr>
+                                <tr><td>科类</td><td>subject_type</td><td>物理/历史</td><td class="required">否（默认物理）</td></tr>
+                                <tr><td>选科要求</td><td>subject_require</td><td>如：物理+化学</td><td class="required">否（默认不限）</td></tr>
+                                <tr><td>专业层次</td><td>major_level</td><td>本科/专科</td><td class="required">否（默认本科）</td></tr>
+                                <tr><td>生源地省份</td><td>source_province</td><td>生源地省份</td><td class="required">否（默认河北）</td></tr>
+<tr><td>门类</td><td>category</td><td>如：综合类、理工类</td><td class="required">否</td></tr>
+<tr><td>专业类</td><td>major_category</td><td>如：工学、理学</td><td class="required">否</td></tr>
+                                <tr><td>最低分</td><td>min_score_1</td><td>专业最低录取分</td><td class="required">否</td></tr>
+                                <tr><td>最低位次</td><td>min_rank_1</td><td>专业最低位次</td><td class="required">否</td></tr>
+                                <tr><td>组最低分</td><td>group_min_score_1</td><td>专业组最低分</td><td class="required">否</td></tr>
+                                <tr><td>组最低位次</td><td>group_min_rank_1</td><td>专业组最低位次</td><td class="required">否</td></tr>
+                                <tr><td>平均分</td><td>avg_score_1</td><td>专业平均录取分</td><td class="required">否</td></tr>
+                                <tr><td>平均位次</td><td>avg_rank_1</td><td>专业平均位次</td><td class="required">否</td></tr>
+                                <tr><td>计划数</td><td>plan_count_1</td><td>招生计划人数</td><td class="required">否</td></tr>
+                                <tr><td>录取数</td><td>admit_count_1</td><td>实际录取人数</td><td class="required">否</td></tr>
+                                <tr><td>组录取数</td><td>group_admit_count_1</td><td>专业组录取人数</td><td class="required">否</td></tr>
+                                <tr><td>批次</td><td>batch</td><td>如：本科批</td><td class="required">否（默认本科批）</td></tr>
+                                <tr><td>批次备注</td><td>batch_remark</td><td>批次补充说明</td><td class="required">否</td></tr>
+                                <tr><td>专业备注</td><td>major_remark</td><td>专业补充说明</td><td class="required">否</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 数据预览区域 -->
+                <div class="import-section" id="previewSection" style="display:none;">
+                    <div class="preview-header">
+                        <span class="preview-title">📊 数据预览（前5条）</span>
+                        <span class="preview-count" id="previewCount"></span>
+                    </div>
+                    <div class="preview-table-container">
+                        <table class="preview-table" id="previewTable">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 进度条 -->
+                <div class="import-section" id="progressSection" style="display:none;">
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill" style="width:0%"></div>
+                        </div>
+                        <span class="progress-text" id="progressText">0%</span>
+                    </div>
+                </div>
+
+                <!-- 导入结果 -->
+                <div class="import-section" id="resultSection" style="display:none;">
+                    <div class="result-content" id="resultContent"></div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeImportModal()">取消</button>
+                    <button type="button" class="btn btn-primary" id="importBtn" onclick="importExcelData()" disabled>开始导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载xlsx库 -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <script src="js/ui-enhancements.js"></script>
     <script src="js/admin.js"></script>
 </body>

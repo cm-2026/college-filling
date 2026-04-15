@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>权鼎教育-升学规划师系统</title>
+    <title>专业名录 - 权鼎教育</title>
     <script>
-        // 登录验证 - 未登录跳转到登录页
+        // 登录验证
+        (function() {
             var userId = localStorage.getItem('qd_userId');
             if (!userId) {
                 window.location.href = 'login.html';
@@ -16,31 +17,35 @@
     <link href="css/major-list.css" rel="stylesheet">
 </head>
 <body>
-<div class="container py-4">
-
-    <!-- 页头 -->
-    <div class="page-header">
-        <h1 class="page-title">专业名录</h1>
-        <p class="page-subtitle">共收录 <span id="totalCount" style="color:var(--accent-cyan)">--</span> 个专业，含专业介绍、就业前景及河南省录取数据</p>
-
-        <!-- 搜索栏 -->
-        <div class="search-bar">
-            <input type="text" id="searchInput" class="search-input"
-                placeholder="搜索专业名称，如：计算机、医学、金融、法学..." autocomplete="off">
-        </div>
-
-        <!-- 统计 -->
-        <div class="stats-bar">
-            <div class="stat-item">
-                <div class="stat-value" id="totalCountStat">--</div>
-                <div class="stat-label">收录专业</div>
+<!-- 固定顶部工具栏 -->
+<header class="top-header" id="topHeader" role="banner">
+    <div class="container">
+        <!-- 第一行：Logo 和门类按钮 -->
+        <div class="header-row">
+            <!-- 左侧：Logo -->
+            <div class="logo-section">
+                <a href="index-mysql.html" class="logo-link">
+                    <img src="images/权鼎教育.png" alt="权鼎教育" class="logo-img">
+                </a>
+                <!-- 类型切换在Logo下面 -->
+                <div class="type-switcher">
+                    <button class="type-btn active" data-type="undergraduate" onclick="switchType('undergraduate')">本科</button>
+                    <button class="type-btn" data-type="specialist" onclick="switchType('specialist')">专科</button>
+                </div>
             </div>
-            <div class="stat-item">
-                <div class="stat-value" id="resultCount">--</div>
-                <div class="stat-label">当前显示</div>
+            
+            <!-- 右侧：门类筛选（从Logo后面开始） -->
+            <div class="category-section">
+                <div class="category-scroll" id="categoryFilter">
+                    <!-- 动态生成分类标签 -->
+                </div>
             </div>
         </div>
     </div>
+</header>
+
+<!-- 页面主内容区域 -->
+<main class="container main-content" role="main">
 
     <!-- 专业列表 -->
     <div id="majorList">
@@ -51,9 +56,13 @@
             <h4 class="mt-3">正在加载专业数据...</h4>
         </div>
     </div>
-</div>
+</main>
 
 <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="js/major-list.js"></script>
+<script>
+    // 固定顶部工具栏高度，无需动态调整
+    // 顶部工具栏高度固定为140px，内容区域padding-top固定为160px
+</script>
 </body>
 </html>

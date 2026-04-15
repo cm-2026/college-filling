@@ -1917,28 +1917,45 @@ app.post('/api/export-excel', async (req, res) => {
 // 获取专业分类列表
 app.get('/api/major-category', async (req, res) => {
   try {
-    const { level, category_code, search } = req.query;
-    
+    const { level, category_code, search, type } = req.query;
+
     let sql = 'SELECT * FROM major_category WHERE 1=1';
     const params = [];
-    
+
     if (level) {
       sql += ' AND level = ?';
       params.push(parseInt(level));
     }
-    
+
     if (category_code) {
       sql += ' AND category_code = ?';
       params.push(category_code);
     }
-    
+
     if (search) {
       sql += ' AND (name LIKE ? OR code LIKE ?)';
       params.push(`%${search}%`, `%${search}%`);
     }
-    
+
+    // 根据类型筛选本科或专科数据
+    if (type === 'undergraduate') {
+      // 本科：code以01-13开头（包括门类、专业类、专业）
+      sql += ` AND (
+        code REGEXP "^(0[1-9]|1[0-3])"
+        OR category_code REGEXP "^(0[1-9]|1[0-3])"
+        OR top_code REGEXP "^(0[1-9]|1[0-3])"
+      )`;
+    } else if (type === 'specialist') {
+      // 专科：code以4-9开头（根据实际数据41-99）
+      sql += ` AND (
+        code REGEXP "^([4-9][0-9])"
+        OR category_code REGEXP "^([4-9][0-9])"
+        OR top_code REGEXP "^([4-9][0-9])"
+      )`;
+    }
+
     sql += ' ORDER BY level, code';
-    
+
     const [rows] = await pool.execute(sql, params);
     res.json({ success: true, data: rows });
   } catch (err) {
@@ -2291,6 +2308,115 @@ app.get('/api/admission-plan/:id', async (req, res) => {
     res.json({ success: true, data: rows[0] });
   } catch (err) {
     console.error('获取招生计划详情失败:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 批量导入招生计划（Excel导入）
+app.post('/api/admission-plan/batch', async (req, res) => {
+  try {
+    const { data } = req.body;
+
+    if (!Array.isArray(data) || data.length === 0) {
+      return res.status(400).json({ success: false, message: '数据不能为空' });
+    }
+
+    if (data.length > 1000) {
+      return res.status(400).json({ success: false, message: '单次导入不能超过1000条' });
+    }
+
+    // 获取当前最大ID
+    const [maxIdRows] = await pool.execute('SELECT MAX(id) as maxId FROM admission_plan');
+    let nextId = (maxIdRows[0].maxId || 0) + 1;
+
+    const successRecords = [];
+    const errorRecords = [];
+
+    // 使用事务
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    try {
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        
+        // 基本校验
+        if (!row.college_code || !row.college_name || !row.major_name) {
+          errorRecords.push({ index: i + 1, data: row, error: '院校代码、院校名称、专业名称不能为空' });
+          continue;
+        }
+
+        const sql = `
+          INSERT INTO admission_plan (
+            id, year, college_code, college_name, major_name, major_code,
+            major_group_code, subject_type, subject_require, major_level,
+            min_score_1, min_rank_1, plan_count_1, admit_count_1,
+            batch, batch_remark, major_remark, source_province,
+            category, major_category,
+            group_min_score_1, group_min_rank_1, group_admit_count_1,
+            avg_score_1, avg_rank_1
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        const params = [
+          nextId++,
+          row.year || 2025,
+          row.college_code,
+          row.college_name,
+          row.major_name,
+          row.major_code || null,
+          row.major_group_code || null,
+          row.subject_type || '物理',
+          row.subject_require || '不限',
+          row.major_level || '本科',
+          row.min_score_1 || null,
+          row.min_rank_1 || null,
+          row.plan_count_1 || null,
+          row.admit_count_1 || null,
+          row.batch || '本科批',
+          row.batch_remark || null,
+          row.major_remark || null,
+          row.source_province || '河北',
+          row.category || null,
+          row.major_category || null,
+          row.group_min_score_1 || null,
+          row.group_min_rank_1 || null,
+          row.group_admit_count_1 || null,
+          row.avg_score_1 || null,
+          row.avg_rank_1 || null
+        ];
+
+        try {
+          await connection.execute(sql, params);
+          successRecords.push({ index: i + 1, college_name: row.college_name, major_name: row.major_name });
+        } catch (insertErr) {
+          errorRecords.push({ index: i + 1, data: row, error: insertErr.message });
+        }
+      }
+
+      await connection.commit();
+    } catch (transactionErr) {
+      await connection.rollback();
+      throw transactionErr;
+    } finally {
+      connection.release();
+    }
+
+    console.log(`✅ 批量导入完成: 成功 ${successRecords.length} 条, 失败 ${errorRecords.length} 条`);
+
+    res.json({
+      success: true,
+      message: `导入完成: 成功 ${successRecords.length} 条, 失败 ${errorRecords.length} 条`,
+      data: {
+        total: data.length,
+        success: successRecords.length,
+        failed: errorRecords.length,
+        successRecords: successRecords.slice(0, 10), // 只返回前10条成功记录
+        errorRecords: errorRecords.slice(0, 10) // 只返回前10条错误记录
+      }
+    });
+  } catch (err) {
+    console.error('❌ 批量导入失败:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });

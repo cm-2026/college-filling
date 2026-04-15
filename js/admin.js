@@ -554,7 +554,8 @@ function buildTree(data) {
     data.forEach(function(item) {
         if (item.parent_id && map[item.parent_id]) {
             map[item.parent_id].children.push(item);
-        } else if (item.level === 1) {
+        } else {
+            // 没有父节点或父节点不存在，作为根节点
             roots.push(item);
         }
     });

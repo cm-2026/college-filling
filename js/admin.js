@@ -566,6 +566,18 @@ function buildTree(data) {
     
     var map = {};
     var roots = [];
+    var orphanedCount = 0;
+    
+    // 检查第一条数据的 id 和 parent_id 类型
+    if (data.length > 0) {
+        console.log('[buildTree] 第一条数据:', {
+            id: data[0].id,
+            idType: typeof data[0].id,
+            parent_id: data[0].parent_id,
+            parentIdType: typeof data[0].parent_id,
+            level: data[0].level
+        });
+    }
     
     // 第一步：创建所有节点的映射
     data.forEach(function(item) {
@@ -573,25 +585,41 @@ function buildTree(data) {
         item.children = [];
     });
     
+    console.log('[buildTree] map 大小:', Object.keys(map).length);
+    
     // 第二步：建立父子关系
     data.forEach(function(item) {
-        // 检查 parent_id 是否有效（不是 null、0、undefined、空字符串）
-        var hasValidParent = item.parent_id != null && item.parent_id !== 0 && item.parent_id !== '';
+        // 检查 parent_id 是否有效（不是 null、undefined）
+        var hasValidParent = item.parent_id != null && item.parent_id !== '';
         
-        if (hasValidParent && map[item.parent_id]) {
+        // 检查父节点是否存在
+        var parentExists = hasValidParent && map[item.parent_id] != null;
+        
+        if (hasValidParent && parentExists) {
             // 有有效的父节点，添加到父节点的 children 中
             map[item.parent_id].children.push(item);
+        } else if (item.level === 1) {
+            // level=1 的节点作为根节点
+            roots.push(item);
         } else {
-            // 没有有效的父节点，作为根节点
-            // 但只有 level=1 的节点才是真正的根节点
-            if (item.level === 1) {
-                roots.push(item);
-            } else {
-                // 如果 level 不是 1 但没有父节点，可能是数据问题，输出警告
-                console.warn('[buildTree] 发现孤儿节点:', item);
+            // level 不是 1 但没有父节点，是孤儿节点
+            orphanedCount++;
+            if (orphanedCount <= 3) {
+                console.warn('[buildTree] 孤儿节点 #' + orphanedCount + ':', {
+                    id: item.id,
+                    name: item.name,
+                    parent_id: item.parent_id,
+                    level: item.level,
+                    hasValidParent: hasValidParent,
+                    parentExists: parentExists
+                });
             }
         }
     });
+    
+    if (orphanedCount > 0) {
+        console.warn('[buildTree] 总孤儿节点数:', orphanedCount);
+    }
     
     // 按 code 排序根节点
     roots.sort(function(a, b) {
@@ -610,6 +638,11 @@ function buildTree(data) {
         });
     }
     sortChildren(roots);
+    
+    // 输出每个根节点的子节点数
+    roots.forEach(function(root) {
+        console.log('[buildTree] 根节点 "' + root.name + '" 的直接子节点数:', root.children.length);
+    });
     
     console.log('[buildTree] 构建完成，根节点数:', roots.length);
     return roots;

@@ -531,6 +531,25 @@ async function loadMajorCategory() {
         var data = await res.json();
         if (data.success) {
             mcAllData = data.data || [];
+            console.log('[loadMajorCategory] 原始数据条数:', mcAllData.length);
+            console.log('[loadMajorCategory] 数据样例 (前5条):', mcAllData.slice(0, 5));
+            
+            // 检查 parent_id 分布
+            var parentIdStats = {};
+            mcAllData.forEach(function(item) {
+                var key = item.parent_id == null ? 'null' : (item.parent_id === 0 ? '0' : String(item.parent_id));
+                parentIdStats[key] = (parentIdStats[key] || 0) + 1;
+            });
+            console.log('[loadMajorCategory] parent_id 分布:', parentIdStats);
+            
+            // 检查 level 分布
+            var levelStats = {};
+            mcAllData.forEach(function(item) {
+                var key = String(item.level);
+                levelStats[key] = (levelStats[key] || 0) + 1;
+            });
+            console.log('[loadMajorCategory] level 分布:', levelStats);
+            
             mcData = buildTree(mcAllData);
             renderMajorCategoryTree();
         } else {
@@ -543,23 +562,56 @@ async function loadMajorCategory() {
 }
 
 function buildTree(data) {
+    console.log('[buildTree] 开始构建树，数据条数:', data.length);
+    
     var map = {};
     var roots = [];
     
+    // 第一步：创建所有节点的映射
     data.forEach(function(item) {
         map[item.id] = item;
         item.children = [];
     });
     
+    // 第二步：建立父子关系
     data.forEach(function(item) {
-        if (item.parent_id && map[item.parent_id]) {
+        // 检查 parent_id 是否有效（不是 null、0、undefined、空字符串）
+        var hasValidParent = item.parent_id != null && item.parent_id !== 0 && item.parent_id !== '';
+        
+        if (hasValidParent && map[item.parent_id]) {
+            // 有有效的父节点，添加到父节点的 children 中
             map[item.parent_id].children.push(item);
         } else {
-            // 没有父节点或父节点不存在，作为根节点
-            roots.push(item);
+            // 没有有效的父节点，作为根节点
+            // 但只有 level=1 的节点才是真正的根节点
+            if (item.level === 1) {
+                roots.push(item);
+            } else {
+                // 如果 level 不是 1 但没有父节点，可能是数据问题，输出警告
+                console.warn('[buildTree] 发现孤儿节点:', item);
+            }
         }
     });
     
+    // 按 code 排序根节点
+    roots.sort(function(a, b) {
+        return (a.code || '').localeCompare(b.code || '');
+    });
+    
+    // 递归排序子节点
+    function sortChildren(nodes) {
+        nodes.forEach(function(node) {
+            if (node.children && node.children.length > 0) {
+                node.children.sort(function(a, b) {
+                    return (a.code || '').localeCompare(b.code || '');
+                });
+                sortChildren(node.children);
+            }
+        });
+    }
+    sortChildren(roots);
+    
+    console.log('[buildTree] 构建完成，根节点数:', roots.length);
     return roots;
 }
 

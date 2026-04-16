@@ -9,6 +9,10 @@
     
     // 特色专业数据（特色类型 -> 专业数组）
     let featuredMajorsMap = {};
+    
+    // 排序功能
+    let currentSortMode = 'major'; // 'major' 或 'college'
+    let collegeTypeInfo = {}; // 院校类型信息缓存
 
 
     // ====================================================
@@ -120,6 +124,15 @@
             }
         } catch (err) {
             console.warn('加载特色专业数据失败:', err.message);
+        }
+        
+        // 初始化排序按钮状态
+        const majorBtn = document.getElementById('sortMajorFirst');
+        const collegeBtn = document.getElementById('sortCollegeFirst');
+        if (majorBtn && collegeBtn) {
+            majorBtn.classList.add('active');
+            majorBtn.setAttribute('aria-selected', 'true');
+            collegeBtn.setAttribute('aria-selected', 'false');
         }
     });
 
@@ -1020,32 +1033,68 @@
             return count;
         }
 
-        // 排序：1.有大拇指排前面 2.特色标签数量降序 3.大拇指数量降序 4.院校层次优先级
+        // 排序逻辑
         const groups=[...schoolMap.values()].sort((ga,gb)=>{
-            const schoolNameA = ga[0].name || '';
-            const schoolNameB = gb[0].name || '';
-            const schoolFeaturesA = collegeFeaturesMap[schoolNameA] || [];
-            const schoolFeaturesB = collegeFeaturesMap[schoolNameB] || [];
-
-            // 计算大拇指数量
-            const thumbCountA = countThumbs(ga, schoolFeaturesA);
-            const thumbCountB = countThumbs(gb, schoolFeaturesB);
-
-            // 1. 有大拇指的排前面
-            const hasThumbA = thumbCountA > 0;
-            const hasThumbB = thumbCountB > 0;
-            if (hasThumbA !== hasThumbB) return hasThumbB ? 1 : -1;
-
-            // 2. 特色标签数量降序
-            const featureCountA = schoolFeaturesA.length;
-            const featureCountB = schoolFeaturesB.length;
-            if (featureCountA !== featureCountB) return featureCountB - featureCountA;
-
-            // 3. 大拇指数量降序
-            if (thumbCountA !== thumbCountB) return thumbCountB - thumbCountA;
-
-            // 4. 院校层次优先级
-            return getLvPrio(ga[0].name) - getLvPrio(gb[0].name);
+            if (currentSortMode === 'college') {
+                // 院校优先排序：按院校类型优先级
+                const priorityA = getCollegeTypePriority(ga[0].name || '');
+                const priorityB = getCollegeTypePriority(gb[0].name || '');
+                
+                if (priorityA !== priorityB) {
+                    return priorityA - priorityB;
+                }
+                
+                // 同类型院校，按原有逻辑排序
+                const schoolNameA = ga[0].name || '';
+                const schoolNameB = gb[0].name || '';
+                const schoolFeaturesA = collegeFeaturesMap[schoolNameA] || [];
+                const schoolFeaturesB = collegeFeaturesMap[schoolNameB] || [];
+                
+                // 计算大拇指数量
+                const thumbCountA = countThumbs(ga, schoolFeaturesA);
+                const thumbCountB = countThumbs(gb, schoolFeaturesB);
+                
+                // 1. 有大拇指的排前面
+                const hasThumbA = thumbCountA > 0;
+                const hasThumbB = thumbCountB > 0;
+                if (hasThumbA !== hasThumbB) return hasThumbB ? 1 : -1;
+                
+                // 2. 特色标签数量降序
+                const featureCountA = schoolFeaturesA.length;
+                const featureCountB = schoolFeaturesB.length;
+                if (featureCountA !== featureCountB) return featureCountB - featureCountA;
+                
+                // 3. 大拇指数量降序
+                if (thumbCountA !== thumbCountB) return thumbCountB - thumbCountA;
+                
+                return 0;
+            } else {
+                // 专业优先排序：保持原有逻辑
+                const schoolNameA = ga[0].name || '';
+                const schoolNameB = gb[0].name || '';
+                const schoolFeaturesA = collegeFeaturesMap[schoolNameA] || [];
+                const schoolFeaturesB = collegeFeaturesMap[schoolNameB] || [];
+                
+                // 计算大拇指数量
+                const thumbCountA = countThumbs(ga, schoolFeaturesA);
+                const thumbCountB = countThumbs(gb, schoolFeaturesB);
+                
+                // 1. 有大拇指的排前面
+                const hasThumbA = thumbCountA > 0;
+                const hasThumbB = thumbCountB > 0;
+                if (hasThumbA !== hasThumbB) return hasThumbB ? 1 : -1;
+                
+                // 2. 特色标签数量降序
+                const featureCountA = schoolFeaturesA.length;
+                const featureCountB = schoolFeaturesB.length;
+                if (featureCountA !== featureCountB) return featureCountB - featureCountA;
+                
+                // 3. 大拇指数量降序
+                if (thumbCountA !== thumbCountB) return thumbCountB - thumbCountA;
+                
+                // 4. 院校层次优先级
+                return getLvPrio(ga[0].name) - getLvPrio(gb[0].name);
+            }
         });
 
         const ps=pageSize===0?groups.length:pageSize;
@@ -1643,3 +1692,85 @@
             }
         }
     });
+
+    // ====================================================
+    // 排序功能
+    // ====================================================
+    
+    // 设置排序模式
+    function setSortMode(mode) {
+        currentSortMode = mode;
+        
+        // 更新按钮样式
+        const majorBtn = document.getElementById('sortMajorFirst');
+        const collegeBtn = document.getElementById('sortCollegeFirst');
+        if (majorBtn && collegeBtn) {
+            majorBtn.classList.toggle('active', mode === 'major');
+            collegeBtn.classList.toggle('active', mode === 'college');
+            // 更新ARIA属性
+            majorBtn.setAttribute('aria-selected', mode === 'major');
+            collegeBtn.setAttribute('aria-selected', mode === 'college');
+        }
+        
+        // 重新渲染表格
+        if (filteredData.length > 0) {
+            renderTable(filteredData);
+        }
+    }
+
+    // 获取院校类型优先级
+    function getCollegeTypePriority(schoolName) {
+        // 从collegeFeaturesMap获取985/211/双一流信息
+        const features = collegeFeaturesMap[schoolName] || [];
+        
+        // 优先级顺序：985 → 211 → 双一流 → 公办本科 → 民办本科 → 公办专科 → 民办专科
+        if (features.includes('985')) return 1;
+        if (features.includes('211')) return 2;
+        if (features.includes('双一流')) return 3;
+        
+        // 对于其他院校，从院校名称中推断类型
+        // 注意：这是一个简化的推断逻辑，实际项目中应该从数据库获取准确的院校类型信息
+        const lowerName = schoolName.toLowerCase();
+        
+        // 判断是否是专科院校（更精确的规则）
+        const isVocational = lowerName.includes('职业') || 
+                            lowerName.includes('技术') || 
+                            lowerName.includes('工程') ||
+                            lowerName.includes('工业') ||
+                            lowerName.includes('商贸') ||
+                            lowerName.includes('财经') ||
+                            lowerName.includes('医学') ||
+                            lowerName.includes('师范') ||
+                            lowerName.includes('公安') ||
+                            lowerName.includes('司法') ||
+                            lowerName.includes('艺术') ||
+                            lowerName.includes('体育') ||
+                            lowerName.includes('高等专科') ||
+                            lowerName.includes('专科学校') ||
+                            lowerName.includes('职业学院') ||
+                            lowerName.includes('职业技术学院');
+        
+        // 判断是否是民办院校
+        const isPrivate = lowerName.includes('民办') || 
+                         lowerName.includes('私立') ||
+                         lowerName.includes('独立学院') ||
+                         lowerName.includes('独立学校');
+        
+        // 判断是否是本科院校（包含"大学"的一般是本科）
+        const isUniversity = lowerName.includes('大学');
+        
+        if (isVocational && !isUniversity) {
+            // 专科院校（不包含"大学"的专科院校）
+            return isPrivate ? 7 : 6; // 民办专科:7, 公办专科:6
+        } else if (isUniversity || !isVocational) {
+            // 本科院校（包含"大学"或者不是专科院校的）
+            return isPrivate ? 5 : 4; // 民办本科:5, 公办本科:4
+        } else {
+            // 其他情况，默认为公办本科
+            return 4;
+        }
+    }
+
+    // 修改renderTable函数中的排序逻辑
+    // 找到第977行的排序代码，修改为：
+    // 注意：这里我们将在后面修改renderTable函数

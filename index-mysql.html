@@ -147,6 +147,22 @@
                 <div class="toolbar-inner">
                     <!-- 返回 -->
                     <button class="back-btn" onclick="showFormView()">← 返回</button>
+                    <!-- 排序切换按钮组 -->
+                    <div class="sort-toggle-group" role="tablist" aria-label="排序方式">
+                        <button class="sort-toggle-btn active" id="sortMajorFirst" onclick="setSortMode('major')" role="tab" aria-selected="true">
+                            <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                            </svg>
+                            <span>专业优先</span>
+                        </button>
+                        <button class="sort-toggle-btn" id="sortCollegeFirst" onclick="setSortMode('college')" role="tab" aria-selected="false">
+                            <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 14l9-5-9-5-9 5 9 5z"/>
+                                <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+                            </svg>
+                            <span>院校优先</span>
+                        </button>
+                    </div>
                     
                     <!-- 筛选条件显示 -->
                     <div class="filter-display" id="filterDisplay">

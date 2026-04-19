@@ -228,7 +228,7 @@
     // ====================================================
     function initSubjectTags() {
         initRegionCombobox();
-        renderSubjectSelection();
+        setupSubjectTagEvents(); // 初始绑定事件
         document.getElementById('region').addEventListener('change',()=>{
             document.getElementById('subjectCombination').value='';
             renderSubjectSelection();
@@ -242,36 +242,64 @@
         let mode = gaokaoModes.mode312.includes(region)?'mode312':gaokaoModes.mode33.includes(region)?'mode33':gaokaoModes.modeTraditional.includes(region)?'modeTraditional':'mode312';
         let html='';
         if(mode==='mode312'){
-            html=`<input type="hidden" id="subjectCombination" required>
-            <div class="invalid-feedback" id="subjectError" style="display:none;">请选择必选科目（1门）和再选科目（2门）</div>
-            <div class="mb-3"><label class="form-label">必选科目（物理/历史二选一，100分）</label>
-            <div class="subject-tags"><div class="subject-tag" data-type="required" data-value="物理">物理</div><div class="subject-tag" data-type="required" data-value="历史">历史</div></div></div>
-            <div><label class="form-label">再选科目（政治、地理、化学、生物中选2门，各100分）</label>
-            <div class="subject-tags"><div class="subject-tag" data-type="optional" data-value="化学">化学</div><div class="subject-tag" data-type="optional" data-value="生物">生物</div><div class="subject-tag" data-type="optional" data-value="政治">政治</div><div class="subject-tag" data-type="optional" data-value="地理">地理</div></div></div>`;
+            html=`
+            <div class="mb-3">
+                <label class="form-label">必选科目（物理/历史二选一，100分）</label>
+                <div class="subject-tags">
+                    <div class="subject-tag" data-type="required" data-value="物理">物理</div>
+                    <div class="subject-tag" data-type="required" data-value="历史">历史</div>
+                </div>
+            </div>
+            <div>
+                <label class="form-label">再选科目（政治、地理、化学、生物中选2门，各100分）</label>
+                <div class="subject-tags">
+                    <div class="subject-tag" data-type="optional" data-value="化学">化学</div>
+                    <div class="subject-tag" data-type="optional" data-value="生物">生物</div>
+                    <div class="subject-tag" data-type="optional" data-value="政治">政治</div>
+                    <div class="subject-tag" data-type="optional" data-value="地理">地理</div>
+                </div>
+            </div>`;
         } else if(mode==='mode33'){
-            const region = document.getElementById('region').value;
-            const hasTech = (region === '浙江'); // 只有浙江有技术科目
+            const hasTech = (region === '浙江');
             const subjectCount = hasTech ? '7选3' : '6选3';
             const techTag = hasTech ? '<div class="subject-tag" data-type="mode33" data-value="技术">技术</div>' : '';
-            html=`<input type="hidden" id="subjectCombination" required>
-            <div class="invalid-feedback" id="subjectError" style="display:none;">请选择选科组合</div>
-            <div><label class="form-label">选考科目（${subjectCount}，各100分）</label>
-            <div class="subject-tags"><div class="subject-tag" data-type="mode33" data-value="物理">物理</div><div class="subject-tag" data-type="mode33" data-value="化学">化学</div><div class="subject-tag" data-type="mode33" data-value="生物">生物</div><div class="subject-tag" data-type="mode33" data-value="政治">政治</div><div class="subject-tag" data-type="mode33" data-value="历史">历史</div><div class="subject-tag" data-type="mode33" data-value="地理">地理</div>${techTag}</div></div>`;
+            html=`
+            <div>
+                <label class="form-label">选考科目（${subjectCount}，各100分）</label>
+                <div class="subject-tags">
+                    <div class="subject-tag" data-type="mode33" data-value="物理">物理</div>
+                    <div class="subject-tag" data-type="mode33" data-value="化学">化学</div>
+                    <div class="subject-tag" data-type="mode33" data-value="生物">生物</div>
+                    <div class="subject-tag" data-type="mode33" data-value="政治">政治</div>
+                    <div class="subject-tag" data-type="mode33" data-value="历史">历史</div>
+                    <div class="subject-tag" data-type="mode33" data-value="地理">地理</div>
+                    ${techTag}
+                </div>
+            </div>`;
         } else {
-            html=`<input type="hidden" id="subjectCombination" required>
-            <div class="invalid-feedback" id="subjectError" style="display:none;">请选择文理分科</div>
-            <div><label class="form-label">文理分科（文综/理综，300分）</label>
-            <div class="subject-tags"><div class="subject-tag" data-type="traditional" data-value="理科">理科（理综）</div><div class="subject-tag" data-type="traditional" data-value="文科">文科（文综）</div></div></div>`;
+            html=`
+            <div>
+                <label class="form-label">文理分科（文综/理综，300分）</label>
+                <div class="subject-tags">
+                    <div class="subject-tag" data-type="traditional" data-value="理科">理科（理综）</div>
+                    <div class="subject-tag" data-type="traditional" data-value="文科">文科（文综）</div>
+                </div>
+            </div>`;
         }
         container.innerHTML=html;
-        setupSubjectTagEvents(mode);
+        setupSubjectTagEvents();
     }
 
-    function setupSubjectTagEvents(mode) {
+    function setupSubjectTagEvents() {
         const tags=document.querySelectorAll('.subject-tag');
         const hiddenInput=document.getElementById('subjectCombination');
         const errorDiv=document.getElementById('subjectError');
         if(!hiddenInput||!errorDiv)return;
+
+        // 从DOM判断当前模式
+        const isMode312 = !!document.querySelector('[data-type="required"]');
+        const isMode33 = !!document.querySelector('[data-type="mode33"]') && !isMode312;
+        const isTraditional = !!document.querySelector('[data-type="traditional"]') && !isMode312;
 
         tags.forEach(tag=>{
             tag.addEventListener('click',function(){
@@ -302,12 +330,12 @@
 
         function updateCombo(){
             let subjects=[];
-            if(mode==='mode312'){
+            if(isMode312){
                 const req=document.querySelector('[data-type="required"].selected');
                 const opt=document.querySelectorAll('[data-type="optional"].selected');
                 if(req&&opt.length===2){subjects=[req.dataset.value,opt[0].dataset.value,opt[1].dataset.value];hiddenInput.value=subjects.join(',');errorDiv.style.display='none';}
                 else hiddenInput.value='';
-            } else if(mode==='mode33'){
+            } else if(isMode33){
                 const sel=document.querySelectorAll('[data-type="mode33"].selected');
                 if(sel.length===3){sel.forEach(t=>subjects.push(t.dataset.value));hiddenInput.value=subjects.join(',');errorDiv.style.display='none';}
                 else hiddenInput.value='';
@@ -315,8 +343,8 @@
         }
         function validateSubject(){
             let ok=false;
-            if(mode==='mode312'){const req=document.querySelector('[data-type="required"].selected');const opt=document.querySelectorAll('[data-type="optional"].selected');ok=req&&opt.length===2;}
-            else if(mode==='mode33'){ok=document.querySelectorAll('[data-type="mode33"].selected').length===3;}
+            if(isMode312){const req=document.querySelector('[data-type="required"].selected');const opt=document.querySelectorAll('[data-type="optional"].selected');ok=req&&opt.length===2;}
+            else if(isMode33){ok=document.querySelectorAll('[data-type="mode33"].selected').length===3;}
             else{ok=!!document.querySelector('[data-type="traditional"].selected');}
             errorDiv.style.display=ok?'none':'block';
             return ok;
@@ -731,8 +759,186 @@
         applyFilter();
     }
 
-    // 导出为 Excel 文件
-    async function exportToExcel(){
+    // 切换导出菜单显示
+    function toggleExportMenu(event){
+        event.stopPropagation();
+        const menu = document.getElementById('exportMenu');
+        if(menu){
+            menu.classList.toggle('show');
+        }
+    }
+
+    // 点击其他地方关闭导出菜单
+    document.addEventListener('click', function(e){
+        const menu = document.getElementById('exportMenu');
+        const dropdown = document.querySelector('.export-dropdown');
+        if(menu && dropdown && !dropdown.contains(e.target)){
+            menu.classList.remove('show');
+        }
+    });
+
+    // 加载PDF库
+    async function ensurePdfLibs() {
+        if (window.jspdf && window.html2canvas) return;
+        const scripts = [
+            { name: 'html2canvas', src: 'https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js' },
+            { name: 'jspdf', src: 'https://cdn.bootcdn.net/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js' }
+        ];
+        for (const s of scripts) {
+            if (!window[s.name]) {
+                await new Promise((resolve) => {
+                    const script = document.createElement('script');
+                    script.src = s.src;
+                    script.onload = resolve;
+                    script.onerror = () => { console.warn(s.name + ' 加载失败'); resolve(); };
+                    document.head.appendChild(script);
+                });
+            }
+        }
+    }
+
+    // 使用 html2canvas + jsPDF 导出为 PDF（避免中文乱码）
+    async function exportToPdf(region, score, rank, subject, schools) {
+        await ensurePdfLibs();
+        if (!window.jspdf) { alert('PDF库加载失败，请检查网络后重试'); return; }
+        const { jsPDF } = window.jspdf;
+
+        // 创建临时 HTML 元素用于渲染
+        const container = document.createElement('div');
+        container.style.cssText = `
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            width: 800px;
+            background: white;
+            padding: 30px;
+            font-family: "Microsoft YaHei", "PingFang SC", "SimHei", sans-serif;
+            font-size: 12px;
+            color: #333;
+        `;
+
+        // 生成 HTML 内容
+        let html = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="font-size: 24px; margin: 0 0 15px 0; color: #1a1a1a;">高考志愿推荐报告</h1>
+                <p style="font-size: 12px; color: #666; margin: 0;">
+                    生源地：${region} &nbsp;&nbsp;|&nbsp;&nbsp; 分数：${score} &nbsp;&nbsp;|&nbsp;&nbsp; 位次：${rank} &nbsp;&nbsp;|&nbsp;&nbsp; 选科：${subject}
+                </p>
+            </div>
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 15px 0;">
+            <h2 style="font-size: 16px; margin: 0 0 15px 0; color: #333;">推荐院校及专业</h2>
+        `;
+
+        schools.forEach((school, schoolIndex) => {
+            const featuresHtml = school.features && school.features.length > 0
+                ? `<span style="color: #e74c3c; font-size: 11px;"> [${school.features.join(' / ')}]</span>`
+                : '';
+
+            html += `
+                <div style="margin-bottom: 15px; page-break-inside: avoid;">
+                    <h3 style="font-size: 14px; margin: 0 0 8px 0; color: #222;">
+                        ${schoolIndex + 1}. ${school.name}${featuresHtml}
+                    </h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                        <thead>
+                            <tr style="background: #3b82f6; color: white;">
+                                <th style="padding: 6px 8px; text-align: center; width: 40px;">#</th>
+                                <th style="padding: 6px 8px; text-align: left;">专业名称</th>
+                                <th style="padding: 6px 8px; text-align: left; width: 120px;">专业类</th>
+                                <th style="padding: 6px 8px; text-align: center; width: 60px;">最低分</th>
+                                <th style="padding: 6px 8px; text-align: center; width: 80px;">最低位次</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${school.majors.map((m, i) => `
+                                <tr style="background: ${i % 2 === 0 ? '#f8f9fa' : 'white'};">
+                                    <td style="padding: 5px 8px; text-align: center;">${i + 1}</td>
+                                    <td style="padding: 5px 8px;">${m.major}</td>
+                                    <td style="padding: 5px 8px;">${m.major_category || '-'}</td>
+                                    <td style="padding: 5px 8px; text-align: center;">${m.min_score || '-'}</td>
+                                    <td style="padding: 5px 8px; text-align: center;">${m.min_rank ? Number(m.min_rank).toLocaleString() : '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        });
+
+        html += `
+            <div style="text-align: center; color: #999; font-size: 10px; margin-top: 20px; padding-top: 10px; border-top: 1px solid #eee;">
+                生成时间：${new Date().toLocaleString('zh-CN')}
+            </div>
+        `;
+
+        container.innerHTML = html;
+        document.body.appendChild(container);
+
+        try {
+            // 使用 html2canvas 渲染
+            const canvas = await html2canvas(container, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            });
+
+            const imgWidth = 210; // A4 宽度 mm
+            const pageHeight = 297; // A4 高度 mm
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            const imgData = canvas.toDataURL('image/png');
+
+            const doc = new jsPDF('p', 'mm', 'a4');
+
+            // 计算总页数
+            const totalPages = Math.ceil(imgHeight / pageHeight);
+
+            // 使用裁剪方式分页：每页显示 pageHeight 高度的内容
+            const pageCanvas = document.createElement('canvas');
+            const ctx = pageCanvas.getContext('2d');
+            const canvasWidth = canvas.width;
+            const pageHeightPx = (pageHeight * canvas.width) / imgWidth;
+
+            pageCanvas.width = canvasWidth;
+            pageCanvas.height = pageHeightPx;
+
+            for (let i = 0; i < totalPages; i++) {
+                if (i > 0) {
+                    doc.addPage();
+                }
+                // 裁剪当前页的内容
+                ctx.clearRect(0, 0, canvasWidth, pageHeightPx);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvasWidth, pageHeightPx);
+                ctx.drawImage(canvas, 0, -i * pageHeightPx);
+
+                const pageImgData = pageCanvas.toDataURL('image/png');
+                doc.addImage(pageImgData, 'PNG', 0, 0, imgWidth, pageHeight);
+            }
+
+            // 下载文件
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 10);
+            const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
+            const fileName = `志愿推荐_${dateStr}_${timeStr}.pdf`;
+            doc.save(fileName);
+
+        } catch (error) {
+            console.error('PDF生成失败:', error);
+            alert('PDF生成失败，请稍后重试');
+        } finally {
+            // 清理临时元素
+            document.body.removeChild(container);
+        }
+    }
+
+    // 导出为 Excel 或 CSV 文件
+    async function exportToExcel(type){
+        // 关闭下拉菜单
+        const menu = document.getElementById('exportMenu');
+        if(menu) menu.classList.remove('show');
+
+        type = type || 'xlsx';
         if(filteredData.length === 0){
             alert('没有数据可导出');
             return;
@@ -846,13 +1052,20 @@
         // 构建导出数据
         const schools = top10Groups.map(group => ({
             name: group[0].name || '',
+            features: collegeFeaturesMap[group[0].name] || [],
             majors: group.map(row => ({
                 major: row.major || '',
                 major_category: row.major_category || '',
                 min_score: row.min_score || row.group_min_score_1 || '',
-                min_rank: row.rank || row.group_min_rank_1 || ''  // 注意：后端返回的是rank字段，不是min_rank
+                min_rank: row.rank || row.group_min_rank_1 || ''
             }))
         }));
+
+        // 如果是 PDF 导出，使用前端 jsPDF 生成
+        if (type === 'pdf') {
+            exportToPdf(region, score, rank, subject, schools);
+            return;
+        }
 
         // 调用后端API
         try {
@@ -864,7 +1077,8 @@
                     score,
                     rank,
                     subject,
-                    schools
+                    schools,
+                    type: type
                 })
             });
 
@@ -876,11 +1090,11 @@
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
-            // 文件名格式：志愿推荐_2026-04-12_095959.xlsx
+            // 文件名格式：志愿推荐_2026-04-12_095959.xlsx/csv
             const now = new Date();
             const dateStr = now.toISOString().slice(0, 10);
             const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
-            const fileName = `志愿推荐_${dateStr}_${timeStr}.xlsx`;
+            const fileName = `志愿推荐_${dateStr}_${timeStr}.${type}`;
             link.href = url;
             link.download = fileName;
             document.body.appendChild(link);

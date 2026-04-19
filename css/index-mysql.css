@@ -751,6 +751,56 @@
             box-shadow: 0 0 0 2px var(--accent-300);
         }
 
+        /* 导出下拉菜单 */
+        .export-dropdown {
+            position: relative;
+            display: inline-flex;
+        }
+        .export-dropdown .dropdown-arrow {
+            margin-left: 2px;
+            transition: transform 0.2s ease;
+        }
+        .export-menu {
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            background: white;
+            border: 1px solid var(--border-light, #d1d5db);
+            border-radius: var(--radius-md, 8px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 180px;
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+        .export-menu.show {
+            display: block;
+            animation: fadeIn 0.15s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .export-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            color: var(--text-primary, #1f2937);
+            font-size: 0.875rem;
+        }
+        .export-menu-item:hover {
+            background: var(--bg-tertiary, #f3f4f6);
+        }
+        .export-menu-item svg {
+            color: var(--accent-500, #3b82f6);
+        }
+        .export-menu-item span {
+            flex: 1;
+        }
+
         /* 排序切换按钮组 - 分段控制器样式 */
         .sort-toggle-group {
             display: inline-flex;

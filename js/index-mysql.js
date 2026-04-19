@@ -455,6 +455,26 @@
 
             if(allData.length===0){
                 document.getElementById('resultBody').innerHTML=`<div class="empty-state"><div style="font-size:2rem;margin-bottom:12px;">🔍</div><div>未找到符合条件的推荐数据，请尝试调整分数或选科</div></div>`;
+                // 清空filteredData，避免显示旧数据
+                filteredData = [];
+                document.getElementById('filteredCount').textContent = '0';
+                
+                // 更新顶部统计信息
+                document.getElementById('infoTotal').textContent = '0';
+                document.getElementById('infoMajorTotal').textContent = '0';
+                
+                // 清空筛选框，避免显示旧选项
+                const filterIds = ['filterProvince', 'filterCity', 'filterCategory', 'filterMajorCategory', 'filterBatch', 'filterBatchRemark', 'filterCollegeLevel', 'filterSubjectRequire'];
+                filterIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.innerHTML = '<option value="">全部</option>';
+                        el.value = '';
+                    }
+                });
+                document.getElementById('filterSchool').value = '';
+                document.getElementById('filterMajor').value = '';
+                
                 return;
             }
 
@@ -750,31 +770,68 @@
             return count;
         }
 
-        // 排序（与 renderTable 相同逻辑）
+        // 排序（与 renderTable 相同逻辑，根据当前排序模式）
         const sortedGroups = [...schoolMap.values()].sort((ga, gb) => {
-            const schoolNameA = ga[0].name || '';
-            const schoolNameB = gb[0].name || '';
-            const schoolFeaturesA = collegeFeaturesMap[schoolNameA] || [];
-            const schoolFeaturesB = collegeFeaturesMap[schoolNameB] || [];
-
-            const thumbCountA = countThumbs(ga, schoolFeaturesA);
-            const thumbCountB = countThumbs(gb, schoolFeaturesB);
-
-            // 1. 有大拇指的排前面
-            const hasThumbA = thumbCountA > 0;
-            const hasThumbB = thumbCountB > 0;
-            if (hasThumbA !== hasThumbB) return hasThumbB ? 1 : -1;
-
-            // 2. 特色标签数量降序
-            const featureCountA = schoolFeaturesA.length;
-            const featureCountB = schoolFeaturesB.length;
-            if (featureCountA !== featureCountB) return featureCountB - featureCountA;
-
-            // 3. 大拇指数量降序
-            if (thumbCountA !== thumbCountB) return thumbCountB - thumbCountA;
-
-            // 4. 院校层次优先级
-            return getLvPrio(ga[0].name) - getLvPrio(gb[0].name);
+            if (currentSortMode === 'college') {
+                // 院校优先排序：按院校类型优先级
+                const priorityA = getCollegeTypePriority(ga[0].name || '');
+                const priorityB = getCollegeTypePriority(gb[0].name || '');
+                
+                if (priorityA !== priorityB) {
+                    return priorityA - priorityB;
+                }
+                
+                // 同类型院校，按原有逻辑排序
+                const schoolNameA = ga[0].name || '';
+                const schoolNameB = gb[0].name || '';
+                const schoolFeaturesA = collegeFeaturesMap[schoolNameA] || [];
+                const schoolFeaturesB = collegeFeaturesMap[schoolNameB] || [];
+                
+                // 计算大拇指数量
+                const thumbCountA = countThumbs(ga, schoolFeaturesA);
+                const thumbCountB = countThumbs(gb, schoolFeaturesB);
+                
+                // 1. 有大拇指的排前面
+                const hasThumbA = thumbCountA > 0;
+                const hasThumbB = thumbCountB > 0;
+                if (hasThumbA !== hasThumbB) return hasThumbB ? 1 : -1;
+                
+                // 2. 特色标签数量降序
+                const featureCountA = schoolFeaturesA.length;
+                const featureCountB = schoolFeaturesB.length;
+                if (featureCountA !== featureCountB) return featureCountB - featureCountA;
+                
+                // 3. 大拇指数量降序
+                if (thumbCountA !== thumbCountB) return thumbCountB - thumbCountA;
+                
+                return 0;
+            } else {
+                // 专业优先排序：保持原有逻辑
+                const schoolNameA = ga[0].name || '';
+                const schoolNameB = gb[0].name || '';
+                const schoolFeaturesA = collegeFeaturesMap[schoolNameA] || [];
+                const schoolFeaturesB = collegeFeaturesMap[schoolNameB] || [];
+                
+                // 计算大拇指数量
+                const thumbCountA = countThumbs(ga, schoolFeaturesA);
+                const thumbCountB = countThumbs(gb, schoolFeaturesB);
+                
+                // 1. 有大拇指的排前面
+                const hasThumbA = thumbCountA > 0;
+                const hasThumbB = thumbCountB > 0;
+                if (hasThumbA !== hasThumbB) return hasThumbB ? 1 : -1;
+                
+                // 2. 特色标签数量降序
+                const featureCountA = schoolFeaturesA.length;
+                const featureCountB = schoolFeaturesB.length;
+                if (featureCountA !== featureCountB) return featureCountB - featureCountA;
+                
+                // 3. 大拇指数量降序
+                if (thumbCountA !== thumbCountB) return thumbCountB - thumbCountA;
+                
+                // 4. 院校层次优先级
+                return getLvPrio(ga[0].name) - getLvPrio(gb[0].name);
+            }
         });
 
         // 只取前10个院校
@@ -1338,53 +1395,7 @@
         } else {pBar.style.display='none';}
     }
 
-    function filterByGroup(btnEl, groupCode){
-        // 切换按钮激活状态
-        const buttons = btnEl.parentElement.querySelectorAll('.group-btn');
-        buttons.forEach(b => {
-            b.classList.remove('active');
-            b.style.background = 'rgba(59,159,232,0.15)';
-            b.style.borderColor = 'rgba(59,159,232,0.3)';
-        });
-        btnEl.classList.add('active');
-        btnEl.style.background = 'rgba(59,159,232,0.35)';
-        btnEl.style.borderColor = 'rgba(59,159,232,0.6)';
-        
-        // 筛选专业列表
-        const majorBody = btnEl.closest('.major-body');
-        const allRows = majorBody.querySelectorAll('.major-row');
-        allRows.forEach(row => {
-            const rowGroupCode = row.getAttribute('data-group-code');
-            if (groupCode === '__all__' || rowGroupCode === groupCode) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
 
-    function switchGroupTab(tabEl){
-        const majorBody=tabEl.closest('.group-tabs').parentElement;
-        const panels=majorBody.querySelectorAll('.group-panel');
-        const tabs=tabEl.closest('.group-tabs').querySelectorAll('.group-tab');
-        const idx=[...tabs].indexOf(tabEl);
-        tabs.forEach(t=>{
-            t.classList.remove('active');
-            // 电脑端：隐藏统计信息
-            const statsDiv = t.querySelector('.tab-stats');
-            if(statsDiv) statsDiv.style.display = 'none';
-        });
-        panels.forEach(p=>p.classList.remove('active'));
-        tabEl.classList.add('active');
-        if(panels[idx])panels[idx].classList.add('active');
-        
-        // 电脑端：显示选中选项卡的统计信息
-        const isMobile = window.innerWidth <= 768;
-        if(!isMobile){
-            const statsDiv = tabEl.querySelector('.tab-stats');
-            if(statsDiv) statsDiv.style.display = 'block';
-        }
-    }
 
     // ====================================================
     // 专业介绍 Tooltip（结果页）

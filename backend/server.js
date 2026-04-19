@@ -1055,6 +1055,67 @@ app.get('/api/school-detail', async (req, res) => {
   }
 });
 
+// 获取专业完整详情（合并 major_introduction + major_info）
+app.get('/api/major-full-detail', async (req, res) => {
+  try {
+    const { major_name, major_type } = req.query;
+    if (!major_name) {
+      return res.json({ success: false, error: '缺少专业名称参数' });
+    }
+
+    console.log(`📚 获取专业完整详情: ${major_name}, 类型: ${major_type || '未指定'}`);
+
+    // 查询 major_introduction 表 - 根据类型筛选
+    let introSql = `SELECT major_name, major_code, subject_category, major_class, level, study_years, degree, gender_ratio,
+                    major_intro, major_content, career_direction, employment_destination, employment_region,
+                    employment_industry, employment_position
+             FROM major_introduction
+             WHERE major_name COLLATE utf8mb4_unicode_ci = ?`;
+    const introParams = [major_name];
+
+    // 如果指定了类型，根据类型筛选
+    if (major_type === 'undergraduate') {
+      introSql += ' AND (level = ? OR level LIKE ? OR level IS NULL)';
+      introParams.push('本科', '%本科%');
+    } else if (major_type === 'specialist') {
+      introSql += ' AND (level = ? OR level LIKE ? OR level IS NULL)';
+      introParams.push('专科', '%专科%');
+    }
+
+    introSql += ' LIMIT 1';
+
+    const [introRows] = await pool.execute(introSql, introParams);
+
+    // 查询 major_info 表 - 目前没有level字段，只能按名称查询
+    const [infoRows] = await pool.execute(
+      `SELECT introduction, career_path, courses
+       FROM major_info
+       WHERE major_name COLLATE utf8mb4_unicode_ci = ?
+       LIMIT 1`,
+      [major_name]
+    );
+
+    if (introRows.length === 0 && infoRows.length === 0) {
+      console.log(`⚠️  未找到专业详情: ${major_name}, 类型: ${major_type}`);
+      return res.json({ success: false, error: '未找到该专业信息' });
+    }
+
+    // 合并数据，major_info 字段优先
+    const result = {
+      ...(introRows[0] || {}),
+      introduction: infoRows[0]?.introduction || introRows[0]?.major_intro || null,
+      career_path: infoRows[0]?.career_path || introRows[0]?.career_direction || null,
+      courses: infoRows[0]?.courses || introRows[0]?.major_content || null
+    };
+
+    console.log(`✅ 找到专业详情: ${major_name}, 类型: ${major_type || '未指定'}`);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('获取专业完整详情失败:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // 获取专业介绍信息
 app.get('/api/major-info', async (req, res) => {
   try {
@@ -1163,7 +1224,7 @@ app.get('/api/majors', async (req, res) => {
 // 获取专业详情（专业介绍 + 开设院校录取数据）
 app.get('/api/major-detail', async (req, res) => {
   try {
-    const { major_name, subject_type } = req.query;
+    const { major_name, subject_type, major_type } = req.query;
     if (!major_name) return res.status(400).json({ success: false, error: '缺少major_name参数' });
 
     // 查专业介绍
@@ -1185,11 +1246,21 @@ app.get('/api/major-detail', async (req, res) => {
         min_rank_1   AS min_rank,
         batch,
         batch_remark,
-        major_category
+        major_category,
+        major_level
       FROM admission_plan
       WHERE major_name COLLATE utf8mb4_unicode_ci = ?
     `;
     const params = [major_name];
+
+    // 根据专业类型筛选
+    if (major_type === 'undergraduate') {
+      sql += ' AND (major_level = ? OR major_level LIKE ? OR major_level IS NULL)';
+      params.push('本科', '%本科%');
+    } else if (major_type === 'specialist') {
+      sql += ' AND (major_level = ? OR major_level LIKE ? OR major_level IS NULL)';
+      params.push('专科', '%专科%');
+    }
 
     if (subject_type && subject_type !== '全部') {
       sql += ' AND subject_type LIKE ?';
@@ -1199,6 +1270,32 @@ app.get('/api/major-detail', async (req, res) => {
     sql += ' ORDER BY min_score_1 DESC';
 
     const [rows] = await pool.execute(sql, params);
+
+    // 获取去重后的院校名称，查询 dxmessage 获取院校属性
+    const schoolNames = [...new Set(rows.map(r => r.school_name).filter(Boolean))];
+    let schoolAttrs = {};
+    if (schoolNames.length > 0) {
+      const placeholders = schoolNames.map(() => '?').join(',');
+      const [attrRows] = await pool.execute(
+        `SELECT school_name, is_985, is_211, is_double_first_class, public_private, undergraduate_graduate
+         FROM dxmessage WHERE school_name IN (${placeholders})`,
+        schoolNames
+      );
+      attrRows.forEach(r => { schoolAttrs[r.school_name] = r; });
+    }
+
+    // 为每条记录附加院校属性
+    rows.forEach(row => {
+      const attr = schoolAttrs[row.school_name];
+      if (attr) {
+        row.is_985 = attr.is_985;
+        row.is_211 = attr.is_211;
+        row.is_double_first_class = attr.is_double_first_class;
+        row.public_private = attr.public_private;
+        row.undergraduate_graduate = attr.undergraduate_graduate;
+      }
+    });
+
     res.json({
       success: true,
       data: rows,

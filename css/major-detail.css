@@ -1,0 +1,681 @@
+:root {
+    --primary-color: #3b82f6;
+    --primary-hover: #2563eb;
+    --primary-light: #eff6ff;
+    --text-primary: #333;
+    --text-secondary: #666;
+    --text-muted: #999;
+    --border-color: #e0e0e0;
+    --bg-light: #f8f9fa;
+    --bg-white: #fff;
+    --bg-page: #f8fafc;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-hover: 0 4px 16px rgba(0,0,0,0.12);
+    --radius: 8px;
+    --radius-lg: 12px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding-top: 120px;
+    padding-bottom: 40px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ==================== 固定顶部工具栏 ==================== */
+.top-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #ffffff;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.15);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+    height: 80px;
+}
+
+.header-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    height: 100%;
+    gap: 30px;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+.major-info-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-height: 56px;
+    padding-left: 16px;
+    border-left: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.major-info-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
+.major-meta-table {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.meta-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 80px;
+    text-align: center;
+}
+
+.meta-col-header {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.meta-col-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    line-height: 1.3;
+    text-align: center;
+}
+
+.major-info-section .major-name {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.major-meta-table {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.meta-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 80px;
+}
+
+.meta-col-header {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.meta-col-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    line-height: 1.3;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.logo-img {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 14px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.back-link:hover {
+    background: var(--primary-light);
+}
+
+/* ==================== 加载状态 ==================== */
+.loading {
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+    color: var(--primary-color);
+}
+
+/* ==================== 专业头部卡片 ==================== */
+.major-header-card {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+}
+
+.major-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.major-title-section {
+    flex: 1;
+}
+
+.major-name {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.major-code {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+/* ==================== 关键信息图标区 ==================== */
+.major-info-icons {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.info-row {
+    display: grid;
+    gap: 16px;
+}
+
+.info-row-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.info-row-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.info-row-2 {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.info-icon-item {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 20px 16px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.info-icon-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.info-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 20px;
+}
+
+.info-icon.level {
+    background: #fff7ed;
+    color: #f97316;
+}
+
+.info-icon.years {
+    background: #fef2f2;
+    color: #ef4444;
+}
+
+.info-icon.degree {
+    background: #f0fdf4;
+    color: #22c55e;
+}
+
+.info-icon.gender {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.info-icon.category {
+    background: #faf5ff;
+    color: #a855f7;
+}
+
+.info-icon.majorClass {
+    background: #f0f9ff;
+    color: #0ea5e9;
+}
+
+.info-icon-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.info-icon-label {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* ==================== Tab导航 ==================== */
+.tab-nav {
+    display: flex;
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 4px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+}
+
+.tab-item {
+    flex: 1;
+    padding: 12px 24px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: all 0.3s;
+    border: none;
+    background: transparent;
+}
+
+.tab-item:hover {
+    color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.tab-item.active {
+    color: var(--primary-color);
+    background: var(--primary-light);
+    font-weight: 600;
+}
+
+/* ==================== Tab内容区 ==================== */
+.tab-content {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 24px 32px;
+    box-shadow: var(--shadow);
+    min-height: 300px;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* ==================== 内容区块 ==================== */
+.section-block {
+    margin-bottom: 28px;
+}
+
+.section-block:last-child {
+    margin-bottom: 0;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.section-line {
+    width: 4px;
+    height: 20px;
+    background: var(--primary-color);
+    border-radius: 2px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.section-body {
+    padding-left: 16px;
+}
+
+/* ==================== 文本描述 ==================== */
+.description-text {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.9;
+    text-align: justify;
+    width: 100%;
+}
+
+/* 就业去向分布的文本占满整行 */
+#employmentDestination .description-text {
+    width: 100%;
+    display: block;
+}
+
+/* ==================== 课程标签 ==================== */
+.course-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.course-tag {
+    display: inline-block;
+    padding: 8px 16px;
+    background: var(--primary-light);
+    color: var(--primary-color);
+    border-radius: 20px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.course-tag:hover {
+    background: #dbeafe;
+    transform: translateY(-1px);
+}
+
+/* ==================== 就业分布 ==================== */
+.distribution-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+/* 就业去向分布占满整行 */
+#employmentDestination {
+    grid-template-columns: 1fr;
+}
+
+.distribution-card {
+    background: var(--bg-light);
+    border-radius: var(--radius);
+    padding: 16px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.distribution-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.distribution-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.distribution-card-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.distribution-card-percent {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.distribution-card-bar {
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.distribution-card-progress {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), #60a5fa);
+    border-radius: 3px;
+    transition: width 0.6s ease;
+    min-width: 2px;
+}
+
+/* ==================== 院校列表 ==================== */
+.school-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.school-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 18px;
+    background: var(--bg-light);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: inherit;
+}
+
+.school-item:hover {
+    background: var(--primary-light);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+.school-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 加载更多 */
+.load-more-wrap {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.load-more-btn {
+    padding: 10px 32px;
+    background: var(--primary-light);
+    color: var(--primary-color);
+    border: 1px solid #bfdbfe;
+    border-radius: 24px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.load-more-btn:hover {
+    background: #dbeafe;
+    border-color: var(--primary-color);
+}
+
+/* ==================== 错误状态 ==================== */
+.error-alert {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+/* ==================== 响应式 ==================== */
+@media (max-width: 992px) {
+    .info-row-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .info-row-2 {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 100%;
+    }
+
+    .school-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-top: 80px;
+    }
+
+    .top-header {
+        height: 60px;
+    }
+
+    .logo-img {
+        height: 32px;
+    }
+
+    .back-link {
+        font-size: 13px;
+        padding: 4px 8px;
+    }
+
+    .major-header-card {
+        padding: 20px 24px;
+    }
+
+    .header-row {
+        gap: 12px;
+    }
+
+    .major-info-section {
+        padding-left: 12px;
+        min-height: 48px;
+    }
+
+    .major-info-row {
+        gap: 12px;
+    }
+
+    .major-info-section .major-name {
+        font-size: 18px;
+    }
+
+    .major-meta-table {
+        gap: 12px;
+    }
+
+    .meta-col {
+        min-width: 60px;
+        gap: 4px;
+    }
+
+    .meta-col-header {
+        font-size: 11px;
+    }
+
+    .meta-col-value {
+        font-size: 13px;
+    }
+
+    .major-info-icons {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .info-icon-item {
+        padding: 16px 12px;
+    }
+
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+
+    .info-row-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .info-row-2 {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+    }
+
+    .info-icon-value {
+        font-size: 16px;
+    }
+
+    .tab-nav {
+        flex-wrap: wrap;
+    }
+
+    .tab-item {
+        flex: 1;
+        min-width: 100px;
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+
+    .tab-content {
+        padding: 20px 24px;
+    }
+
+    .section-body {
+        padding-left: 0;
+    }
+}
+
+/* 手机端样式已移至 major-detail-mobile.css */

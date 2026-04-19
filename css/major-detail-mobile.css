@@ -1,0 +1,227 @@
+/* ==================== 手机端样式 (max-width: 576px) ==================== */
+
+@media (max-width: 576px) {
+    /* 基础布局 */
+    body {
+        padding-top: 70px;
+        padding-bottom: 20px;
+    }
+
+    .container {
+        padding: 0 12px;
+    }
+
+    /* 顶部工具栏 */
+    .top-header {
+        height: 56px;
+    }
+
+    .header-row {
+        gap: 8px;
+        padding: 8px 0;
+    }
+
+    .logo-img {
+        height: 24px;
+    }
+
+    .major-info-section {
+        padding-left: 8px;
+        min-height: 40px;
+        border-left: none;
+    }
+
+    .major-info-row {
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .major-info-section .major-name {
+        font-size: 15px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .major-meta-table {
+        gap: 10px;
+    }
+
+    .meta-col {
+        min-width: auto;
+        gap: 2px;
+    }
+
+    .meta-col-header {
+        font-size: 9px;
+        color: #888;
+    }
+
+    .meta-col-value {
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    /* 关键信息图标区 */
+    .major-info-icons {
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .info-row-4 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .info-icon-item {
+        padding: 12px 8px;
+        border-radius: 8px;
+    }
+
+    .info-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+
+    .info-icon-value {
+        font-size: 13px;
+        margin-bottom: 2px;
+    }
+
+    /* 男女比例卡片特殊处理：数据换行显示 */
+    .info-icon.gender + .info-icon-value br {
+        display: block;
+    }
+
+    .info-icon-label {
+        font-size: 11px;
+    }
+
+    /* Tab导航 */
+    .tab-nav {
+        margin-bottom: 12px;
+        border-radius: 8px;
+    }
+
+    .tab-item {
+        padding: 10px 8px;
+        font-size: 13px;
+    }
+
+    /* Tab内容区 */
+    .tab-content {
+        padding: 12px;
+        border-radius: 8px;
+    }
+
+    /* 内容区块 */
+    .section-block {
+        margin-bottom: 16px;
+    }
+
+    .section-header {
+        margin-bottom: 12px;
+    }
+
+    .section-line {
+        width: 3px;
+        height: 16px;
+    }
+
+    .section-title {
+        font-size: 15px;
+    }
+
+    .section-body {
+        padding-left: 0;
+    }
+
+    .description-text {
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    /* 课程标签 */
+    .course-tags {
+        gap: 6px;
+    }
+
+    .course-tag {
+        padding: 4px 10px;
+        font-size: 12px;
+        border-radius: 12px;
+    }
+
+    /* 就业分布 */
+    .distribution-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .distribution-card {
+        padding: 12px;
+    }
+
+    .distribution-card-header {
+        margin-bottom: 8px;
+    }
+
+    .distribution-card-name {
+        font-size: 12px;
+    }
+
+    .distribution-card-percent {
+        font-size: 12px;
+    }
+
+    .distribution-card-bar {
+        height: 4px;
+    }
+
+    /* 开设院校 */
+    .school-section {
+        margin-top: 16px;
+    }
+
+    .school-list {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .school-item {
+        padding: 10px 12px;
+        border-radius: 6px;
+    }
+
+    .school-name {
+        font-size: 13px;
+    }
+
+    .load-more-btn {
+        padding: 10px 20px;
+        font-size: 13px;
+    }
+
+    /* 加载和错误状态 */
+    .loading {
+        padding: 40px 20px;
+    }
+
+    .loading h4 {
+        font-size: 14px;
+    }
+
+    .error-alert {
+        padding: 30px 20px;
+    }
+
+    .error-alert h3 {
+        font-size: 16px;
+    }
+
+    .error-alert p {
+        font-size: 13px;
+    }
+}

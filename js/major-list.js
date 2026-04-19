@@ -431,7 +431,18 @@ function updateStats() {
 
 // 跳转到专业详情
 function goToMajorDetail(majorName) {
-    window.location.href = `major-detail.html?major=${encodeURIComponent(majorName)}`;
+    const clickedElement = event.currentTarget;
+    clickedElement.classList.add('clicked');
+    try {
+        const encodedName = encodeURIComponent(majorName.trim());
+        const typeParam = currentType === 'specialist' ? 'specialist' : 'undergraduate';
+        window.open(`major-detail.html?major=${encodedName}&type=${typeParam}`, '_blank');
+    } catch (error) {
+        console.error('跳转失败:', error);
+    }
+    setTimeout(() => {
+        clickedElement.classList.remove('clicked');
+    }, 300);
 }
 
 // HTML转义

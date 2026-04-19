@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专业详情 - 权鼎教育</title>
+    <script>
+        (function() {
+            var userId = localStorage.getItem('qd_userId');
+            if (!userId) {
+                window.location.href = 'login.html';
+            }
+        })();
+    </script>
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/major-detail.css" rel="stylesheet">
+    <link href="css/major-detail-mobile.css" rel="stylesheet">
+</head>
+<body>
+<!-- 固定顶部工具栏 -->
+<header class="top-header" id="topHeader" role="banner">
+    <div class="container">
+        <div class="header-row">
+            <!-- 左侧：Logo -->
+            <div class="logo-section">
+                <a href="index-mysql.html" class="logo-link">
+                    <img src="images/权鼎教育.png" alt="权鼎教育" class="logo-img">
+                </a>
+            </div>
+            
+            <!-- 中间：专业信息 -->
+            <div class="major-info-section">
+                <div class="major-info-row">
+                    <h1 class="major-name" id="majorName"></h1>
+                    <div class="major-meta-table">
+                        <div class="meta-col">
+                            <div class="meta-col-header">专业代码</div>
+                            <div class="meta-col-value" id="majorCode"></div>
+                        </div>
+                        <div class="meta-col">
+                            <div class="meta-col-header">学科门类</div>
+                            <div class="meta-col-value" id="majorCategory"></div>
+                        </div>
+                        <div class="meta-col">
+                            <div class="meta-col-header">专业类</div>
+                            <div class="meta-col-value" id="majorClass"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- 页面主内容区域 -->
+<main class="container main-content" role="main">
+    <div id="loading" class="loading">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">加载中...</span>
+        </div>
+        <h4 class="mt-3">正在加载专业信息...</h4>
+    </div>
+
+    <div id="content" style="display: none;">
+
+        <!-- 关键信息图标区 -->
+        <div class="major-info-icons" id="majorInfoIcons">
+            <!-- 单行显示4个卡片：学历层次、修业年限、授予学位、男女比例 -->
+            <div class="info-row info-row-4" id="infoRowAll"></div>
+        </div>
+
+        <!-- Tab导航 -->
+        <div class="tab-nav">
+            <div class="tab-item active" data-tab="overview" onclick="switchTab('overview')">专业概况</div>
+            <div class="tab-item" data-tab="career" onclick="switchTab('career')">就业前景</div>
+            <div class="tab-item" data-tab="schools" onclick="switchTab('schools')">开设院校</div>
+        </div>
+
+        <!-- Tab内容区 -->
+        <div class="tab-content">
+            <!-- 专业概况 Tab -->
+            <div class="tab-pane active" id="tab-overview">
+                <!-- 专业介绍 -->
+                <div class="section-block" id="introBlock" style="display:none;">
+                    <div class="section-header">
+                        <div class="section-line"></div>
+                        <h2 class="section-title">专业介绍</h2>
+                    </div>
+                    <div class="section-body">
+                        <div class="description-text" id="majorIntro"></div>
+                    </div>
+                </div>
+
+                <!-- 培养目标 -->
+                <div class="section-block" id="goalBlock" style="display:none;">
+                    <div class="section-header">
+                        <div class="section-line"></div>
+                        <h2 class="section-title">培养目标</h2>
+                    </div>
+                    <div class="section-body">
+                        <div class="description-text" id="majorGoal"></div>
+                    </div>
+                </div>
+
+                <!-- 培养要求/内容 -->
+                <div class="section-block" id="contentBlock" style="display:none;">
+                    <div class="section-header">
+                        <div class="section-line"></div>
+                        <h2 class="section-title">培养要求</h2>
+                    </div>
+                    <div class="section-body">
+                        <div class="description-text" id="majorContent"></div>
+                    </div>
+                </div>
+
+                
+            </div>
+
+            <!-- 就业前景 Tab -->
+            <div class="tab-pane" id="tab-career">
+                <!-- 就业方向 -->
+                <div class="section-block" id="careerBlock" style="display:none;">
+                    <div class="section-header">
+                        <div class="section-line"></div>
+                        <h2 class="section-title">就业方向</h2>
+                    </div>
+                    <div class="section-body">
+                        <div class="description-text" id="careerDirection"></div>
+                    </div>
+                </div>
+
+                <!-- 就业地区分布 -->
+                <div class="section-block" id="regionBlock" style="display:none;">
+                    <div class="section-header">
+                        <div class="section-line"></div>
+                        <h2 class="section-title">就业地区分布</h2>
+                    </div>
+                    <div class="section-body">
+                        <div class="distribution-list" id="employmentRegion"></div>
+                    </div>
+                </div>
+
+                <!-- 就业行业分布 -->
+                <div class="section-block" id="industryBlock" style="display:none;">
+                    <div class="section-header">
+                        <div class="section-line"></div>
+                        <h2 class="section-title">就业行业分布</h2>
+                    </div>
+                    <div class="section-body">
+                        <div class="distribution-list" id="employmentIndustry"></div>
+                    </div>
+                </div>
+
+                <!-- 就业岗位分布 -->
+                <div class="section-block" id="positionBlock" style="display:none;">
+                    <div class="section-header">
+                        <div class="section-line"></div>
+                        <h2 class="section-title">就业岗位分布</h2>
+                    </div>
+                    <div class="section-body">
+                        <div class="distribution-list" id="employmentPosition"></div>
+                    </div>
+                </div>
+
+                <!-- 就业去向分布 -->
+                <div class="section-block" id="destinationBlock" style="display:none;">
+                    <div class="section-header">
+                        <div class="section-line"></div>
+                        <h2 class="section-title">就业去向分布</h2>
+                    </div>
+                    <div class="section-body">
+                        <div class="distribution-list" id="employmentDestination"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 开设院校 Tab -->
+            <div class="tab-pane" id="tab-schools">
+                <div class="section-block">
+                    <div class="section-header">
+                        <div class="section-line"></div>
+                        <h2 class="section-title">开设院校</h2>
+                    </div>
+                    <div class="section-body">
+                        <div class="school-list" id="schoolList"></div>
+                        <div class="load-more-wrap" id="schoolMoreWrap" style="display:none;">
+                            <button class="load-more-btn" onclick="loadMoreSchools()">加载更多</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="error" style="display: none;" class="error-alert">
+        <h3 style="color: #ef4444; margin-bottom: 15px;">❌ 加载失败</h3>
+        <p id="errorMessage"></p>
+        <a href="major-list.html" class="btn btn-primary" style="margin-top: 20px;">返回专业名录</a>
+    </div>
+</main>
+
+<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="js/major-detail.js"></script>
+</body>
+</html>

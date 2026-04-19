@@ -243,6 +243,8 @@
         let html='';
         if(mode==='mode312'){
             html=`
+            <input type="hidden" id="subjectCombination" required>
+            <div class="invalid-feedback" id="subjectError" style="display: none;">请选择必选科目（1门）和再选科目（2门）</div>
             <div class="mb-3">
                 <label class="form-label">必选科目（物理/历史二选一，100分）</label>
                 <div class="subject-tags">
@@ -264,6 +266,8 @@
             const subjectCount = hasTech ? '7选3' : '6选3';
             const techTag = hasTech ? '<div class="subject-tag" data-type="mode33" data-value="技术">技术</div>' : '';
             html=`
+            <input type="hidden" id="subjectCombination" required>
+            <div class="invalid-feedback" id="subjectError" style="display: none;">请选择3门选考科目</div>
             <div>
                 <label class="form-label">选考科目（${subjectCount}，各100分）</label>
                 <div class="subject-tags">
@@ -278,6 +282,8 @@
             </div>`;
         } else {
             html=`
+            <input type="hidden" id="subjectCombination" required>
+            <div class="invalid-feedback" id="subjectError" style="display: none;">请选择文理分科</div>
             <div>
                 <label class="form-label">文理分科（文综/理综，300分）</label>
                 <div class="subject-tags">
@@ -322,7 +328,9 @@
                 } else if(type==='traditional'){
                     document.querySelectorAll('[data-type="traditional"]').forEach(t=>t.classList.remove('selected'));
                     this.classList.add('selected');
-                    hiddenInput.value=value;errorDiv.style.display='none';return;
+                    // 理科→物理，文科→历史，匹配后端subject_type
+                    const mappedValue = value === '理科' ? '物理' : value === '文科' ? '历史' : value;
+                    hiddenInput.value=mappedValue;errorDiv.style.display='none';return;
                 }
                 validateSubject();
             });

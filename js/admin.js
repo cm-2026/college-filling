@@ -47,7 +47,12 @@ function sortBy(field) {
 function switchTab(tab) {
     currentTab = tab;
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+    } else if (event && event.target) {
+        var btn = event.target.closest('.tab-btn');
+        if (btn) btn.classList.add('active');
+    }
     document.getElementById('usersTab').style.display = tab === 'users' ? 'block' : 'none';
     document.getElementById('dashboardTab').style.display = tab === 'dashboard' ? 'block' : 'none';
     document.getElementById('majorCategoryTab').style.display = tab === 'majorCategory' ? 'block' : 'none';

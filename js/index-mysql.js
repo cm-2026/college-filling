@@ -1,7 +1,7 @@
 // ====================================================
     // 公共配置
     // ====================================================
-    const API_BASE = `http://${window.location.hostname || 'localhost'}:3000/api`;
+    const API_BASE = `${window.location.protocol}//${window.location.hostname || 'localhost'}:3000/api`;
 
     // 获取认证 Token
     function getAuthToken() {
@@ -572,7 +572,7 @@
 
         } catch(err) {
             document.getElementById('resultLoading').style.display='none';
-            document.getElementById('resultBody').innerHTML=`<div class="empty-state"><div style="font-size:2rem;margin-bottom:12px;">❌</div><div>查询失败：${err.message}<br><small>请确认后端服务已启动（http://localhost:3000）</small></div></div>`;
+            document.getElementById('resultBody').innerHTML=`<div class="empty-state"><div style="font-size:2rem;margin-bottom:12px;">❌</div><div>查询失败：${err.message}<br><small>请确认后端服务已启动（localhost:3000）</small></div></div>`;
         }
     }
 

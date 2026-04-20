@@ -1,4 +1,4 @@
-const API = `http://${window.location.hostname || 'localhost'}:3000/api`;
+const API = `${window.location.protocol}//${window.location.hostname || 'localhost'}:3000/api`;
 
 // 获取认证 Token
 function getAuthToken() {

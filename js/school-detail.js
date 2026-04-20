@@ -55,7 +55,7 @@ async function loadSchoolDetail() {
     }
 
     try {
-        const response = await apiFetch(`http://${window.location.hostname || 'localhost'}:3000/api/school-detail?schoolName=${encodeURIComponent(schoolName)}`);
+        const response = await apiFetch(`${window.location.protocol}//${window.location.hostname || 'localhost'}:3000/api/school-detail?schoolName=${encodeURIComponent(schoolName)}`);
         const result = await response.json();
 
         if (!result.success) {

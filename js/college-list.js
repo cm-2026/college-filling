@@ -17,7 +17,7 @@
 
 // ==================== 配置常量 ====================
 const CONFIG = {
-    API_BASE: `http://${window.location.hostname || 'localhost'}:3000/api`,
+    API_BASE: `${window.location.protocol}//${window.location.hostname || 'localhost'}:3000/api`,
     DEBOUNCE_DELAY: 300,           // 防抖延迟（毫秒）
     DEFAULT_DISPLAY_COUNT: 100,    // 默认显示院校数量
     DEBUG: false                   // 调试模式开关

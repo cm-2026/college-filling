@@ -201,7 +201,7 @@ function checkStrength(pwd) {
 }
 
 
-const API_BASE = `http://${window.location.hostname || 'localhost'}:3000`;
+const API_BASE = `${window.location.protocol}//${window.location.hostname || 'localhost'}:3000`;
 
 // ===== 登录逻辑 =====
 async function handleLogin(e) {

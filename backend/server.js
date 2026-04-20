@@ -62,7 +62,6 @@ async function createPool() {
       queueLimit: 100,              // 优化：设置排队上限
       charset: 'utf8mb4',
       multipleStatements: false,
-      acquireTimeout: 30000,        // 优化：获取连接超时30s
       idleTimeout: 60000,           // 优化：空闲连接60s后释放
       enableKeepAlive: true,        // 优化：保持连接活跃
       keepAliveInitialDelay: 30000  // 优化：30s心跳检测

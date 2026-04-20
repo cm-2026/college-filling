@@ -13,6 +13,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# 环境变量（敏感信息）
+.env
+.env.local
+.env.*.local
+
 # 临时文件
 *.tmp
 *.temp
@@ -31,3 +36,8 @@ Thumbs.db
 # 测试文件
 test_*.js
 test_*.xlsx
+
+# 临时导出文件
+temp_export_*.json
+temp_export_*.xlsx
+

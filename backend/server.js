@@ -3,6 +3,8 @@ const mysql = require('mysql2/promise');
 const cors = require('cors');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { authenticateToken } = require('./middleware/auth');
 
 
 const app = express();
@@ -194,10 +196,18 @@ app.post('/api/auth/login', async (req, res) => {
     // 记录登录行为
     await recordBehavior(user.id, 'login', { username: user.username }, req);
 
+    // 生成 JWT Token
+    const token = jwt.sign(
+      { userId: user.id, username: user.username, role: user.role || 'user' },
+      process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      { expiresIn: '7d' } // Token有效期7天
+    );
+
     console.log(`✅ 用户登录：${user.username} (角色: ${user.role || 'user'})`);
-    res.json({ 
-      success: true, 
-      message: '登录成功', 
+    res.json({
+      success: true,
+      message: '登录成功',
+      token: token,
       userId: user.id,
       username: user.username,
       role: user.role || 'user'
@@ -209,8 +219,8 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// 获取所有推荐记录
-app.get('/api/recommendations', async (req, res) => {
+// 获取所有推荐记录（需要认证）
+app.get('/api/recommendations', authenticateToken, async (req, res) => {
   try {
     console.log('📋 获取所有推荐记录');
 
@@ -253,8 +263,8 @@ app.get('/api/recommendations', async (req, res) => {
   }
 });
 
-// 获取单条记录
-app.get('/api/recommendations/:id', async (req, res) => {
+// 获取单条记录（需要认证）
+app.get('/api/recommendations/:id', authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.execute(
       'SELECT * FROM user_recommendations WHERE id = ?',
@@ -275,8 +285,8 @@ app.get('/api/recommendations/:id', async (req, res) => {
   }
 });
 
-// 添加推荐记录
-app.post('/api/recommendations', async (req, res) => {
+// 添加推荐记录（需要认证）
+app.post('/api/recommendations', authenticateToken, async (req, res) => {
   try {
     const {
       region,
@@ -315,8 +325,8 @@ app.post('/api/recommendations', async (req, res) => {
   }
 });
 
-// 删除记录
-app.delete('/api/recommendations/:id', async (req, res) => {
+// 删除记录（需要认证）
+app.delete('/api/recommendations/:id', authenticateToken, async (req, res) => {
   try {
     await pool.execute('DELETE FROM user_recommendations WHERE id = ?', [req.params.id]);
     res.json({ success: true, message: '删除成功' });
@@ -326,8 +336,8 @@ app.delete('/api/recommendations/:id', async (req, res) => {
   }
 });
 
-// 清空所有记录
-app.delete('/api/recommendations', async (req, res) => {
+// 清空所有记录（需要认证）
+app.delete('/api/recommendations', authenticateToken, async (req, res) => {
   try {
     await pool.execute('DELETE FROM user_recommendations');
     await pool.execute('ALTER TABLE user_recommendations AUTO_INCREMENT = 1');
@@ -338,8 +348,8 @@ app.delete('/api/recommendations', async (req, res) => {
   }
 });
 
-// 根据分数查询位次（cumulative_count）
-app.post('/api/get-rank-by-score', async (req, res) => {
+// 根据分数查询位次（cumulative_count）（需要认证）
+app.post('/api/get-rank-by-score', authenticateToken, async (req, res) => {
   try {
     const { score, subjectCombination, region } = req.body;
     
@@ -428,8 +438,8 @@ app.post('/api/get-rank-by-score', async (req, res) => {
   }
 });
 
-// 根据位次查询分数
-app.post('/api/get-score-by-rank', async (req, res) => {
+// 根据位次查询分数（需要认证）
+app.post('/api/get-score-by-rank', authenticateToken, async (req, res) => {
   try {
     const { rank, subjectCombination, region } = req.body;
     
@@ -519,8 +529,8 @@ app.post('/api/get-score-by-rank', async (req, res) => {
   }
 });
 
-// 从 admission_plan 表获取推荐院校
-app.post('/api/recommend-from-db', async (req, res) => {
+// 从 admission_plan 表获取推荐院校（需要认证）
+app.post('/api/recommend-from-db', authenticateToken, async (req, res) => {
   try {
     const { score, rank, scoreMode, subjectCombination, region, targetRegion, batchFilter, majorPreference, categoryFilter, majorCategoryFilter } = req.body;
 
@@ -1024,8 +1034,8 @@ app.post('/api/recommend-from-db', async (req, res) => {
   }
 });
 
-// 获取学校详情
-app.get('/api/school-detail', async (req, res) => {
+// 获取学校详情（需要认证）
+app.get('/api/school-detail', authenticateToken, async (req, res) => {
   try {
     const { schoolName } = req.query;
 
@@ -1055,8 +1065,8 @@ app.get('/api/school-detail', async (req, res) => {
   }
 });
 
-// 获取专业完整详情（合并 major_introduction + major_info）
-app.get('/api/major-full-detail', async (req, res) => {
+// 获取专业完整详情（合并 major_introduction + major_info）（需要认证）
+app.get('/api/major-full-detail', authenticateToken, async (req, res) => {
   try {
     const { major_name, major_type } = req.query;
     if (!major_name) {
@@ -1116,8 +1126,8 @@ app.get('/api/major-full-detail', async (req, res) => {
   }
 });
 
-// 获取专业介绍信息
-app.get('/api/major-info', async (req, res) => {
+// 获取专业介绍信息（需要认证）
+app.get('/api/major-info', authenticateToken, async (req, res) => {
   try {
     const { major_name } = req.query;
 
@@ -1153,8 +1163,8 @@ app.get('/api/major-info', async (req, res) => {
   }
 });
 
-// 获取所有院校（用于院校名录）
-app.get('/api/colleges', async (req, res) => {
+// 获取所有院校（用于院校名录）（需要认证）
+app.get('/api/colleges', authenticateToken, async (req, res) => {
   try {
     console.log('📋 获取所有院校列表');
 
@@ -1174,8 +1184,8 @@ app.get('/api/colleges', async (req, res) => {
   }
 });
 
-// 获取专业名录（基于 major_info 表，附带 admission_plan 录取统计）
-app.get('/api/majors', async (req, res) => {
+// 获取专业名录（基于 major_info 表，附带 admission_plan 录取统计）（需要认证）
+app.get('/api/majors', authenticateToken, async (req, res) => {
   try {
     const { search } = req.query;
 
@@ -1221,8 +1231,8 @@ app.get('/api/majors', async (req, res) => {
   }
 });
 
-// 获取专业详情（专业介绍 + 开设院校录取数据）
-app.get('/api/major-detail', async (req, res) => {
+// 获取专业详情（专业介绍 + 开设院校录取数据）（需要认证）
+app.get('/api/major-detail', authenticateToken, async (req, res) => {
   try {
     const { major_name, subject_type, major_type } = req.query;
     if (!major_name) return res.status(400).json({ success: false, error: '缺少major_name参数' });
@@ -1308,8 +1318,8 @@ app.get('/api/major-detail', async (req, res) => {
   }
 });
 
-// 获取学校专业组的全部专业
-app.get('/api/school-group-majors', async (req, res) => {
+// 获取学校专业组的全部专业（需要认证）
+app.get('/api/school-group-majors', authenticateToken, async (req, res) => {
   try {
     const { schoolCode, groupCode, region, subjectCombination, schoolName } = req.query;
     
@@ -1436,8 +1446,8 @@ app.get('/api/test-connection', async (req, res) => {
 
 // ===== 管理员功能 =====
 
-// 获取所有用户列表
-app.get('/api/admin/users', async (req, res) => {
+// 获取所有用户列表（需要认证）
+app.get('/api/admin/users', authenticateToken, async (req, res) => {
   try {
     const { search, status, page = 1, pageSize = 20, viewerRole, viewerId, sortField, sortOrder } = req.query;
     const pageNum = parseInt(page);
@@ -1513,8 +1523,8 @@ app.get('/api/admin/users', async (req, res) => {
   }
 });
 
-// 更新用户状态（启用/禁用）
-app.put('/api/admin/users/:id/status', async (req, res) => {
+// 更新用户状态（启用/禁用）（需要认证）
+app.put('/api/admin/users/:id/status', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -1543,8 +1553,8 @@ app.put('/api/admin/users/:id/status', async (req, res) => {
   }
 });
 
-// 删除用户
-app.delete('/api/admin/users/:id', async (req, res) => {
+// 删除用户（需要认证）
+app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1565,8 +1575,8 @@ app.delete('/api/admin/users/:id', async (req, res) => {
   }
 });
 
-// 重置用户密码
-app.post('/api/admin/users/:id/reset-password', async (req, res) => {
+// 重置用户密码（需要认证）
+app.post('/api/admin/users/:id/reset-password', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { newPassword } = req.body;
@@ -1593,8 +1603,8 @@ app.post('/api/admin/users/:id/reset-password', async (req, res) => {
   }
 });
 
-// 修改用户身份（角色）
-app.put('/api/admin/users/:id/role', async (req, res) => {
+// 修改用户身份（角色）（需要认证）
+app.put('/api/admin/users/:id/role', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { role, operatorRole } = req.body;
@@ -1627,8 +1637,8 @@ app.put('/api/admin/users/:id/role', async (req, res) => {
   }
 });
 
-// 获取用户统计数据
-app.get('/api/admin/stats', async (req, res) => {
+// 获取用户统计数据（需要认证）
+app.get('/api/admin/stats', authenticateToken, async (req, res) => {
   try {
     const { viewerRole, viewerId } = req.query;
 
@@ -1676,8 +1686,8 @@ app.get('/api/admin/stats', async (req, res) => {
   }
 });
 
-// 数据看板API
-app.get('/api/admin/dashboard', async (req, res) => {
+// 数据看板API（需要认证）
+app.get('/api/admin/dashboard', authenticateToken, async (req, res) => {
   try {
     const dashboard = {};
 
@@ -1792,8 +1802,8 @@ app.get('/api/admin/dashboard', async (req, res) => {
   }
 });
 
-// 获取专业推荐顺序
-app.get('/api/major-recommend-order', async (req, res) => {
+// 获取专业推荐顺序（需要认证）
+app.get('/api/major-recommend-order', authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.execute(
       'SELECT discipline_category, major_category, sort_order FROM major_recommend_order ORDER BY sort_order'
@@ -1805,8 +1815,8 @@ app.get('/api/major-recommend-order', async (req, res) => {
   }
 });
 
-// 获取院校特色标签
-app.get('/api/college-features', async (req, res) => {
+// 获取院校特色标签（需要认证）
+app.get('/api/college-features', authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT school_name, is_985, is_211, is_double_first_class, is_postgrad_recommended,
@@ -1885,8 +1895,8 @@ function generateSimplifiedNames(fullName) {
   return [...names];
 }
 
-// 获取特色专业数据
-app.get('/api/featured-majors', async (req, res) => {
+// 获取特色专业数据（需要认证）
+app.get('/api/featured-majors', authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT feature_type, majors FROM featured_majors`
@@ -1916,8 +1926,8 @@ app.get('/api/featured-majors', async (req, res) => {
   }
 });
 
-// 导出Excel API
-app.post('/api/export-excel', async (req, res) => {
+// 导出Excel API（需要认证）
+app.post('/api/export-excel', authenticateToken, async (req, res) => {
   try {
     const { region, score, rank, subject, schools } = req.body;
     
@@ -2011,8 +2021,8 @@ app.post('/api/export-excel', async (req, res) => {
 });
 
 // ===== 专业分类管理 API =====
-// 获取专业分类列表
-app.get('/api/major-category', async (req, res) => {
+// 获取专业分类列表（需要认证）
+app.get('/api/major-category', authenticateToken, async (req, res) => {
   try {
     const { level, category_code, search, type } = req.query;
 
@@ -2061,8 +2071,8 @@ app.get('/api/major-category', async (req, res) => {
   }
 });
 
-// 新增专业分类
-app.post('/api/major-category', async (req, res) => {
+// 新增专业分类（需要认证）
+app.post('/api/major-category', authenticateToken, async (req, res) => {
   try {
     const { code, name, level, parent_id, category_code, category_name, class_code, class_name, status, top_code } = req.body;
     
@@ -2100,8 +2110,8 @@ app.post('/api/major-category', async (req, res) => {
   }
 });
 
-// 更新专业分类
-app.put('/api/major-category/:id', async (req, res) => {
+// 更新专业分类（需要认证）
+app.put('/api/major-category/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { code, name, level, parent_id, category_code, category_name, class_code, class_name, status, top_code } = req.body;
@@ -2140,8 +2150,8 @@ app.put('/api/major-category/:id', async (req, res) => {
   }
 });
 
-// 删除专业分类（级联删除子节点）
-app.delete('/api/major-category/:id', async (req, res) => {
+// 删除专业分类（级联删除子节点）（需要认证）
+app.delete('/api/major-category/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -2173,8 +2183,8 @@ app.delete('/api/major-category/:id', async (req, res) => {
 });
 
 // ===== 招生计划管理 API =====
-// 获取招生计划列表（分页）
-app.get('/api/admission-plan', async (req, res) => {
+// 获取招生计划列表（分页）（需要认证）
+app.get('/api/admission-plan', authenticateToken, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 20;
@@ -2267,8 +2277,8 @@ app.get('/api/admission-plan/provinces', async (req, res) => {
   }
 });
 
-// 新增招生计划
-app.post('/api/admission-plan', async (req, res) => {
+// 新增招生计划（需要认证）
+app.post('/api/admission-plan', authenticateToken, async (req, res) => {
   try {
     const {
       year, college_code, college_name, major_name, major_code,
@@ -2317,8 +2327,8 @@ app.post('/api/admission-plan', async (req, res) => {
   }
 });
 
-// 更新招生计划
-app.put('/api/admission-plan/:id', async (req, res) => {
+// 更新招生计划（需要认证）
+app.put('/api/admission-plan/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -2369,8 +2379,8 @@ app.put('/api/admission-plan/:id', async (req, res) => {
   }
 });
 
-// 删除招生计划
-app.delete('/api/admission-plan/:id', async (req, res) => {
+// 删除招生计划（需要认证）
+app.delete('/api/admission-plan/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     await pool.execute('DELETE FROM admission_plan WHERE id = ?', [id]);
@@ -2381,8 +2391,8 @@ app.delete('/api/admission-plan/:id', async (req, res) => {
   }
 });
 
-// 获取单条招生计划详情
-app.get('/api/admission-plan/:id', async (req, res) => {
+// 获取单条招生计划详情（需要认证）
+app.get('/api/admission-plan/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const [rows] = await pool.execute(
@@ -2409,8 +2419,8 @@ app.get('/api/admission-plan/:id', async (req, res) => {
   }
 });
 
-// 批量导入招生计划（Excel导入）
-app.post('/api/admission-plan/batch', async (req, res) => {
+// 批量导入招生计划（Excel导入）（需要认证）
+app.post('/api/admission-plan/batch', authenticateToken, async (req, res) => {
   try {
     const { data } = req.body;
 

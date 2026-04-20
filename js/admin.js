@@ -1,4 +1,45 @@
 var API_BASE = 'http://' + (window.location.hostname || 'localhost') + ':3000/api';
+
+// 获取认证 Token
+function getAuthToken() {
+    const token = localStorage.getItem('qd_token');
+    if (!token) {
+        console.warn('未找到认证 Token，请先登录');
+        return null;
+    }
+    return token;
+}
+
+// 封装 API 请求，自动添加 Token
+async function apiFetch(url, options = {}) {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers
+        });
+
+        // 如果返回 401，跳转到登录页
+        if (response.status === 401) {
+            localStorage.removeItem('qd_token');
+            window.location.href = 'login.html';
+            throw new Error('未授权，请重新登录');
+        }
+
+        return response;
+    } catch (error) {
+        console.error('API 请求失败:', error);
+        throw error;
+    }
+}
 var currentPage = 1;
 var pageSize = 20;
 var totalUsers = 0;
@@ -77,7 +118,7 @@ async function loadStats() {
     try {
         var viewerRole = localStorage.getItem('qd_role') || 'user';
         var viewerId = localStorage.getItem('qd_userId') || '';
-        var res = await fetch(API_BASE + '/admin/stats?viewerRole=' + encodeURIComponent(viewerRole) + '&viewerId=' + encodeURIComponent(viewerId));
+        var res = await apiFetch(API_BASE + '/admin/stats?viewerRole=' + encodeURIComponent(viewerRole) + '&viewerId=' + encodeURIComponent(viewerId));
         var data = await res.json();
         if (data.success) {
             document.getElementById('statTotal').textContent = data.data.total;
@@ -102,7 +143,7 @@ async function loadUsers() {
     if (sortOrder) params += '&sortOrder=' + encodeURIComponent(sortOrder);
 
     try {
-        var res = await fetch(API_BASE + '/admin/users?' + params);
+        var res = await apiFetch(API_BASE + '/admin/users?' + params);
         var data = await res.json();
         if (data.success) {
             totalUsers = data.pagination?.total || data.data.length;
@@ -173,7 +214,7 @@ function formatDate(dateStr) {
 async function toggleStatus(userId, newStatus) {
     if (!confirm(newStatus === 1 ? '确认启用该用户？' : '确认禁用该用户？')) return;
     try {
-        var res = await fetch(API_BASE + '/admin/users/' + userId + '/status', {
+        var res = await apiFetch(API_BASE + '/admin/users/' + userId + '/status', {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({status: newStatus})
@@ -188,7 +229,7 @@ async function changeRole(userId, newRole) {
     if (!confirm('确认修改用户身份？')) { loadUsers(); return; }
     var operatorRole = localStorage.getItem('qd_role') || 'user';
     try {
-        var res = await fetch(API_BASE + '/admin/users/' + userId + '/role', {
+        var res = await apiFetch(API_BASE + '/admin/users/' + userId + '/role', {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({role: newRole, operatorRole: operatorRole})
@@ -204,7 +245,7 @@ async function resetPwd(userId) {
     var pwd = prompt('请输入新密码（至少6位）：');
     if (!pwd || pwd.length < 6) { alert('密码长度至少6位'); return; }
     try {
-        var res = await fetch(API_BASE + '/admin/users/' + userId + '/reset-password', {
+        var res = await apiFetch(API_BASE + '/admin/users/' + userId + '/reset-password', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({newPassword: pwd})
@@ -217,7 +258,7 @@ async function resetPwd(userId) {
 async function deleteUser(userId) {
     if (!confirm('确认删除该用户？此操作不可恢复！')) return;
     try {
-        var res = await fetch(API_BASE + '/admin/users/' + userId, {method: 'DELETE'});
+        var res = await apiFetch(API_BASE + '/admin/users/' + userId, {method: 'DELETE'});
         var data = await res.json();
         alert(data.message || (data.success ? '删除成功' : '删除失败'));
         if (data.success) { loadUsers(); loadStats(); }
@@ -265,7 +306,7 @@ function logout() {
 
 async function loadDashboard() {
     try {
-        var res = await fetch(API_BASE + '/admin/dashboard');
+        var res = await apiFetch(API_BASE + '/admin/dashboard');
         var data = await res.json();
         if (data.success) { renderDashboard(data.data); }
     } catch (e) { console.error('加载看板失败:', e); }
@@ -532,7 +573,7 @@ var mcExpandedNodes = new Set(); // 记录展开的节点ID
 
 async function loadMajorCategory() {
     try {
-        var res = await fetch(API_BASE + '/major-category');
+        var res = await apiFetch(API_BASE + '/major-category');
         var data = await res.json();
         if (data.success) {
             mcAllData = data.data || [];
@@ -824,7 +865,7 @@ async function deleteMajorCategory(id) {
     if (!confirm('确认删除此分类？如果存在子分类，将一并删除！')) return;
     
     try {
-        var res = await fetch(API_BASE + '/major-category/' + id, {
+        var res = await apiFetch(API_BASE + '/major-category/' + id, {
             method: 'DELETE'
         });
         var data = await res.json();
@@ -921,7 +962,7 @@ var apTotalCount = 0; // 总数据量
 
 async function loadAdmissionPlanProvinces() {
     try {
-        var res = await fetch(API_BASE + '/admission-plan/provinces');
+        var res = await apiFetch(API_BASE + '/admission-plan/provinces');
         var data = await res.json();
         if (data.success) {
             var select = document.getElementById('apProvinceFilter');
@@ -946,7 +987,7 @@ async function loadAdmissionPlan() {
     if (search) params += '&search=' + encodeURIComponent(search);
 
     try {
-        var res = await fetch(API_BASE + '/admission-plan?' + params);
+        var res = await apiFetch(API_BASE + '/admission-plan?' + params);
         var data = await res.json();
         if (data.success) {
             renderAdmissionPlan(data.data);
@@ -1066,7 +1107,7 @@ function closeAdmissionPlanModal() {
 async function editAdmissionPlan(id) {
     // 直接通过ID查询该条记录
     try {
-        var res = await fetch(API_BASE + '/admission-plan/' + id);
+        var res = await apiFetch(API_BASE + '/admission-plan/' + id);
         var data = await res.json();
         if (data.success) {
             var item = data.data;
@@ -1111,7 +1152,7 @@ async function deleteAdmissionPlan(id) {
     if (!confirm('确认删除此招生计划？')) return;
     
     try {
-        var res = await fetch(API_BASE + '/admission-plan/' + id, {
+        var res = await apiFetch(API_BASE + '/admission-plan/' + id, {
             method: 'DELETE'
         });
         var data = await res.json();
@@ -1474,7 +1515,7 @@ async function importExcelData() {
     document.getElementById('progressSection').style.display = 'block';
     
     try {
-        var res = await fetch(API_BASE + '/admission-plan/batch', {
+        var res = await apiFetch(API_BASE + '/admission-plan/batch', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ data: excelDataCache })

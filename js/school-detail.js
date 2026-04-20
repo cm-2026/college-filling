@@ -4,6 +4,47 @@ function getSchoolNameFromURL() {
     return decodeURIComponent(urlParams.get('schoolName') || '');
 }
 
+// 获取认证 Token
+function getAuthToken() {
+    const token = localStorage.getItem('qd_token');
+    if (!token) {
+        console.warn('未找到认证 Token，请先登录');
+        return null;
+    }
+    return token;
+}
+
+// 封装 API 请求，自动添加 Token
+async function apiFetch(url, options = {}) {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers
+        });
+
+        // 如果返回 401，跳转到登录页
+        if (response.status === 401) {
+            localStorage.removeItem('qd_token');
+            window.location.href = 'login.html';
+            throw new Error('未授权，请重新登录');
+        }
+
+        return response;
+    } catch (error) {
+        console.error('API 请求失败:', error);
+        throw error;
+    }
+}
+
 // 加载学校详情
 async function loadSchoolDetail() {
     const schoolName = getSchoolNameFromURL();
@@ -14,7 +55,7 @@ async function loadSchoolDetail() {
     }
 
     try {
-        const response = await fetch(`http://${window.location.hostname || 'localhost'}:3000/api/school-detail?schoolName=${encodeURIComponent(schoolName)}`);
+        const response = await apiFetch(`http://${window.location.hostname || 'localhost'}:3000/api/school-detail?schoolName=${encodeURIComponent(schoolName)}`);
         const result = await response.json();
 
         if (!result.success) {

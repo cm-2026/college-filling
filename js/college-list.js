@@ -23,6 +23,47 @@ const CONFIG = {
     DEBUG: false                   // 调试模式开关
 };
 
+// 获取认证 Token
+function getAuthToken() {
+    const token = localStorage.getItem('qd_token');
+    if (!token) {
+        console.warn('未找到认证 Token，请先登录');
+        return null;
+    }
+    return token;
+}
+
+// 封装 API 请求，自动添加 Token
+async function apiFetch(url, options = {}) {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers
+        });
+
+        // 如果返回 401，跳转到登录页
+        if (response.status === 401) {
+            localStorage.removeItem('qd_token');
+            window.location.href = 'login.html';
+            throw new Error('未授权，请重新登录');
+        }
+
+        return response;
+    } catch (error) {
+        console.error('API 请求失败:', error);
+        throw error;
+    }
+}
+
 // 筛选类型映射（统一管理，避免重复定义）
 const FILTER_MAP = {
     province: 'provinceFilters',
@@ -510,15 +551,11 @@ function applyFilters() {
 async function loadCollegeFeatures() {
     try {
         debug('开始加载院校特色标签（数据来源: college_features表）...');
-        
-        const response = await fetch(`${CONFIG.API_BASE}/college-features`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP错误: ${response.status}`);
-        }
-        
+
+        const response = await apiFetch(`${CONFIG.API_BASE}/college-features`);
+
         const result = await response.json();
-        
+
         if (result.success) {
             collegeFeatures = result.data;
             const allFeatures = result.allFeatures;
@@ -559,19 +596,19 @@ async function loadColleges() {
         if (DOM.loading) DOM.loading.style.display = 'block';
         if (DOM.error) DOM.error.style.display = 'none';
         
-        const response = await fetch(`${CONFIG.API_BASE}/colleges`);
+        const response = await apiFetch(`${CONFIG.API_BASE}/colleges`);
         const text = await response.text();
-        
+
         if (!text || text.trim() === '') {
             throw new Error('服务器返回空响应');
         }
-        
+
         const result = JSON.parse(text);
-        
+
         if (!result.success) {
             throw new Error(result.error || '获取院校数据失败');
         }
-        
+
         allColleges = result.data || [];
         
         debug(`✅ 加载了 ${allColleges.length} 所院校（数据来源: dxmessage表）`);

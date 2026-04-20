@@ -228,19 +228,26 @@ async function handleLogin(e) {
         const data = await resp.json();
         if (data.success) {
             showMsg(`登录成功，欢迎回来 ${data.username}！`, 'success');
-            localStorage.setItem('qd_userId', data.userId);
-            localStorage.setItem('qd_username', data.username);
-            localStorage.setItem('qd_role', data.role || 'user');
-            
-            // 记住我功能
+
+            // 使用认证管理器存储Token和用户信息
+            if (!auth.login(data.token, {
+                userId: data.userId,
+                username: data.username,
+                role: data.role || 'user'
+            })) {
+                showMsg('登录信息存储失败，请重试', 'error');
+                return false;
+            }
+
+            // 记住我功能（只记住账号，不记住密码）
             if (rememberMe) {
                 localStorage.setItem('qd_rememberedAccount', account);
-                localStorage.setItem('qd_rememberedPassword', password);
+                localStorage.removeItem('qd_rememberedPassword');
             } else {
                 localStorage.removeItem('qd_rememberedAccount');
                 localStorage.removeItem('qd_rememberedPassword');
             }
-            
+
             // 根据角色跳转
             const role = data.role || 'user';
             if (role === 'user') {

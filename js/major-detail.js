@@ -1,5 +1,46 @@
 const API = `http://${window.location.hostname || 'localhost'}:3000/api`;
 
+// 获取认证 Token
+function getAuthToken() {
+    const token = localStorage.getItem('qd_token');
+    if (!token) {
+        console.warn('未找到认证 Token，请先登录');
+        return null;
+    }
+    return token;
+}
+
+// 封装 API 请求，自动添加 Token
+async function apiFetch(url, options = {}) {
+    const token = getAuthToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers
+        });
+
+        // 如果返回 401，跳转到登录页
+        if (response.status === 401) {
+            localStorage.removeItem('qd_token');
+            window.location.href = 'login.html';
+            throw new Error('未授权，请重新登录');
+        }
+
+        return response;
+    } catch (error) {
+        console.error('API 请求失败:', error);
+        throw error;
+    }
+}
+
 // 院校排序优先级：985=1, 211=2, 双一流=3, 公办本科=4, 民办本科=5, 公办专科=6, 民办专科=7, 其他=8
 function getSchoolOrder(school) {
     const is985 = String(school.is_985 || '').includes('985');
@@ -53,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 加载专业完整详情（合并 major_introduction + major_info）
 async function loadMajorFullDetail() {
     try {
-        const res = await fetch(`${API}/major-full-detail?major_name=${encodeURIComponent(majorName)}&major_type=${majorType}`);
+        const res = await apiFetch(`${API}/major-full-detail?major_name=${encodeURIComponent(majorName)}&major_type=${majorType}`);
         const json = await res.json();
         if (!json.success) throw new Error(json.error || '未找到该专业');
         renderMajorDetail(json.data);
@@ -294,7 +335,7 @@ function renderEmploymentDistribution(data) {
 // 加载开设院校
 async function loadSchoolsForMajor() {
     try {
-        const res = await fetch(`${API}/major-detail?major_name=${encodeURIComponent(majorName)}&major_type=${majorType}`);
+        const res = await apiFetch(`${API}/major-detail?major_name=${encodeURIComponent(majorName)}&major_type=${majorType}`);
         const json = await res.json();
         if (!json.success) return;
 

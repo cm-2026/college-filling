@@ -3,6 +3,47 @@
     // ====================================================
     const API_BASE = `http://${window.location.hostname || 'localhost'}:3000/api`;
 
+    // 获取认证 Token
+    function getAuthToken() {
+        const token = localStorage.getItem('qd_token');
+        if (!token) {
+            console.warn('未找到认证 Token，请先登录');
+            return null;
+        }
+        return token;
+    }
+
+    // 封装 API 请求，自动添加 Token
+    async function apiFetch(url, options = {}) {
+        const token = getAuthToken();
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                headers
+            });
+
+            // 如果返回 401，跳转到登录页
+            if (response.status === 401) {
+                localStorage.removeItem('qd_token');
+                window.location.href = 'login.html';
+                throw new Error('未授权，请重新登录');
+            }
+
+            return response;
+        } catch (error) {
+            console.error('API 请求失败:', error);
+            throw error;
+        }
+    }
+
     // 院校特色标签数据（院校名称 -> 特色标签数组）
     let collegeFeaturesMap = {};
     let allFeatureTags = []; // 所有特色标签列表（去重后）
@@ -103,7 +144,7 @@
 
         // 加载院校特色标签数据
         try {
-            const res = await fetch(`${API_BASE}/college-features`);
+            const res = await apiFetch(`${API_BASE}/college-features`);
             const json = await res.json();
             if (json.success && json.data) {
                 collegeFeaturesMap = json.data;
@@ -116,7 +157,9 @@
         
         // 加载特色专业数据
         try {
-            const res = await fetch(`${API_BASE}/featured-majors`);
+            const token = getAuthToken();
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await apiFetch(`${API_BASE}/featured-majors`);
             const json = await res.json();
             if (json.success && json.data) {
                 featuredMajorsMap = json.data;
@@ -406,9 +449,8 @@
             
             try {
                 // 调用API查询位次
-                const rankResp = await fetch(`${API_BASE}/get-rank-by-score`, {
+                const rankResp = await apiFetch(`${API_BASE}/get-rank-by-score`, {
                     method: 'POST',
-                    headers: {'Content-Type':'application/json'},
                     body: JSON.stringify({score: userScore, subjectCombination, region})
                 });
                 const rankResult = await rankResp.json();
@@ -436,9 +478,8 @@
             
             try {
                 // 调用API查询分数
-                const scoreResp = await fetch(`${API_BASE}/get-score-by-rank`, {
+                const scoreResp = await apiFetch(`${API_BASE}/get-score-by-rank`, {
                     method: 'POST',
-                    headers: {'Content-Type':'application/json'},
                     body: JSON.stringify({rank: userRank, subjectCombination, region})
                 });
                 const scoreResult = await scoreResp.json();
@@ -465,14 +506,13 @@
         document.getElementById('paginationBar').style.display='none';
 
         try {
-            const resp = await fetch(`${API_BASE}/recommend-from-db`, {
+            const resp = await apiFetch(`${API_BASE}/recommend-from-db`, {
                 method: 'POST',
-                headers: {'Content-Type':'application/json'},
                 body: JSON.stringify({
                     score: userScore,
                     rank: userRank,
                     scoreMode: scoreMode,
-                    subjectCombination, 
+                    subjectCombination,
                     region
                 })
             });
@@ -581,7 +621,7 @@
     // 获取专业推荐顺序
     async function loadMajorOrder() {
         try {
-            const resp = await fetch(`${API_BASE}/major-recommend-order`);
+            const resp = await apiFetch(`${API_BASE}/major-recommend-order`);
             const result = await resp.json();
             if (result.success && result.data) {
                 result.data.forEach(item => {
@@ -811,60 +851,62 @@
         if (!window.jspdf) { alert('PDF库加载失败，请检查网络后重试'); return; }
         const { jsPDF } = window.jspdf;
 
-        // 创建临时 HTML 元素用于渲染
+        // 创建临时 HTML 元素用于渲染（宽度设为 A4 宽度）
         const container = document.createElement('div');
         container.style.cssText = `
             position: fixed;
             left: -9999px;
             top: 0;
-            width: 800px;
+            width: 595px;
             background: white;
-            padding: 30px;
+            padding: 20px;
             font-family: "Microsoft YaHei", "PingFang SC", "SimHei", sans-serif;
             font-size: 12px;
             color: #333;
         `;
 
-        // 生成 HTML 内容
+        // 生成 HTML 内容（不分页，长图）
         let html = `
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h1 style="font-size: 24px; margin: 0 0 15px 0; color: #1a1a1a;">高考志愿推荐报告</h1>
-                <p style="font-size: 12px; color: #666; margin: 0;">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <h1 style="font-size: 28px; margin: 0 0 10px 0; color: #1a1a1a;">高考志愿推荐报告</h1>
+                <p style="font-size: 13px; color: #666; margin: 0;">
                     生源地：${region} &nbsp;&nbsp;|&nbsp;&nbsp; 分数：${score} &nbsp;&nbsp;|&nbsp;&nbsp; 位次：${rank} &nbsp;&nbsp;|&nbsp;&nbsp; 选科：${subject}
                 </p>
             </div>
-            <hr style="border: none; border-top: 1px solid #ddd; margin: 15px 0;">
-            <h2 style="font-size: 16px; margin: 0 0 15px 0; color: #333;">推荐院校及专业</h2>
+            <hr style="border: none; border-top: 2px solid #3b82f6; margin: 15px 0;">
+            <h2 style="font-size: 18px; margin: 0 0 15px 0; color: #333; border-left: 5px solid #3b82f6; padding-left: 10px;">推荐院校及专业</h2>
         `;
 
         schools.forEach((school, schoolIndex) => {
             const featuresHtml = school.features && school.features.length > 0
-                ? `<span style="color: #e74c3c; font-size: 11px;"> [${school.features.join(' / ')}]</span>`
+                ? `<span style="color: #e74c3c; font-size: 12px; font-weight: bold;"> [${school.features.join(' / ')}]</span>`
                 : '';
 
             html += `
-                <div style="margin-bottom: 15px; page-break-inside: avoid;">
-                    <h3 style="font-size: 14px; margin: 0 0 8px 0; color: #222;">
-                        ${schoolIndex + 1}. ${school.name}${featuresHtml}
-                    </h3>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                <div style="margin-bottom: 25px; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fafafa;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="font-size: 15px; margin: 0; color: #222; font-weight: 600;">
+                            ${schoolIndex + 1}. ${school.name}${featuresHtml}
+                        </h3>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                         <thead>
                             <tr style="background: #3b82f6; color: white;">
-                                <th style="padding: 6px 8px; text-align: center; width: 40px;">#</th>
-                                <th style="padding: 6px 8px; text-align: left;">专业名称</th>
-                                <th style="padding: 6px 8px; text-align: left; width: 120px;">专业类</th>
-                                <th style="padding: 6px 8px; text-align: center; width: 60px;">最低分</th>
-                                <th style="padding: 6px 8px; text-align: center; width: 80px;">最低位次</th>
+                                <th style="padding: 8px 10px; text-align: center; width: 40px;">#</th>
+                                <th style="padding: 8px 10px; text-align: left;">专业名称</th>
+                                <th style="padding: 8px 10px; text-align: left; width: 120px;">专业类</th>
+                                <th style="padding: 8px 10px; text-align: center; width: 60px;">最低分</th>
+                                <th style="padding: 8px 10px; text-align: center; width: 80px;">最低位次</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${school.majors.map((m, i) => `
-                                <tr style="background: ${i % 2 === 0 ? '#f8f9fa' : 'white'};">
-                                    <td style="padding: 5px 8px; text-align: center;">${i + 1}</td>
-                                    <td style="padding: 5px 8px;">${m.major}</td>
-                                    <td style="padding: 5px 8px;">${m.major_category || '-'}</td>
-                                    <td style="padding: 5px 8px; text-align: center;">${m.min_score || '-'}</td>
-                                    <td style="padding: 5px 8px; text-align: center;">${m.min_rank ? Number(m.min_rank).toLocaleString() : '-'}</td>
+                                <tr style="background: ${i % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+                                    <td style="padding: 6px 10px; text-align: center;">${i + 1}</td>
+                                    <td style="padding: 6px 10px;">${m.major}</td>
+                                    <td style="padding: 6px 10px;">${m.major_category || '-'}</td>
+                                    <td style="padding: 6px 10px; text-align: center;">${m.min_score || '-'}</td>
+                                    <td style="padding: 6px 10px; text-align: center;">${m.min_rank ? Number(m.min_rank).toLocaleString() : '-'}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -874,7 +916,7 @@
         });
 
         html += `
-            <div style="text-align: center; color: #999; font-size: 10px; margin-top: 20px; padding-top: 10px; border-top: 1px solid #eee;">
+            <div style="text-align: center; color: #999; font-size: 11px; margin-top: 25px; padding-top: 15px; border-top: 2px solid #e5e7eb;">
                 生成时间：${new Date().toLocaleString('zh-CN')}
             </div>
         `;
@@ -883,46 +925,31 @@
         document.body.appendChild(container);
 
         try {
-            // 使用 html2canvas 渲染
+            // 使用 html2canvas 渲染（高分辨率）
             const canvas = await html2canvas(container, {
-                scale: 2,
+                scale: 3, // 提高清晰度
                 useCORS: true,
                 logging: false,
                 backgroundColor: '#ffffff'
             });
 
-            const imgWidth = 210; // A4 宽度 mm
-            const pageHeight = 297; // A4 高度 mm
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
             const imgData = canvas.toDataURL('image/png');
 
-            const doc = new jsPDF('p', 'mm', 'a4');
+            // 计算缩放比例，确保内容完整显示
+            const a4Width = 595;
+            const scale = a4Width / canvas.width;
+            const scaledWidth = a4Width;
+            const scaledHeight = canvas.height * scale;
 
-            // 计算总页数
-            const totalPages = Math.ceil(imgHeight / pageHeight);
+            // 创建 PDF（宽度固定为 A4，高度根据内容自适应）
+            const doc = new jsPDF({
+                orientation: 'p',
+                unit: 'px',
+                format: [595, scaledHeight]
+            });
 
-            // 使用裁剪方式分页：每页显示 pageHeight 高度的内容
-            const pageCanvas = document.createElement('canvas');
-            const ctx = pageCanvas.getContext('2d');
-            const canvasWidth = canvas.width;
-            const pageHeightPx = (pageHeight * canvas.width) / imgWidth;
-
-            pageCanvas.width = canvasWidth;
-            pageCanvas.height = pageHeightPx;
-
-            for (let i = 0; i < totalPages; i++) {
-                if (i > 0) {
-                    doc.addPage();
-                }
-                // 裁剪当前页的内容
-                ctx.clearRect(0, 0, canvasWidth, pageHeightPx);
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvasWidth, pageHeightPx);
-                ctx.drawImage(canvas, 0, -i * pageHeightPx);
-
-                const pageImgData = pageCanvas.toDataURL('image/png');
-                doc.addImage(pageImgData, 'PNG', 0, 0, imgWidth, pageHeight);
-            }
+            // 添加图片
+            doc.addImage(imgData, 'PNG', 0, 0, scaledWidth, scaledHeight);
 
             // 下载文件
             const now = new Date();
@@ -1077,9 +1104,8 @@
 
         // 调用后端API
         try {
-            const response = await fetch(`${API_BASE}/export-excel`, {
+            const response = await apiFetch(`${API_BASE}/export-excel`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     region,
                     score,
@@ -1169,7 +1195,8 @@
             return;
         }
         
-        fetch(`${API_BASE}/major-info?major_name=${encodeURIComponent(majorName)}`)
+
+        apiFetch(`${API_BASE}/major-info?major_name=${encodeURIComponent(majorName)}`)
             .then(r=>r.json())
             .then(res=>{
                 if(res.success&&res.data)majorCache[majorName]=res.data;
@@ -1635,7 +1662,7 @@
         tooltip.classList.add('visible');
         if(majorCache[majorName]!==undefined){renderTooltipContent(majorCache[majorName]);return;}
         ttBody.innerHTML='<div class="tooltip-loading">加载中…</div>';
-        fetch(`${API_BASE}/major-info?major_name=${encodeURIComponent(majorName)}`)
+        apiFetch(`${API_BASE}/major-info?major_name=${encodeURIComponent(majorName)}`)
             .then(r=>r.json())
             .then(res=>{
                 if(res.success&&res.data)majorCache[majorName]=res.data;
@@ -1700,7 +1727,7 @@
         schoolTooltip.classList.add('visible');
         if(schoolCache[schoolName]!==undefined){renderSchoolTooltipContent(schoolCache[schoolName]);return;}
         schoolTtBody.innerHTML='<div class="school-tooltip-loading">加载中…</div>';
-        fetch(`${API_BASE}/school-detail?schoolName=${encodeURIComponent(schoolName)}`)
+        apiFetch(`${API_BASE}/school-detail?schoolName=${encodeURIComponent(schoolName)}`)
             .then(r=>r.json())
             .then(res=>{
                 if(res.success&&res.data)schoolCache[schoolName]=res.data;
@@ -1832,7 +1859,7 @@
                 schoolName: schoolName
             });
             
-            const resp = await fetch(`${API_BASE}/school-group-majors?${params.toString()}`);
+            const resp = await apiFetch(`${API_BASE}/school-group-majors?${params.toString()}`);
             const result = await resp.json();
             
             if (!result.success) {

@@ -86,6 +86,13 @@ function sortBy(field) {
 }
 
 function switchTab(tab) {
+    // 非 root 用户禁止访问专业分类、招生计划、智能客服面板
+    var currentRole = localStorage.getItem('qd_role') || 'user';
+    var restrictedTabs = ['majorCategory', 'admissionPlan', 'chatConfig'];
+    if (currentRole !== 'root' && restrictedTabs.indexOf(tab) !== -1) {
+        alert('您没有权限访问此功能');
+        return;
+    }
     currentTab = tab;
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     if (event && event.currentTarget) {
@@ -98,6 +105,7 @@ function switchTab(tab) {
     document.getElementById('dashboardTab').style.display = tab === 'dashboard' ? 'block' : 'none';
     document.getElementById('majorCategoryTab').style.display = tab === 'majorCategory' ? 'block' : 'none';
     document.getElementById('admissionPlanTab').style.display = tab === 'admissionPlan' ? 'block' : 'none';
+    document.getElementById('chatConfigTab').style.display = tab === 'chatConfig' ? 'block' : 'none';
     if (tab === 'dashboard') {
         if (!echartsLoaded) {
             loadEcharts(loadDashboard);
@@ -111,6 +119,10 @@ function switchTab(tab) {
     if (tab === 'admissionPlan') {
         loadAdmissionPlanProvinces();
         loadAdmissionPlan();
+    }
+    if (tab === 'chatConfig') {
+        loadChatBasicConfig();
+        loadChatLogs();
     }
 }
 
@@ -551,10 +563,10 @@ window.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // 只有 root 身份才能看到专业分类面板
+    // 只有 root 身份才能看到专业分类、招生计划、智能客服面板
     if (role !== 'root') {
-        var mcBtns = document.querySelectorAll('[onclick="switchTab(\'majorCategory\')"]');
-        mcBtns.forEach(function(btn) {
+        var restrictedBtns = document.querySelectorAll('.tab-btn.root-only');
+        restrictedBtns.forEach(function(btn) {
             btn.style.display = 'none';
         });
     }
@@ -1608,4 +1620,153 @@ if (uploadArea) {
             }
         }
     });
+}
+
+// ====================================================
+// 智能客服配置管理
+// ====================================================
+
+// 加载基础配置
+async function loadChatBasicConfig() {
+    try {
+        var res = await apiFetch(API_BASE + '/chat-config/basic');
+        var data = await res.json();
+        if (data.success && data.data) {
+            var config = data.data;
+            document.getElementById('chatEnabled').checked = config.enabled !== false;
+            document.getElementById('chatWelcome').value = config.welcome || '';
+            document.getElementById('chatQuickQuestions').value = (config.quickQuestions || []).join('\n');
+            document.getElementById('chatPetName').value = config.petName || '权鼎小助手';
+            document.getElementById('chatStatStatus').textContent = config.enabled !== false ? '开启' : '关闭';
+            // DeepSeek 配置
+            document.getElementById('deepseekEnabled').checked = !!config.deepseekEnabled;
+            document.getElementById('deepseekApiKey').value = config.deepseekApiKey || '';
+            document.getElementById('deepseekModel').value = config.deepseekModel || 'deepseek-chat';
+        }
+    } catch (err) {
+        console.error('加载客服配置失败:', err);
+    }
+}
+
+// 保存基础配置
+async function saveChatBasicConfig() {
+    var enabled = document.getElementById('chatEnabled').checked;
+    var welcome = document.getElementById('chatWelcome').value.trim();
+    var quickQuestions = document.getElementById('chatQuickQuestions').value.trim().split('\n').filter(function(q) { return q.trim(); });
+    var petName = document.getElementById('chatPetName').value.trim() || '权鼎小助手';
+    var deepseekEnabled = document.getElementById('deepseekEnabled').checked;
+    var deepseekApiKey = document.getElementById('deepseekApiKey').value.trim();
+    var deepseekModel = document.getElementById('deepseekModel').value;
+
+    try {
+        var res = await apiFetch(API_BASE + '/chat-config/basic', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                enabled: enabled,
+                welcome: welcome,
+                quickQuestions: quickQuestions,
+                petName: petName,
+                deepseekEnabled: deepseekEnabled,
+                deepseekApiKey: deepseekApiKey,
+                deepseekModel: deepseekModel
+            })
+        });
+        var data = await res.json();
+        if (data.success) {
+            document.getElementById('chatStatStatus').textContent = enabled ? '开启' : '关闭';
+            alert('保存成功');
+        } else {
+            alert('保存失败: ' + (data.message || '未知错误'));
+        }
+    } catch (err) {
+        alert('保存失败: ' + err.message);
+    }
+}
+
+
+
+// 加载对话日志
+async function loadChatLogs() {
+    var tbody = document.getElementById('chatLogsBody');
+    tbody.innerHTML = '<tr><td colspan="5" class="loading">加载中...</td></tr>';
+
+    try {
+        var userSearch = document.getElementById('chatLogUserSearch').value.trim();
+        var url = API_BASE + '/chat-config/logs?limit=50';
+        if (userSearch) {
+            url += '&userId=' + encodeURIComponent(userSearch);
+        }
+        var res = await apiFetch(url);
+        var data = await res.json();
+        if (data.success) {
+            var logs = data.data || [];
+            document.getElementById('chatStatTotal').textContent = data.total || logs.length;
+
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:32px;">暂无对话日志</td></tr>';
+                return;
+            }
+
+            var html = '';
+            logs.forEach(function(log) {
+                var sourceLabel = log.source === 'rule' ? '规则' : (log.source === 'db' ? '数据库' : (log.source === 'deepseek' ? 'AI' : '默认'));
+                var sourceClass = log.source === 'rule' ? 'rule' : (log.source === 'db' ? 'db' : (log.source === 'deepseek' ? 'deepseek' : 'default'));
+
+                html += '<tr>';
+                html += '<td><span class="log-time">' + escapeHtml(log.created_at || '') + '</span></td>';
+                html += '<td>' + escapeHtml(log.user_id || '游客') + '</td>';
+                html += '<td>' + escapeHtml(log.user_message || '') + '</td>';
+                html += '<td><div class="response-preview" title="' + escapeHtml(log.bot_reply || '') + '">' + escapeHtml(log.bot_reply || '') + '</div></td>';
+                html += '<td><span class="log-source ' + sourceClass + '">' + sourceLabel + '</span></td>';
+                html += '</tr>';
+            });
+            tbody.innerHTML = html;
+        }
+    } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color:#ef4444;text-align:center;">加载失败</td></tr>';
+    }
+}
+
+// DeepSeek API Key 显示/隐藏切换
+function toggleApiKeyVisibility() {
+    var input = document.getElementById('deepseekApiKey');
+    var toggleText = document.getElementById('apiKeyToggleText');
+    if (input.type === 'password') {
+        input.type = 'text';
+        toggleText.textContent = '隐藏';
+    } else {
+        input.type = 'password';
+        toggleText.textContent = '显示';
+    }
+}
+
+// 测试 DeepSeek 连接
+async function testDeepSeek() {
+    var apiKey = document.getElementById('deepseekApiKey').value.trim();
+    var model = document.getElementById('deepseekModel').value;
+
+    if (!apiKey) {
+        alert('请先填写 API Key');
+        return;
+    }
+
+    try {
+        var res = await apiFetch(API_BASE + '/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: '你好，请用一句话介绍你自己',
+                sessionId: 'test_' + Date.now()
+            })
+        });
+        var data = await res.json();
+        if (data.success) {
+            alert('测试成功！AI 回复：\n\n' + data.reply);
+        } else {
+            alert('测试失败：' + (data.reply || '未知错误'));
+        }
+    } catch (err) {
+        alert('测试失败：' + err.message);
+    }
 }

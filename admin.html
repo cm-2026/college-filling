@@ -41,14 +41,14 @@
                     </svg>
                     数据看板
                 </button>
-                <button class="tab-btn" onclick="switchTab('majorCategory')">
+                <button class="tab-btn root-only" onclick="switchTab('majorCategory')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                     </svg>
                     专业分类
                 </button>
-                <button class="tab-btn" onclick="switchTab('admissionPlan')">
+                <button class="tab-btn root-only" onclick="switchTab('admissionPlan')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                         <polyline points="14 2 14 8 20 8"></polyline>
@@ -56,6 +56,12 @@
                         <line x1="16" y1="17" x2="8" y2="17"></line>
                     </svg>
                     招生计划
+                </button>
+                <button class="tab-btn root-only" onclick="switchTab('chatConfig')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    智能客服
                 </button>
             </div>
             
@@ -414,6 +420,171 @@
             </div>
             <div class="pagination" id="apPagination"></div>
         </div>
+
+        <!-- 智能客服配置标签页 -->
+        <div id="chatConfigTab" class="tab-content" style="display:none;">
+            <!-- 统计卡片 -->
+            <div class="stats-grid">
+                <div class="stat-card-modern">
+                    <div class="stat-icon-wrap blue">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">对话总数</div>
+                        <div class="stat-value-large" id="chatStatTotal">0</div>
+                        <div class="stat-desc">累计对话次数</div>
+                    </div>
+                </div>
+
+                <div class="stat-card-modern">
+                    <div class="stat-icon-wrap orange">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">服务状态</div>
+                        <div class="stat-value-large" id="chatStatStatus">开启</div>
+                        <div class="stat-desc">客服功能开关</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 功能开关区域 -->
+            <div class="chat-config-section">
+                <div class="chat-config-card">
+                    <div class="chat-config-card-header">
+                        <h3>基础设置</h3>
+                    </div>
+                    <div class="chat-config-card-body">
+                        <div class="chat-config-row">
+                            <div class="chat-config-label">
+                                <span class="chat-config-title">智能客服开关</span>
+                                <span class="chat-config-desc">关闭后前端将不显示电子宠物和对话框</span>
+                            </div>
+                            <label class="chat-switch">
+                                <input type="checkbox" id="chatEnabled" checked onchange="saveChatBasicConfig()">
+                                <span class="chat-switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="chat-config-row">
+                            <div class="chat-config-label">
+                                <span class="chat-config-title">欢迎语</span>
+                                <span class="chat-config-desc">用户首次打开对话框时显示的欢迎消息</span>
+                            </div>
+                            <textarea class="chat-config-textarea" id="chatWelcome" rows="3" maxlength="500" placeholder="输入欢迎语..."></textarea>
+                        </div>
+                        <div class="chat-config-row">
+                            <div class="chat-config-label">
+                                <span class="chat-config-title">快捷问题</span>
+                                <span class="chat-config-desc">欢迎语下方显示的快捷提问按钮，每行一个</span>
+                            </div>
+                            <textarea class="chat-config-textarea" id="chatQuickQuestions" rows="3" maxlength="300" placeholder="每行一个问题，如：&#10;怎么使用这个系统？&#10;志愿填报策略"></textarea>
+                        </div>
+                        <div class="chat-config-row">
+                            <div class="chat-config-label">
+                                <span class="chat-config-title">宠物名称</span>
+                                <span class="chat-config-desc">对话框标题栏显示的助手名称</span>
+                            </div>
+                            <input type="text" class="chat-config-input" id="chatPetName" maxlength="20" placeholder="如：权鼎小助手">
+                        </div>
+                        <div class="chat-config-actions">
+                            <button class="btn btn-primary" onclick="saveChatBasicConfig()">保存设置</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DeepSeek AI 配置区域 -->
+            <div class="chat-config-section">
+                <div class="chat-config-card">
+                    <div class="chat-config-card-header">
+                        <h3>DeepSeek AI 配置</h3>
+                    </div>
+                    <div class="chat-config-card-body">
+                        <div class="chat-config-row">
+                            <div class="chat-config-label">
+                                <span class="chat-config-title">启用 DeepSeek AI</span>
+                                <span class="chat-config-desc">开启后，规则和数据库查询均未命中时将调用 DeepSeek AI 生成回复</span>
+                            </div>
+                            <label class="chat-switch">
+                                <input type="checkbox" id="deepseekEnabled" onchange="saveChatBasicConfig()">
+                                <span class="chat-switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="chat-config-row">
+                            <div class="chat-config-label">
+                                <span class="chat-config-title">API Key</span>
+                                <span class="chat-config-desc">在 <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:#3b82f6;">platform.deepseek.com</a> 获取的 API Key</span>
+                            </div>
+                            <div style="display:flex;gap:8px;width:100%;justify-content:flex-end;">
+                                <input type="password" class="chat-config-input" id="deepseekApiKey" placeholder="sk-..." style="flex:1;">
+                                <button class="btn btn-secondary" onclick="toggleApiKeyVisibility()" style="white-space:nowrap;padding:6px 12px;">
+                                    <span id="apiKeyToggleText">显示</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chat-config-row">
+                            <div class="chat-config-label">
+                                <span class="chat-config-title">模型名称</span>
+                                <span class="chat-config-desc">DeepSeek 提供的模型，默认 deepseek-chat</span>
+                            </div>
+                            <select class="chat-config-input" id="deepseekModel">
+                                <option value="deepseek-chat">deepseek-chat（推荐）</option>
+                                <option value="deepseek-reasoner">deepseek-reasoner（深度推理）</option>
+                            </select>
+                        </div>
+                        <div class="chat-config-actions">
+                            <button class="btn btn-primary" onclick="saveChatBasicConfig()">保存 DeepSeek 配置</button>
+                            <button class="btn btn-secondary" onclick="testDeepSeek()">测试连接</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- 对话日志区域 -->
+            <div class="chat-config-section">
+                <div class="chat-config-card">
+                    <div class="chat-config-card-header">
+                        <h3>最近对话日志</h3>
+                        <div class="chat-config-card-actions">
+                            <input type="text" id="chatLogUserSearch" placeholder="输入用户ID搜索..." onkeyup="if(event.key==='Enter')loadChatLogs()" style="padding:4px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;width:140px;">
+                            <button class="btn btn-primary" onclick="loadChatLogs()" style="padding:6px 12px;font-size:13px;">确定</button>
+                            <button class="btn btn-secondary" onclick="loadChatLogs()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                </svg>
+                                刷新
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chat-config-card-body">
+                        <div class="chat-logs-table-wrap">
+                            <table class="chat-rules-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:160px">时间</th>
+                                        <th style="width:80px">用户</th>
+                                        <th style="width:200px">用户消息</th>
+                                        <th>客服回复</th>
+                                        <th style="width:80px">来源</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="chatLogsBody">
+                                    <tr><td colspan="5" class="loading">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- 专业分类编辑模态框 -->
@@ -728,6 +899,8 @@
             </div>
         </div>
     </div>
+
+
 
     <!-- 加载本地脚本 -->
     <script src="js/ui-enhancements.js"></script>

@@ -136,8 +136,6 @@ function closePageChoice() {
     if (overlay) {
         overlay.remove();
     }
-    // 关闭选择框时默认跳转到首页
-    window.location.href = 'index-mysql.html';
 }
 
 function goToPage(page) {
@@ -239,6 +237,11 @@ async function handleLogin(e) {
                 return false;
             }
 
+            // 同步设置独立key，兼容admin.html等页面读取
+            localStorage.setItem('qd_userId', data.userId);
+            localStorage.setItem('qd_username', data.username);
+            localStorage.setItem('qd_role', data.role || 'user');
+
             // 记住我功能（只记住账号，不记住密码）
             if (rememberMe) {
                 localStorage.setItem('qd_rememberedAccount', account);
@@ -338,10 +341,12 @@ document.addEventListener('input', function(e) {
 (function loadRememberedCredentials() {
     const rememberedAccount = localStorage.getItem('qd_rememberedAccount');
     const rememberedPassword = localStorage.getItem('qd_rememberedPassword');
-    
-    if (rememberedAccount && rememberedPassword) {
+
+    if (rememberedAccount) {
         document.getElementById('loginUsername').value = rememberedAccount;
+        document.getElementById('rememberMe').checked = !!rememberedPassword;
+    }
+    if (rememberedPassword) {
         document.getElementById('loginPassword').value = rememberedPassword;
-        document.getElementById('rememberMe').checked = true;
     }
 })();

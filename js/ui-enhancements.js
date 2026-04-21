@@ -238,9 +238,13 @@
         },
         
         scrollTo(element, offset = 80) {
+            if (!element || !element.getBoundingClientRect) {
+                console.warn('[ui-enhancements] scrollTo: 元素不存在或无效');
+                return;
+            }
             const elementPosition = element.getBoundingClientRect().top;
             const offsetPosition = elementPosition + window.pageYOffset - offset;
-            
+
             window.scrollTo({
                 top: offsetPosition,
                 behavior: 'smooth'

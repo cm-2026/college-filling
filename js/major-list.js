@@ -1,46 +1,5 @@
 const API = `${window.location.protocol}//${window.location.hostname || 'localhost'}:3000/api`;
 
-// 获取认证 Token
-function getAuthToken() {
-    const token = localStorage.getItem('qd_token');
-    if (!token) {
-        console.warn('未找到认证 Token，请先登录');
-        return null;
-    }
-    return token;
-}
-
-// 封装 API 请求，自动添加 Token
-async function apiFetch(url, options = {}) {
-    const token = getAuthToken();
-    const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers
-    };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    try {
-        const response = await fetch(url, {
-            ...options,
-            headers
-        });
-
-        // 如果返回 401，跳转到登录页
-        if (response.status === 401) {
-            localStorage.removeItem('qd_token');
-            window.location.href = 'login.html';
-            throw new Error('未授权，请重新登录');
-        }
-
-        return response;
-    } catch (error) {
-        console.error('API 请求失败:', error);
-        throw error;
-    }
-}
-
 // 状态管理
 let currentType = 'undergraduate'; // undergraduate, vocational, specialist
 let currentCategory = 'all';
@@ -486,11 +445,4 @@ function goToMajorDetail(majorName) {
     }, 300);
 }
 
-// HTML转义
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;')
-              .replace(/"/g, '&quot;');
-}
+

@@ -1,45 +1,4 @@
 var API_BASE = window.location.protocol + '//' + (window.location.hostname || 'localhost') + ':3000/api';
-
-// 获取认证 Token
-function getAuthToken() {
-    const token = localStorage.getItem('qd_token');
-    if (!token) {
-        console.warn('未找到认证 Token，请先登录');
-        return null;
-    }
-    return token;
-}
-
-// 封装 API 请求，自动添加 Token
-async function apiFetch(url, options = {}) {
-    const token = getAuthToken();
-    const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers
-    };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    try {
-        const response = await fetch(url, {
-            ...options,
-            headers
-        });
-
-        // 如果返回 401，跳转到登录页
-        if (response.status === 401) {
-            localStorage.removeItem('qd_token');
-            window.location.href = 'login.html';
-            throw new Error('未授权，请重新登录');
-        }
-
-        return response;
-    } catch (error) {
-        console.error('API 请求失败:', error);
-        throw error;
-    }
-}
 var currentPage = 1;
 var pageSize = 20;
 var totalUsers = 0;
@@ -212,11 +171,6 @@ function renderUsers(users) {
     document.getElementById('cardList').innerHTML = cardHtml;
 }
 
-function escapeHtml(str) {
-    if (str == null) return '';
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
 function formatDate(dateStr) {
     if (!dateStr) return '-';
     var d = new Date(dateStr);
@@ -340,6 +294,7 @@ function renderCharts(d) {
 }
 
 function renderProvinceMap(d) {
+    try {
     const chartDom = document.getElementById('provinceMapChart');
     if (!chartDom || !d.rankings.hotSearches || d.rankings.hotSearches.length === 0) return;
     
@@ -434,9 +389,11 @@ function renderProvinceMap(d) {
         .catch(err => console.error('地图加载失败:', err));
     
     window.addEventListener('resize', () => chart.resize());
+    } catch (e) { /* ECharts内部非致命错误，忽略 */ }
 }
 
 function renderCollegeRank(d) {
+    try {
     const chartDom = document.getElementById('collegeRankChart');
     if (!chartDom || !d.rankings.popularColleges || d.rankings.popularColleges.length === 0) return;
     
@@ -494,9 +451,11 @@ function renderCollegeRank(d) {
     
     chart.setOption(option);
     window.addEventListener('resize', () => chart.resize());
+    } catch (e) { /* ECharts内部非致命错误，忽略 */ }
 }
 
 function renderBehaviorPie(d) {
+    try {
     const chartDom = document.getElementById('behaviorPieChart');
     if (!chartDom || !d.today) return;
     
@@ -546,6 +505,7 @@ function renderBehaviorPie(d) {
     
     chart.setOption(option);
     window.addEventListener('resize', () => chart.resize());
+    } catch (e) { /* ECharts内部非致命错误，忽略 */ }
 }
 
 window.addEventListener('DOMContentLoaded', function() {

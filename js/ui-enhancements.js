@@ -259,41 +259,6 @@
         }
     };
 
-    // ========== 无限滚动 ==========
-    const InfiniteScroll = {
-        init(options) {
-            const {
-                container,
-                loadMore,
-                threshold = 100,
-                loadingClass = 'loading'
-            } = options;
-            
-            let isLoading = false;
-            
-            const observer = new IntersectionObserver((entries) => {
-                const entry = entries[0];
-                if (entry.isIntersecting && !isLoading) {
-                    isLoading = true;
-                    container.classList.add(loadingClass);
-                    
-                    loadMore().then(() => {
-                        isLoading = false;
-                        container.classList.remove(loadingClass);
-                    }).catch(() => {
-                        isLoading = false;
-                        container.classList.remove(loadingClass);
-                    });
-                }
-            }, {
-                rootMargin: `${threshold}px`
-            });
-            
-            observer.observe(container);
-            return observer;
-        }
-    };
-
     // ========== 输入防抖 ==========
     function debounce(func, wait = 300) {
         let timeout;
@@ -319,117 +284,6 @@
         };
     }
 
-    // ========== 元素进入视口动画 ==========
-    const ScrollReveal = {
-        init(options = {}) {
-            const defaultOptions = {
-                threshold: 0.1,
-                rootMargin: '0px',
-                triggerOnce: true
-            };
-            
-            const config = { ...defaultOptions, ...options };
-            
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('revealed');
-                        if (config.triggerOnce) {
-                            observer.unobserve(entry.target);
-                        }
-                    } else if (!config.triggerOnce) {
-                        entry.target.classList.remove('revealed');
-                    }
-                });
-            }, {
-                threshold: config.threshold,
-                rootMargin: config.rootMargin
-            });
-            
-            document.querySelectorAll('[data-reveal]').forEach(el => {
-                observer.observe(el);
-            });
-            
-            return observer;
-        }
-    };
-
-    // ========== 触摸手势 ==========
-    const TouchGestures = {
-        init(element, callbacks) {
-            let startX = 0;
-            let startY = 0;
-            let startTime = 0;
-            
-            element.addEventListener('touchstart', (e) => {
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-                startTime = Date.now();
-            }, { passive: true });
-            
-            element.addEventListener('touchend', (e) => {
-                const endX = e.changedTouches[0].clientX;
-                const endY = e.changedTouches[0].clientY;
-                const endTime = Date.now();
-                
-                const diffX = endX - startX;
-                const diffY = endY - startY;
-                const diffTime = endTime - startTime;
-                
-                // 滑动检测
-                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-                    if (diffX > 0 && callbacks.onSwipeRight) {
-                        callbacks.onSwipeRight();
-                    } else if (diffX < 0 && callbacks.onSwipeLeft) {
-                        callbacks.onSwipeLeft();
-                    }
-                }
-                
-                // 点击检测
-                if (Math.abs(diffX) < 10 && Math.abs(diffY) < 10 && diffTime < 300) {
-                    if (callbacks.onTap) {
-                        callbacks.onTap(e);
-                    }
-                }
-            }, { passive: true });
-        }
-    };
-
-    // ========== 本地存储封装 ==========
-    const Storage = {
-        set(key, value, expireMinutes = null) {
-            const data = {
-                value,
-                expire: expireMinutes ? Date.now() + expireMinutes * 60000 : null
-            };
-            localStorage.setItem(key, JSON.stringify(data));
-        },
-        
-        get(key) {
-            const data = localStorage.getItem(key);
-            if (!data) return null;
-            
-            try {
-                const parsed = JSON.parse(data);
-                if (parsed.expire && Date.now() > parsed.expire) {
-                    localStorage.removeItem(key);
-                    return null;
-                }
-                return parsed.value;
-            } catch {
-                return null;
-            }
-        },
-        
-        remove(key) {
-            localStorage.removeItem(key);
-        },
-        
-        clear() {
-            localStorage.clear();
-        }
-    };
-
     // ========== 初始化 ==========
     function init() {
         // 初始化页面加载器
@@ -443,9 +297,6 @@
         
         // 初始化平滑滚动
         SmoothScroll.init();
-        
-        // 初始化滚动显示动画
-        ScrollReveal.init();
         
         // 添加全局CSS变量
         document.documentElement.style.setProperty('--viewport-height', window.innerHeight + 'px');
@@ -467,10 +318,6 @@
         Toast,
         Modal,
         SmoothScroll,
-        InfiniteScroll,
-        ScrollReveal,
-        TouchGestures,
-        Storage,
         debounce,
         throttle
     };

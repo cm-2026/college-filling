@@ -1,48 +1,7 @@
 // ====================================================
-    // 公共配置
-    // ====================================================
-    const API_BASE = `${window.location.protocol}//${window.location.hostname || 'localhost'}:3000/api`;
-
-    // 获取认证 Token
-    function getAuthToken() {
-        const token = localStorage.getItem('qd_token');
-        if (!token) {
-            console.warn('未找到认证 Token，请先登录');
-            return null;
-        }
-        return token;
-    }
-
-    // 封装 API 请求，自动添加 Token
-    async function apiFetch(url, options = {}) {
-        const token = getAuthToken();
-        const headers = {
-            'Content-Type': 'application/json',
-            ...options.headers
-        };
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        try {
-            const response = await fetch(url, {
-                ...options,
-                headers
-            });
-
-            // 如果返回 401，跳转到登录页
-            if (response.status === 401) {
-                localStorage.removeItem('qd_token');
-                window.location.href = 'login.html';
-                throw new Error('未授权，请重新登录');
-            }
-
-            return response;
-        } catch (error) {
-            console.error('API 请求失败:', error);
-            throw error;
-        }
-    }
+// 公共配置
+// ====================================================
+const API_BASE = `${window.location.protocol}//${window.location.hostname || 'localhost'}:3000/api`;
 
     // 院校特色标签数据（院校名称 -> 特色标签数组）
     let collegeFeaturesMap = {};
@@ -845,11 +804,40 @@
         }
     }
 
+    // 加载图片为 base64（用于 PDF 嵌入）
+    function loadImageAsBase64(url) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function() {
+                const c = document.createElement('canvas');
+                c.width = img.width;
+                c.height = img.height;
+                c.getContext('2d').drawImage(img, 0, 0);
+                resolve(c.toDataURL('image/png'));
+            };
+            img.onerror = reject;
+            img.src = url;
+        });
+    }
+
     // 使用 html2canvas + jsPDF 导出为 PDF（避免中文乱码）
     async function exportToPdf(region, score, rank, subject, schools) {
         await ensurePdfLibs();
         if (!window.jspdf) { alert('PDF库加载失败，请检查网络后重试'); return; }
         const { jsPDF } = window.jspdf;
+
+        // 预加载 logo
+        let logoBase64 = null;
+        try {
+            logoBase64 = await loadImageAsBase64('images/权鼎教育.png');
+        } catch (e) {
+            console.warn('Logo 加载失败，将不显示 logo');
+        }
+
+        const logoHeight = 45;      // logo 在 PDF 中的高度
+        const logoTop = 20;         // logo 上方留白
+        const logoBottom = 10;      // logo 与正文间距
 
         // 创建临时 HTML 元素用于渲染（宽度设为 A4 宽度）
         const container = document.createElement('div');
@@ -868,7 +856,6 @@
         // 生成 HTML 内容（不分页，长图）
         let html = `
             <div style="text-align: center; margin-bottom: 15px;">
-                <h1 style="font-size: 28px; margin: 0 0 10px 0; color: #1a1a1a;">高考志愿推荐报告</h1>
                 <p style="font-size: 13px; color: #666; margin: 0;">
                     生源地：${region} &nbsp;&nbsp;|&nbsp;&nbsp; 分数：${score} &nbsp;&nbsp;|&nbsp;&nbsp; 位次：${rank} &nbsp;&nbsp;|&nbsp;&nbsp; 选科：${subject}
                 </p>
@@ -941,15 +928,26 @@
             const scaledWidth = a4Width;
             const scaledHeight = canvas.height * scale;
 
+            // 计算总高度：logo 区域 + 内容区域
+            const logoArea = logoBase64 ? (logoTop + logoHeight + logoBottom) : 0;
+            const totalHeight = scaledHeight + logoArea;
+
             // 创建 PDF（宽度固定为 A4，高度根据内容自适应）
             const doc = new jsPDF({
                 orientation: 'p',
                 unit: 'px',
-                format: [595, scaledHeight]
+                format: [595, totalHeight]
             });
 
-            // 添加图片
-            doc.addImage(imgData, 'PNG', 0, 0, scaledWidth, scaledHeight);
+            // 添加 logo（居中）
+            if (logoBase64) {
+                const logoWidth = 150; // logo 显示宽度
+                const logoX = (a4Width - logoWidth) / 2;
+                doc.addImage(logoBase64, 'PNG', logoX, logoTop, logoWidth, logoHeight);
+            }
+
+            // 添加主体内容（向下偏移 logo 区域）
+            doc.addImage(imgData, 'PNG', 0, logoArea, scaledWidth, scaledHeight);
 
             // 下载文件
             const now = new Date();

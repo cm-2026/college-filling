@@ -28,20 +28,6 @@ async function recordBehavior(userId, behaviorType, behaviorData, req) {
   }
 }
 
-// 管理员操作日志函数
-async function recordAdminLog(adminId, adminName, action, targetType, targetId, detail, req) {
-  try {
-    const ip = req.ip || req.connection.remoteAddress || '';
-    
-    await pool.execute(
-      'INSERT INTO admin_logs (admin_id, admin_name, action, target_type, target_id, detail, ip) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [adminId, adminName, action, targetType, targetId, JSON.stringify(detail), ip]
-    );
-  } catch (error) {
-    console.error('[WARN] 记录管理员日志失败:', error.message);
-  }
-}
-
 // MySQL数据库配置
 const dbConfig = {
   host: 'localhost',
@@ -2711,10 +2697,16 @@ app.post('/api/chat/stream', async (req, res) => {
     }
 
     // 尝试 DeepSeek AI 流式回复
-    const deepseekSuccess = await tryDeepSeekStream(text, context, sendEvent);
-    if (deepseekSuccess) {
-      logChatMessage(sessionId, userId, text, '[流式回复]', 'deepseek', null);
-      return res.end();
+    let deepseekSuccess = false;
+    try {
+      deepseekSuccess = await tryDeepSeekStream(text, context, sendEvent);
+      if (deepseekSuccess) {
+        logChatMessage(sessionId, userId, text, '[流式回复]', 'deepseek', null);
+        return res.end();
+      }
+    } catch (err) {
+      console.error('[DeepSeek] 调用失败，使用本地回复:', err.message);
+      deepseekSuccess = false;
     }
 
     // 默认回复
@@ -2740,11 +2732,10 @@ async function streamText(text, sendEvent) {
   // 发送开始信号
   sendEvent({ type: 'start' });
   
-  // 逐字发送
+  // 逐字发送（延迟从20ms降到2ms，大幅提升响应速度）
   for (let i = 0; i < text.length; i++) {
     sendEvent({ type: 'char', content: text[i] });
-    // 添加小延迟，让显示效果更明显
-    await new Promise(resolve => setTimeout(resolve, 20));
+    await new Promise(resolve => setTimeout(resolve, 2));
   }
   
   // 发送完成信号
@@ -2790,24 +2781,38 @@ async function tryDeepSeekStream(text, context, sendEvent) {
     // 添加当前用户消息
     messages.push({ role: 'user', content: text });
 
-    // 调用 DeepSeek API（流式）
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: messages,
-        max_tokens: 500,
-        temperature: 0.7,
-        stream: true  // 启用流式
-      })
-    });
+    // 调用 DeepSeek API（流式，15秒超时）
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    
+    let response;
+    try {
+      response = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: messages,
+          max_tokens: 500,
+          temperature: 0.7,
+          stream: true  // 启用流式
+        }),
+        signal: controller.signal
+      });
+    } catch (networkErr) {
+      // 网络错误（无法连接、超时等），直接返回false让后端走默认回复
+      console.error('[DeepSeek Stream API] 网络错误:', networkErr.message);
+      clearTimeout(timeoutId);
+      return false;
+    }
+    
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const errText = await response.text();
+      const errText = await response.text().catch(() => '无法读取错误信息');
       console.error('[DeepSeek Stream API] 请求失败:', response.status, errText);
       return false;
     }
@@ -2821,10 +2826,19 @@ async function tryDeepSeekStream(text, context, sendEvent) {
     let buffer = '';
 
     while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+      let result;
+      try {
+        result = await reader.read();
+      } catch (readErr) {
+        console.error('[DeepSeek Stream API] 读取响应失败:', readErr.message);
+        // 已经发送了部分内容，只能结束
+        sendEvent({ type: 'end' });
+        return true;
+      }
+      
+      if (result.done) break;
 
-      buffer += decoder.decode(value, { stream: true });
+      buffer += decoder.decode(result.value, { stream: true });
       
       // 处理 SSE 格式的数据
       const lines = buffer.split('\n');
@@ -2951,9 +2965,9 @@ async function tryParseRecommend(text) {
     }
   }
   
-  // 解析分数（匹配数字）
+  // 解析分数（匹配数字）- 改进：支持任何位置的数字，去掉空格限制，支持"450分"、"物理类450"、"450物理类"
   let score = null;
-  const scoreMatch = text.match(/(\d{2,3})\s*[分档]?/);
+  const scoreMatch = text.match(/(\d{2,3})/);
   if (scoreMatch) {
     score = parseInt(scoreMatch[1], 10);
     if (score < 100 || score > 800) {
@@ -2963,16 +2977,35 @@ async function tryParseRecommend(text) {
   
   // 解析选科组合
   let selectedSubjects = [];
+  // 处理"物理类"、"历史类"、"理科"、"文科"这种常见表述 - 自动添加首选科目
+  if (/\b(物理|理科)\b/.test(text) && (text.includes('类') || /\b(物理|理科)\b/.test(text))) {
+    selectedSubjects.push('物理');
+  }
+  if (/\b(历史|文科)\b/.test(text) && (text.includes('类') || /\b(历史|文科)\b/.test(text))) {
+    if (!selectedSubjects.includes('历史')) {
+      selectedSubjects.push('历史');
+    }
+  }
   // 先检查完整科目名称
   for (const s of subjects) {
     if (text.includes(s)) {
-      selectedSubjects.push(s);
+      if (!selectedSubjects.includes(s)) {
+        selectedSubjects.push(s);
+      }
     }
   }
-  // 如果未找到完整名称，检查缩写
-  if (selectedSubjects.length === 0) {
-    for (const [abbr, full] of Object.entries(subjectAbbr)) {
-      if (text.includes(abbr)) {
+  // 如果未找到完整名称，检查缩写（也检查连续缩写如"物化生"）
+  for (const [abbr, full] of Object.entries(subjectAbbr)) {
+    if (text.includes(abbr)) {
+      if (!selectedSubjects.includes(full)) {
+        selectedSubjects.push(full);
+      }
+    }
+  }
+  // 即使已经找到一些，再检查一遍缩写（处理"物化生"这种连续缩写的情况）
+  for (const [abbr, full] of Object.entries(subjectAbbr)) {
+    if (text.includes(abbr)) {
+      if (!selectedSubjects.includes(full)) {
         selectedSubjects.push(full);
       }
     }
@@ -2993,43 +3026,90 @@ async function tryParseRecommend(text) {
     score = 500;
   }
   
-  // 如果没有选科但有省份，设置默认选科（物理+化学+生物或历史+政治+地理）
-  if (!hasSubjects) {
-    // 默认为物理组合
-    selectedSubjects = ['物理', '化学', '生物'];
+  // 根据省份确定高考模式，简化选科处理
+  const mode33Provinces = ['北京', '天津', '上海', '山东', '浙江', '海南'];
+  const traditionalProvinces = ['西藏', '新疆'];
+  const is33Mode = mode33Provinces.includes(province);
+  const isTraditionalMode = traditionalProvinces.includes(province);
+  
+  if (is33Mode) {
+    // 3+3模式：保留用户输入的所有选科（或默认物化生）
+    if (!hasSubjects) {
+      selectedSubjects = ['物理', '化学', '生物'];
+    }
+  } else if (isTraditionalMode) {
+    // 传统文理分科：只判断文科/理科
+    const hasHistory = selectedSubjects.some(s => s === '历史' || s === '政治' || s === '地理' || s === '文科');
+    selectedSubjects = hasHistory ? ['历史'] : ['物理'];
+  } else {
+    // 3+1+2模式：只保留物理/历史作为标识，不补全具体组合
+    const hasHistory = selectedSubjects.some(s => s === '历史' || s === '文科');
+    selectedSubjects = hasHistory ? ['历史'] : ['物理'];
   }
   
   console.log(`[推荐解析] 省份: ${province}, 分数: ${score}, 选科: ${selectedSubjects.join(',')}`);
   
   try {
+    // 如果用户输入的是分数，先查询对应的位次（更准确推荐）
+    let useScore = score;
+    let useScoreMode = 'score';
+    try {
+      const [rankResult] = await pool.execute(
+        'SELECT cumulative_count FROM score_rank_table WHERE province = ? AND `score` = ? AND subject_type = ?',
+        [province, score, selectedSubjects[0]]
+      );
+      if (rankResult.length > 0 && rankResult[0].cumulative_count) {
+        const actualRank = rankResult[0].cumulative_count;
+        console.log(`[分数→位次] ${province} ${score}分 → ${actualRank}名`);
+        useScore = actualRank;
+        useScoreMode = 'rank';
+      }
+    } catch (err) {
+      console.log('[分数→位次] 查询位次失败，继续使用分数查询:', err.message);
+    }
+
     // 调用推荐查询逻辑
-    const result = await queryRecommendations(province, score, selectedSubjects.join(','), 'score');
+    const result = await queryRecommendations(province, useScore, selectedSubjects.join(','), useScoreMode);
     if (result && result.length > 0) {
-      return formatRecommendResponse(result, province, score, selectedSubjects);
+      return formatRecommendResponse(result, province, score, selectedSubjects, useScore);
+    } else {
+      // 查询结果为空，返回友好提示，不返回null（避免走到DeepSeek导致网络错误）
+      return `在${province}省，针对${score}分 ${selectedSubjects.join('+')} 组合，暂时没有找到匹配的院校数据。\n\n建议你：\n1. 前往首页使用完整查询功能，可以设置更多筛选条件\n2. 调整分数范围后再次查询\n3. 确认数据库中已导入该省份的招生计划数据`;
     }
   } catch (err) {
     console.error('[推荐查询失败]', err.message);
+    // 查询发生异常，返回错误提示，不返回null
+    return `查询推荐数据时出现异常，请稍后再试。你也可以直接前往首页进行查询。`;
   }
-  
-  return null;
 }
 
 // 从 admission_plan 表查询推荐院校
 async function queryRecommendations(sourceProvince, score, subjectCombination, scoreMode) {
   const subjects = subjectCombination.split(',').map(s => s.trim()).filter(s => s);
   
-  // 判断是否为3+3模式
+  // 省份高考模式判断
   const mode33Provinces = ['北京', '天津', '上海', '山东', '浙江', '海南'];
   const is33Mode = mode33Provinces.includes(sourceProvince);
   
-  // 判断是否为传统文理分科模式
   const traditionalProvinces = ['西藏', '新疆'];
   const isTraditionalMode = traditionalProvinces.includes(sourceProvince);
   
-  // 确定查询条件：使用分数范围（向下5分）
-  const whereCondition = `AND COALESCE(group_min_score_1, min_score_1) >= ? AND COALESCE(group_min_score_1, min_score_1) <= ?`;
-  const orderCondition = `COALESCE(group_min_score_1, min_score_1) DESC`;
-  const rangeParams = [Math.max(score - 5, 0), score];
+  const is312Mode = !is33Mode && !isTraditionalMode;
+  
+  // 确定查询条件：分数模式用分数范围，位次模式用位次范围
+  let whereCondition, orderCondition, rangeParams;
+  if (scoreMode === 'rank') {
+    // 位次模式：使用min_rank_1字段查询（group_min_rank_1可能为空）
+    // 位次越小排名越高，推荐位次 >= 用户位次（排名更靠后/更低的学校）
+    whereCondition = `AND min_rank_1 >= ? AND min_rank_1 <= ?`;
+    orderCondition = `min_rank_1 ASC`; // 位次从小到大
+    rangeParams = [score, score + 5000]; // 扩大范围，确保有足够推荐
+  } else {
+    // 分数模式：扩大分数范围（向下15分，保证能查到数据）
+    whereCondition = `AND COALESCE(group_min_score_1, min_score_1) >= ? AND COALESCE(group_min_score_1, min_score_1) <= ?`;
+    orderCondition = `COALESCE(group_min_score_1, min_score_1) DESC`;
+    rangeParams = [Math.max(score - 15, 0), score];
+  }
   
   let query, queryParams;
   
@@ -3045,13 +3125,22 @@ async function queryRecommendations(sourceProvince, score, subjectCombination, s
     }
     const singles = subjects;
     
+    // 分数模式使用分数排序，位次模式使用位次排序
+    let effectiveScoreExpr = scoreMode === 'rank' 
+      ? 'min_rank_1 AS effective_score'
+      : 'COALESCE(group_min_score_1, min_score_1) AS effective_score';
+
+    let orderBy = scoreMode === 'rank'
+      ? 'ORDER BY effective_score ASC'   // 位次从小到大
+      : 'ORDER BY effective_score DESC';  // 分数从大到小
+
     query = `
       SELECT
         college_name, major_name,
         group_min_score_1, min_score_1 AS min_score,
         min_rank_1 AS min_rank, subject_require,
         batch, major_category,
-        COALESCE(group_min_score_1, min_score_1) AS effective_score
+        ${effectiveScoreExpr}
       FROM admission_plan
       WHERE source_province = ?
         ${whereCondition}
@@ -3062,7 +3151,7 @@ async function queryRecommendations(sourceProvince, score, subjectCombination, s
           OR subject_require IS NULL
           OR subject_require = ''
         )
-      ORDER BY effective_score DESC
+      ${orderBy}
       LIMIT 100
     `;
     
@@ -3072,94 +3161,63 @@ async function queryRecommendations(sourceProvince, score, subjectCombination, s
     // 传统文理分科模式
     const subjectType = subjects[0] === '历史' ? '历史' : '物理';
     
+    // 分数模式使用分数排序，位次模式使用位次排序
+    let effectiveScoreExpr = scoreMode === 'rank' 
+      ? 'min_rank_1 AS effective_score'
+      : 'COALESCE(group_min_score_1, min_score_1) AS effective_score';
+
+    let orderBy = scoreMode === 'rank'
+      ? 'ORDER BY effective_score ASC'   // 位次从小到大
+      : 'ORDER BY effective_score DESC';  // 分数从大到小
+
     query = `
       SELECT
         college_name, major_name,
         min_score_1 AS min_score, min_rank_1 AS min_rank,
         subject_type, batch, major_category,
-        COALESCE(group_min_score_1, min_score_1) AS effective_score
+        ${effectiveScoreExpr}
       FROM admission_plan
       WHERE source_province = ?
         AND subject_type = ?
         ${whereCondition}
-      ORDER BY effective_score DESC
+      ${orderBy}
       LIMIT 100
     `;
     
     queryParams = [sourceProvince, subjectType, ...rangeParams];
     
-  } else {
-    // 3+1+2 模式
-    const requiredSubject = subjects[0] || '物理';
-    const optional1 = subjects[1] || '';
-    const optional2 = subjects[2] || '';
+  } else if (is312Mode) {
+    // 3+1+2 模式：只需判断首选科目是物理还是历史
+    // 从用户输入中判断：包含"历史"或"文科"则为历史类，否则默认物理类
+    const hasHistory = subjects.some(s => s === '历史' || s === '文科');
+    let subjectType = hasHistory ? '历史' : '物理';
     
-    let subjectType = requiredSubject === '历史' ? '历史' : '物理';
-    
-    const subjectRequireConditions = [];
-    const subjectRequireParams = [];
-    
-    // 三科组合
-    if (optional1 && optional2) {
-      subjectRequireConditions.push(`subject_require IN (?, ?, ?, ?, ?, ?)`);
-      subjectRequireParams.push(
-        `${requiredSubject}和${optional1}和${optional2}`,
-        `${requiredSubject}和${optional2}和${optional1}`,
-        `${optional1}和${requiredSubject}和${optional2}`,
-        `${optional2}和${requiredSubject}和${optional1}`,
-        `${optional1}和${optional2}和${requiredSubject}`,
-        `${optional2}和${optional1}和${requiredSubject}`
-      );
-    }
-    
-    // 两科组合
-    const pairs = [];
-    if (optional1) {
-      pairs.push(`${requiredSubject}和${optional1}`);
-      pairs.push(`${optional1}和${requiredSubject}`);
-    }
-    if (optional2) {
-      pairs.push(`${requiredSubject}和${optional2}`);
-      pairs.push(`${optional2}和${requiredSubject}`);
-    }
-    if (optional1 && optional2) {
-      pairs.push(`${optional1}和${optional2}`);
-      pairs.push(`${optional2}和${optional1}`);
-    }
-    if (pairs.length > 0) {
-      subjectRequireConditions.push(`subject_require IN (${pairs.map(() => '?').join(',')})`);
-      subjectRequireParams.push(...pairs);
-    }
-    
-    // 单科
-    const singleSubjects = [requiredSubject];
-    if (optional1) singleSubjects.push(optional1);
-    if (optional2) singleSubjects.push(optional2);
-    subjectRequireConditions.push(`subject_require IN (${singleSubjects.map(() => '?').join(',')})`);
-    subjectRequireParams.push(...singleSubjects);
-    
-    // 不限
-    subjectRequireConditions.push(`subject_require = '不限'`);
-    
-    const subjectRequireClause = `AND (${subjectRequireConditions.join(' OR ')})`;
-    
+    // 3+1+2 模式查询：只按 subject_type（物理/历史）过滤，不限制具体选科组合
+    // 因为同一首选科目下的所有考生都可以报考该 subject_type 的专业
+    let effectiveScoreExpr = scoreMode === 'rank' 
+      ? 'min_rank_1 AS effective_score'
+      : 'COALESCE(group_min_score_1, min_score_1) AS effective_score';
+
+    let orderBy = scoreMode === 'rank'
+      ? 'ORDER BY effective_score ASC'
+      : 'ORDER BY effective_score DESC';
+
     query = `
       SELECT
         college_name, major_name,
         group_min_score_1, min_score_1 AS min_score,
         min_rank_1 AS min_rank, subject_require,
         batch, major_category,
-        COALESCE(group_min_score_1, min_score_1) AS effective_score
+        ${effectiveScoreExpr}
       FROM admission_plan
       WHERE source_province = ?
         AND subject_type = ?
-        ${subjectRequireClause}
         ${whereCondition}
-      ORDER BY effective_score DESC
+      ${orderBy}
       LIMIT 100
     `;
     
-    queryParams = [sourceProvince, subjectType, ...subjectRequireParams, ...rangeParams];
+    queryParams = [sourceProvince, subjectType, ...rangeParams];
   }
   
   console.log(`[queryRecommendations] 执行查询: ${query}`);
@@ -3170,12 +3228,12 @@ async function queryRecommendations(sourceProvince, score, subjectCombination, s
 }
 
 // 格式化推荐结果
-function formatRecommendResponse(rows, province, score, subjects) {
+function formatRecommendResponse(rows, province, score, subjects, actualScore = score) {
   if (!rows || rows.length === 0) {
     return `在${province}省，针对${score}分${subjects.join('')}组合，暂时没有找到匹配的院校数据。\n\n建议：\n1. 尝试调整分数或选科组合\n2. 在首页输入分数进行更精确的查询`;
   }
   
-  let response = `📊 ${province}省 ${score}分 ${subjects.join('')}组合 推荐院校：\n\n`;
+  let response = `📊 ${province}省 ${score}分 ${subjects.join('')}组合\n推荐院校：\n\n`;
   
   // 按学校分组展示
   const schoolMap = new Map();
@@ -3193,10 +3251,12 @@ function formatRecommendResponse(rows, province, score, subjects) {
   schools.forEach(([schoolName, majors], index) => {
     const topMajor = majors[0];
     const scoreDisplay = topMajor.group_min_score_1 || topMajor.min_score || '暂无';
+    const rankDisplay = topMajor.group_min_rank_1 || topMajor.min_rank || '暂无';
     const batchDisplay = topMajor.batch || '本科批';
     
     response += `${index + 1}. 🏫 ${schoolName}\n`;
-    response += `   📈 录取最低分：${scoreDisplay} | ${batchDisplay}\n`;
+    response += `   📈 录取最低分：${scoreDisplay} | 最低位次：${rankDisplay}\n`;
+    response += `   📋 批次：${batchDisplay}\n`;
     response += `   📚 选科要求：${topMajor.subject_require || '不限'}\n`;
     
     // 显示该校的几个专业
@@ -3441,84 +3501,7 @@ async function analyzeIntentWithAI(text, context, userId = null) {
       userProfile = await pm.loadUserProfile();
     }
     
-    // 2. 构建AI意图分析提示词
-    const systemPrompt = `你是高考志愿填报专家，需要分析用户问题意图。
-用户问题："${text}"
-${userId ? '这是已登录用户，请考虑个性化推荐。' : '这是未登录用户，提供通用建议。'}
-${userProfile ? `用户历史偏好：地区偏好=${userProfile.preferences.region || '无'}，专业偏好=${userProfile.preferences.major || '无'}` : ''}
-
-请分析：
-1. 主要意图（recommend/rank_conversion/school_info/major_info/strategy/score_line/general）
-2. 关键参数（省份、分数、选科、院校名、专业名等）
-3. 隐含需求（如：担心就业、考虑地区、预算限制等）
-
-以JSON格式返回分析结果，格式：
-{
-  "type": "recommend",
-  "confidence": 0.8,
-  "params": {
-    "province": "河南",
-    "score": 550,
-    "selectedSubjects": ["物理", "化学", "生物"]
-  },
-  "hiddenNeeds": ["考虑就业前景", "偏好大城市"]
-}`;
-    
-    // 3. 调用DeepSeek AI进行意图分析
-    const [configRows] = await pool.execute(
-      'SELECT deepseek_enabled, deepseek_api_key, deepseek_model FROM chat_basic_config WHERE id = 1'
-    );
-    
-    if (!configRows.length || !configRows[0].deepseek_enabled || !configRows[0].deepseek_api_key) {
-      // AI未启用，使用规则匹配
-      return await analyzeIntentWithRules(text, userProfile);
-    }
-    
-    const apiKey = configRows[0].deepseek_api_key;
-    const model = configRows[0].deepseek_model || 'deepseek-chat';
-    
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: text }
-    ];
-    
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: messages,
-        max_tokens: 500,
-        temperature: 0.3, // 较低温度以获得更确定的输出
-        response_format: { type: "json_object" }
-      })
-    });
-    
-    if (!response.ok) {
-      console.error('[AI Intent Analysis] API请求失败:', response.status);
-      return await analyzeIntentWithRules(text, userProfile);
-    }
-    
-    const data = await response.json();
-    if (data.choices && data.choices[0] && data.choices[0].message) {
-      try {
-        const result = JSON.parse(data.choices[0].message.content.trim());
-        // 添加用户上下文信息
-        result.userContext = userProfile ? {
-          preferences: userProfile.preferences || {},
-          patterns: userProfile.patterns || {},
-          hasHistory: userProfile.history && userProfile.history.length > 0
-        } : null;
-        return result;
-      } catch (parseErr) {
-        console.error('[AI Intent Analysis] JSON解析失败:', parseErr.message);
-        return await analyzeIntentWithRules(text, userProfile);
-      }
-    }
-    
+    // 2. 直接使用本地规则匹配进行意图分析（避免调用DeepSeek API的延迟）
     return await analyzeIntentWithRules(text, userProfile);
     
   } catch (err) {
@@ -3756,92 +3739,18 @@ async function analyzeIntentWithRules(text, userProfile) {
 // AI增强结果处理器
 async function enhanceResultsWithAI(rawResults, intent, userContext) {
   try {
-    // 1. 如果没有AI配置或用户选择不增强，直接返回原始结果
-    const [configRows] = await pool.execute(
-      'SELECT deepseek_enabled, deepseek_api_key FROM chat_basic_config WHERE id = 1'
-    );
-    
-    if (!configRows.length || !configRows[0].deepseek_enabled || !configRows[0].deepseek_api_key) {
-      return { data: rawResults, insights: null, personalizedTips: null };
+    // 直接返回原始结果，不再调用DeepSeek做增强分析（因为formatEnhancedResponse中insights已被注释不展示）
+    // 大幅提升响应速度，数据库查询结果直接格式化返回
+    let personalizedTips = null;
+    if (userContext && userContext.preferences) {
+      personalizedTips = generatePersonalizedTips(userContext, rawResults);
     }
     
-    // 2. 构建AI增强提示词
-    const systemPrompt = `你是一个高考志愿填报专家，需要基于查询结果为用户提供个性化分析和建议。
-
-【重要约束】你收到的"查询结果"全部来自系统数据库，是事实性数据。你的分析和建议必须严格基于这些查询结果，绝对禁止编造、推测或补充任何不在查询结果中的具体数据（如院校名称、专业名称、分数线、招生计划等）。
-
-用户查询意图：${intent.type}
-${intent.params.province ? `用户省份：${intent.params.province}` : ''}
-${intent.params.score ? `用户分数：${intent.params.score}` : ''}
-${intent.params.selectedSubjects ? `用户选科：${intent.params.selectedSubjects.join(',')}` : ''}
-${userContext ? `用户历史偏好：${JSON.stringify(userContext.preferences, null, 2)}` : ''}
-
-查询结果（来自数据库的事实数据）：
-${JSON.stringify(rawResults, null, 2)}
-
-请基于上述查询结果提供：
-1. 3个关键洞察（机会、风险、建议）
-2. 2个个性化提醒（基于用户历史偏好）
-3. 1个后续行动建议
-
-用通俗易懂的语言回复，格式如下：
-【关键洞察】
-1. 机会：...
-2. 风险：...
-3. 建议：...
-
-【个性化提醒】
-1. ...
-2. ...
-
-【后续行动】
-...`;
-    
-    const apiKey = configRows[0].deepseek_api_key;
-    const model = configRows[0].deepseek_model || 'deepseek-chat';
-    
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: '请分析这些结果并提供建议。' }
-    ];
-    
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: messages,
-        max_tokens: 800,
-        temperature: 0.7
-      })
-    });
-    
-    if (!response.ok) {
-      console.error('[AI Results Enhancement] API请求失败:', response.status);
-      return { data: rawResults, insights: null, personalizedTips: null };
-    }
-    
-    const data = await response.json();
-    if (data.choices && data.choices[0] && data.choices[0].message) {
-      const aiAnalysis = data.choices[0].message.content.trim();
-      
-      // 3. 生成个性化提示
-      let personalizedTips = null;
-      if (userContext && userContext.preferences) {
-        personalizedTips = generatePersonalizedTips(userContext, rawResults);
-      }
-      
-      return {
-        data: rawResults,
-        insights: aiAnalysis,
-        personalizedTips: personalizedTips
-      };
-    }
-    
-    return { data: rawResults, insights: null, personalizedTips: null };
+    return {
+      data: rawResults,
+      insights: null,
+      personalizedTips: personalizedTips
+    };
     
   } catch (err) {
     console.error('[AI Results Enhancement] 异常:', err.message);
@@ -3883,6 +3792,14 @@ function generatePersonalizedTips(userContext, results) {
 // 增强的数据库查询（AI辅助）
 async function tryEnhancedDbQuery(text, context, userId = null) {
   try {
+    // ========== 优先直接解析推荐查询 ==========
+    // 如果能直接解析出省份+分数+选科，直接执行推荐，不依赖意图分析
+    const directRecommend = await tryParseRecommend(text);
+    if (directRecommend) {
+      console.log(`[tryEnhancedDbQuery] 直接解析推荐成功: ${text}`);
+      return directRecommend;
+    }
+
     // 1. 意图分析（AI辅助）
     const intent = await analyzeIntentWithAI(text, context, userId);
     
@@ -4021,7 +3938,7 @@ function formatEnhancedResponse(intentType, enhancedData, params) {
       if (!data || data.length === 0) {
         response = `根据您提供的信息（${params.province}省，${params.score}分，${params.selectedSubjects.join('')}），系统中暂未找到完全匹配的院校数据。\n\n建议：\n1. 尝试调整分数范围±20分\n2. 在首页进行更精确的查询\n3. 考虑增加备选院校类型\n4. 当前数据库可能未收录该分数段的所有院校`;
       } else {
-        response = `📊 ${params.province}省 ${params.score}分 ${params.selectedSubjects.join('')}组合推荐院校：\n\n`;
+        response = `📊 ${params.province}省 ${params.score}分 ${params.selectedSubjects.join('')}组合\n推荐院校：\n\n`;
         
         // 按学校分组展示
         const schoolMap = new Map();
@@ -4207,7 +4124,10 @@ async function tryDeepSeek(text, context) {
     // 添加当前用户消息
     messages.push({ role: 'user', content: text });
 
-    // 调用 DeepSeek API（使用 Node.js 内置 fetch）
+    // 调用 DeepSeek API（使用 Node.js 内置 fetch，15秒超时）
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
@@ -4219,8 +4139,10 @@ async function tryDeepSeek(text, context) {
         messages: messages,
         max_tokens: 500,
         temperature: 0.7
-      })
+      }),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errText = await response.text();

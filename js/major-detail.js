@@ -1,46 +1,5 @@
 const API = `${window.location.protocol}//${window.location.hostname || 'localhost'}:3000/api`;
 
-// 获取认证 Token
-function getAuthToken() {
-    const token = localStorage.getItem('qd_token');
-    if (!token) {
-        console.warn('未找到认证 Token，请先登录');
-        return null;
-    }
-    return token;
-}
-
-// 封装 API 请求，自动添加 Token
-async function apiFetch(url, options = {}) {
-    const token = getAuthToken();
-    const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers
-    };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    try {
-        const response = await fetch(url, {
-            ...options,
-            headers
-        });
-
-        // 如果返回 401，跳转到登录页
-        if (response.status === 401) {
-            localStorage.removeItem('qd_token');
-            window.location.href = 'login.html';
-            throw new Error('未授权，请重新登录');
-        }
-
-        return response;
-    } catch (error) {
-        console.error('API 请求失败:', error);
-        throw error;
-    }
-}
-
 // 院校排序优先级：985=1, 211=2, 双一流=3, 公办本科=4, 民办本科=5, 公办专科=6, 民办专科=7, 其他=8
 function getSchoolOrder(school) {
     const is985 = String(school.is_985 || '').includes('985');
@@ -434,8 +393,4 @@ function showError(msg) {
     if (errorMsgEl) errorMsgEl.textContent = msg;
 }
 
-// HTML转义
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+

@@ -453,6 +453,7 @@
         scrollMessages();
 
         var fullReply = '';  // 收集完整回复
+        var lastProcessedLen = 0; // 记录上次处理到的长度，用于增量更新
         var botContentEl = botMsgEl.querySelector('.bot-content');
         var cursorEl = botMsgEl.querySelector('.typing-cursor');
 
@@ -488,6 +489,8 @@
                         }
                         // 隐藏光标，结束
                         if (cursorEl) cursorEl.style.display = 'none';
+                        // 流结束后做一次完整的Markdown渲染
+                        botContentEl.innerHTML = escapeHTML(fullReply).replace(/\n/g, '<br>');
                         sessionManager.addMessage('bot', fullReply);
                         finishSending();
                         return;
@@ -515,10 +518,15 @@
                             var data = JSON.parse(line.slice(6));
                             if (data.type === 'char') {
                                 fullReply += data.content;
-                                // 实时显示字符
-                                var displayText = escapeHTML(fullReply).replace(/\n/g, '<br>');
-                                botContentEl.innerHTML = displayText;
-                                scrollMessages();
+                                // 增量更新：只处理新增的文本（避免O(n²)性能问题）
+                                var newText = fullReply.substring(lastProcessedLen);
+                                lastProcessedLen = fullReply.length;
+                                // 流式过程中只做简单转义和换行，不做Markdown转换（避免创建DOM和正则全量扫描）
+                                var newHtml = escapeHTMLBasic(newText).replace(/\n/g, '<br>');
+                                if (newHtml) {
+                                    botContentEl.insertAdjacentHTML('beforeend', newHtml);
+                                    scrollMessages();
+                                }
                             } else if (data.type === 'error') {
                                 botContentEl.innerHTML = escapeHTML(data.content);
                                 if (cursorEl) cursorEl.style.display = 'none';
@@ -591,7 +599,16 @@
         }, 50);
     }
 
-    // HTML 转义 + Markdown 简单格式化
+    // 简单HTML转义（不创建DOM，性能更高，用于流式增量更新）
+    function escapeHTMLBasic(str) {
+        return str.replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;')
+                  .replace(/"/g, '&quot;')
+                  .replace(/'/g, '&#39;');
+    }
+
+    // HTML 转义 + Markdown 简单格式化（用于最终渲染）
     function escapeHTML(str) {
         var div = document.createElement('div');
         div.textContent = str;

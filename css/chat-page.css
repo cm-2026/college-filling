@@ -1,0 +1,492 @@
+/* ========== 独立智能客服页面样式 ========== */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-page-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* 顶部导航栏 */
+.chat-page-header {
+    background: linear-gradient(135deg, #8B8DF8 0%, #5F60EE 100%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 16px 0;
+    flex-shrink: 0;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-logo {
+    height: 40px;
+    width: auto;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.btn-back {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    border: none;
+    background: rgba(255,255,255,0.15);
+    color: #ffffff;
+}
+
+.btn-back {
+    background: rgba(255,255,255,0.15);
+    color: #ffffff;
+}
+
+.btn-back:hover {
+    background: rgba(255,255,255,0.25);
+    transform: translateY(-1px);
+}
+
+/* 主聊天区域 */
+.chat-page-main {
+    flex: 1;
+    display: flex;
+    padding: 24px 0;
+}
+
+.chat-main-wrapper {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 120px);
+    min-height: 500px;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: #f8fafc;
+    /* 平滑滚动条 */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* 消息气泡 */
+.pet-msg {
+    max-width: 88%;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    word-break: break-word;
+    position: relative;
+    animation: pet-msg-appear 0.3s ease;
+}
+
+@keyframes pet-msg-appear {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 打字光标 */
+.typing-cursor {
+    display: inline-block;
+    color: #5F60EE;
+    font-weight: bold;
+    animation: blink 0.8s infinite;
+    margin-left: 1px;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* 宠物消息（左侧） */
+.pet-msg.bot {
+    align-self: flex-start;
+    width: 88%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px 16px 16px 4px;
+    color: #334155;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.pet-msg.bot strong {
+    color: #0f172a;
+}
+
+/* 用户消息（右侧） */
+.pet-msg.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #5F60EE 0%, #5F60EE 100%);
+    border: none;
+    border-radius: 16px 16px 4px 16px;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(95,96,238,0.3);
+}
+
+/* 消息中的文本链接 */
+.pet-msg a {
+    color: #0ea5e9;
+    text-decoration: none;
+    border-bottom: 1px dotted #0ea5e9;
+}
+
+.pet-msg a:hover {
+    color: #0284c7;
+    border-bottom-style: solid;
+}
+
+/* 欢迎消息样式 */
+.pet-welcome {
+    background: linear-gradient(135deg, #f0f0ff 0%, #eeeefa 100%) !important;
+    border-color: #5F60EE !important;
+}
+
+/* 加载指示器 */
+.pet-msg-typing {
+    align-self: flex-start;
+    background: #f0f0ff;
+    border: 2px solid #2C2C2C;
+    border-radius: 8px 8px 8px 2px;
+    padding: 10px 14px;
+    display: flex;
+    gap: 4px;
+}
+
+.pet-typing-dot {
+    width: 6px;
+    height: 6px;
+    background: #5F60EE;
+    border: 1px solid #2C2C2C;
+    border-radius: 50%;
+    animation: pet-typing 1.2s ease-in-out infinite;
+}
+
+.pet-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.pet-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pet-typing {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-4px); opacity: 1; }
+}
+
+.chat-messages .pet-msg.bot {
+    align-self: flex-start;
+}
+
+.chat-messages .pet-msg.user {
+    align-self: flex-end;
+}
+
+/* 输入区域 */
+.chat-input-wrapper {
+    padding: 16px 24px 20px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.input-box {
+    background: #f1f5f9;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-box:focus-within {
+    border-color: #5F60EE;
+    box-shadow: 0 0 0 3px rgba(95,96,238,0.15);
+}
+
+.chat-textarea {
+    width: 100%;
+    min-height: 60px;
+    max-height: 200px;
+    padding: 14px 16px;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 15px;
+    font-family: inherit;
+    color: #334155;
+    resize: none;
+    line-height: 1.5;
+}
+
+.chat-textarea::placeholder {
+    color: #94a3b8;
+}
+
+.input-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 8px 12px 8px 16px;
+    border-top: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.hint-text {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.btn-send {
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #5F60EE 0%, #5F60EE 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-send svg {
+    width: 16px;
+    height: 16px;
+}
+
+.btn-send:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(95,96,238,0.4);
+}
+
+.btn-send:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.btn-send:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.input-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-clear-inline {
+    padding: 8px 16px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    height: 36px;
+    display: flex;
+    align-items: center;
+}
+
+.btn-clear-inline:hover {
+    background: #e2e8f0;
+    color: #ef4444;
+    transform: translateY(-1px);
+}
+
+/* 打字指示器 */
+.chat-messages .pet-msg-typing {
+    align-self: flex-start;
+    margin-top: 8px;
+}
+
+/* 欢迎消息 */
+.chat-messages .pet-welcome {
+    max-width: 100%;
+}
+
+/* 响应式适配 */
+@media (max-width: 767.98px) {
+    .chat-page-header {
+        padding: 12px 0;
+    }
+    
+    .header-logo {
+        height: 32px;
+    }
+    
+    .btn-back {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+    
+    .chat-page-main {
+        padding: 12px 0;
+    }
+    
+    .chat-main-wrapper {
+        height: calc(100vh - 100px);
+        border-radius: 12px;
+    }
+    
+    .chat-messages {
+        padding: 16px;
+        gap: 16px;
+    }
+    
+    .chat-messages .pet-msg {
+        max-width: 90%;
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    .chat-input-wrapper {
+        padding: 12px 16px 16px;
+    }
+}
+
+/* 减少动画 */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* ========== 快速提问按钮 ========== */
+.pet-quick-questions {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(95, 96, 238, 0.2);
+}
+
+.pet-quick-title {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.pet-quick-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pet-quick-btn {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #f0f0ff 100%);
+    border: 1px solid rgba(95, 96, 238, 0.35);
+    border-radius: 20px;
+    font-size: 13px;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+    font-weight: 500;
+    box-shadow: 0 1px 4px rgba(95, 96, 238, 0.12), 0 1px 2px rgba(0, 0, 0, 0.04);
+    position: relative;
+    overflow: hidden;
+}
+
+.pet-quick-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(95, 96, 238, 0.08) 0%, rgba(95, 96, 238, 0.08) 100%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.pet-quick-btn:hover {
+    border-color: #5F60EE;
+    color: #4f46e5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(95, 96, 238, 0.25), 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.pet-quick-btn:hover::before {
+    opacity: 1;
+}
+
+.pet-quick-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(95, 96, 238, 0.2);
+    background: linear-gradient(135deg, #5F60EE 0%, #5F60EE 100%);
+    color: #ffffff;
+    border-color: #5F60EE;
+}
+
+/* 手机端快速提问 */
+@media (max-width: 767.98px) {
+    .pet-quick-list {
+        gap: 6px;
+    }
+    .pet-quick-btn {
+        padding: 7px 14px;
+        font-size: 12px;
+        border-radius: 16px;
+    }
+}

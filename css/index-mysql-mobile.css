@@ -27,6 +27,52 @@
         padding: 0 !important;
     }
 
+    .header-buttons {
+        display: none !important;
+    }
+
+    /* 手机端按钮每个独占一行 */
+    .form-btn-row {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    .form-btn-row .btn {
+        width: 100% !important;
+        flex: none !important;
+    }
+
+    /* 手机端底部导航按钮 */
+    .mobile-nav-row {
+        display: flex !important;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .btn-mobile-nav,
+    .btn-mobile-nav:link,
+    .btn-mobile-nav:visited {
+        width: 100%;
+        height: 50px;
+        line-height: 50px;
+        font-size: 16px;
+        background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+        color: var(--text-secondary);
+        border: none;
+        border-radius: var(--radius-lg);
+        text-decoration: none;
+        text-align: center;
+        font-weight: 500;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        transition: all 0.25s ease;
+        padding: 0 24px;
+        margin: 6px 0;
+    }
+    .btn-mobile-nav:hover {
+        color: var(--accent-600);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
     .form-header-logo-small {
         height: 80px !important;
         margin: 0 !important;
@@ -843,6 +889,11 @@
         padding: 2px 6px !important;
     }
     
+    /* 隐藏Toast提示框 */
+    .position-fixed.bottom-0.end-0.p-3 {
+        display: none !important;
+    }
+
     /* Tooltip优化 */
     #majorTooltip, #schoolTooltip {
         width: 95vw;

@@ -424,6 +424,7 @@
 /* 宠物消息（左侧） */
 .pet-msg.bot {
     align-self: flex-start;
+    width: 88%;
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 16px 16px 16px 4px;
@@ -447,27 +448,6 @@
 @keyframes blink {
     0%, 50% { opacity: 1; }
     51%, 100% { opacity: 0; }
-}
-
-.pet-msg.bot ul, .pet-msg.bot ol {
-    margin: 8px 0;
-    padding-left: 20px;
-}
-
-.pet-msg.bot li {
-    margin: 4px 0;
-}
-
-.pet-msg.bot p {
-    margin: 8px 0;
-}
-
-.pet-msg.bot p:first-child {
-    margin-top: 0;
-}
-
-.pet-msg.bot p:last-child {
-    margin-bottom: 0;
 }
 
 /* 用户消息（右侧） */

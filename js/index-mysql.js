@@ -302,7 +302,7 @@ const API_BASE = `${window.location.protocol}//${window.location.hostname || 'lo
         const tags=document.querySelectorAll('.subject-tag');
         const hiddenInput=document.getElementById('subjectCombination');
         const errorDiv=document.getElementById('subjectError');
-        if(!hiddenInput||!errorDiv)return;
+        if(!hiddenInput)return;
 
         // 从DOM判断当前模式
         const isMode312 = !!document.querySelector('[data-type="required"]');
@@ -332,7 +332,7 @@ const API_BASE = `${window.location.protocol}//${window.location.hostname || 'lo
                     this.classList.add('selected');
                     // 理科→物理，文科→历史，匹配后端subject_type
                     const mappedValue = value === '理科' ? '物理' : value === '文科' ? '历史' : value;
-                    hiddenInput.value=mappedValue;errorDiv.style.display='none';return;
+                    hiddenInput.value=mappedValue;if(errorDiv)errorDiv.style.display='none';return;
                 }
                 validateSubject();
             });
@@ -343,11 +343,11 @@ const API_BASE = `${window.location.protocol}//${window.location.hostname || 'lo
             if(isMode312){
                 const req=document.querySelector('[data-type="required"].selected');
                 const opt=document.querySelectorAll('[data-type="optional"].selected');
-                if(req&&opt.length===2){subjects=[req.dataset.value,opt[0].dataset.value,opt[1].dataset.value];hiddenInput.value=subjects.join(',');errorDiv.style.display='none';}
+                if(req&&opt.length===2){subjects=[req.dataset.value,opt[0].dataset.value,opt[1].dataset.value];hiddenInput.value=subjects.join(',');if(errorDiv)errorDiv.style.display='none';}
                 else hiddenInput.value='';
             } else if(isMode33){
                 const sel=document.querySelectorAll('[data-type="mode33"].selected');
-                if(sel.length===3){sel.forEach(t=>subjects.push(t.dataset.value));hiddenInput.value=subjects.join(',');errorDiv.style.display='none';}
+                if(sel.length===3){sel.forEach(t=>subjects.push(t.dataset.value));hiddenInput.value=subjects.join(',');if(errorDiv)errorDiv.style.display='none';}
                 else hiddenInput.value='';
             }
         }
@@ -356,7 +356,7 @@ const API_BASE = `${window.location.protocol}//${window.location.hostname || 'lo
             if(isMode312){const req=document.querySelector('[data-type="required"].selected');const opt=document.querySelectorAll('[data-type="optional"].selected');ok=req&&opt.length===2;}
             else if(isMode33){ok=document.querySelectorAll('[data-type="mode33"].selected').length===3;}
             else{ok=!!document.querySelector('[data-type="traditional"].selected');}
-            errorDiv.style.display=ok?'none':'block';
+            if(errorDiv)errorDiv.style.display=ok?'none':'block';
             return ok;
         }
     }
@@ -372,7 +372,7 @@ const API_BASE = `${window.location.protocol}//${window.location.hostname || 'lo
         const scoreMode=document.getElementById('scoreMode').value; // 获取当前模式
         
         if(!region){document.getElementById('regionInput').focus();showToast('请选择有效的地区省份！','warning');return;}
-        if(!score||!subjectCombination){if(!subjectCombination)document.getElementById('subjectError').style.display='block';showToast('请填写所有必填项！','warning');return;}
+        if(!score||!subjectCombination){showToast('请填写所有必填项！','warning');return;}
         
         // 根据模式进行不同的验证
         const scoreValue = parseInt(score);
@@ -561,13 +561,17 @@ const API_BASE = `${window.location.protocol}//${window.location.hostname || 'lo
     function openCollegeList(){ window.open('college-list.html','_blank'); }
 
     function showToast(message, type='info') {
+        if(window.innerWidth<768) return;
+        try {
         const toastEl=document.getElementById('liveToast');
         const msgEl=document.getElementById('toastMessage');
         const titleEl=document.getElementById('toastTitle');
+        if(!toastEl||!msgEl||!titleEl) return;
         const types={success:{header:'✅ 成功',cls:'text-success',border:'rgba(16,185,129,0.4)'},error:{header:'❌ 错误',cls:'text-danger',border:'rgba(239,68,68,0.4)'},warning:{header:'⚠️ 警告',cls:'text-warning',border:'rgba(245,158,11,0.4)'},info:{header:'ℹ️ 提示',cls:'text-info',border:'rgba(59,159,232,0.4)'}};
         const s=types[type]||types.info;
         titleEl.textContent=s.header; msgEl.className=`toast-body ${s.cls}`; msgEl.textContent=message; toastEl.style.borderColor=s.border;
         new bootstrap.Toast(toastEl).show();
+        } catch(e) {}
     }
 
     // ====================================================

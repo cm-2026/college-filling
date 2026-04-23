@@ -2796,7 +2796,7 @@ async function tryDeepSeekStream(text, context, sendEvent) {
         body: JSON.stringify({
           model: model,
           messages: messages,
-          max_tokens: 500,
+          max_tokens: 4000,
           temperature: 0.7,
           stream: true  // 启用流式
         }),
@@ -2899,7 +2899,7 @@ async function tryDbQuery(text, context) {
     if (searchName.length >= 2 && searchName.length <= 20) {
       const [rows] = await pool.execute(
         `SELECT DISTINCT school_name, province, school_type, school_level 
-         FROM admission 
+         FROM admission_plan 
          WHERE school_name LIKE ? 
          LIMIT 1`,
         [`%${searchName}%`]
@@ -2919,7 +2919,7 @@ async function tryDbQuery(text, context) {
     if (majorName.length >= 2 && majorName.length <= 20) {
       const [rows] = await pool.execute(
         `SELECT DISTINCT major_name, major_category 
-         FROM admission 
+         FROM admission_plan 
          WHERE major_name LIKE ? 
          LIMIT 1`,
         [`%${majorName}%`]
@@ -3834,27 +3834,46 @@ async function tryEnhancedDbQuery(text, context, userId = null) {
         
       case 'school_info':
         if (intent.params.schoolName) {
-          const [rows] = await pool.execute(
-            `SELECT DISTINCT school_name, province, school_type, school_level 
-             FROM admission 
-             WHERE school_name LIKE ? 
-             LIMIT 5`,
-            [`%${intent.params.schoolName}%`]
-          );
-          rawResults = rows;
+          // 清理院校名称，去除描述性词语
+          let cleanSchoolName = intent.params.schoolName
+            .replace(/哪所|哪些|什么|哪个|推荐|介绍|怎么样|好不好|了解|查|看看|一下|的|了|吗|呢|啊|大学|学院/g, '')
+            .trim();
+          
+          if (!cleanSchoolName) {
+            rawResults = null;
+          } else {
+            const [rows] = await pool.execute(
+              `SELECT DISTINCT school_name, province, school_type, school_level 
+               FROM admission_plan 
+               WHERE school_name LIKE ? 
+               LIMIT 5`,
+              [`%${cleanSchoolName}%`]
+            );
+            rawResults = rows.length > 0 ? rows : null;
+          }
         }
         break;
         
       case 'major_info':
         if (intent.params.majorName) {
-          const [rows] = await pool.execute(
-            `SELECT DISTINCT major_name, major_category 
-             FROM admission 
-             WHERE major_name LIKE ? 
-             LIMIT 5`,
-            [`%${intent.params.majorName}%`]
-          );
-          rawResults = rows;
+          // 清理专业名称，去除描述性词语，提取真正的专业关键词
+          let cleanMajorName = intent.params.majorName
+            .replace(/女生|男生|文科|理科|分数|多少分|适合|哪些|推荐|什么|介绍|怎么样|好不好|了解|查|看看|一下|的|了|吗|呢|啊|学|分/g, '')
+            .trim();
+          
+          // 如果清理后为空，返回 null，让 DeepSeek AI 处理推荐类问题
+          if (!cleanMajorName) {
+            rawResults = null;
+          } else {
+            const [rows] = await pool.execute(
+              `SELECT DISTINCT major_name, major_category 
+               FROM admission_plan 
+               WHERE major_name LIKE ? 
+               LIMIT 5`,
+              [`%${cleanMajorName}%`]
+            );
+            rawResults = rows.length > 0 ? rows : null;
+          }
         }
         break;
         
@@ -3954,22 +3973,25 @@ function formatEnhancedResponse(intentType, enhancedData, params) {
         schools.forEach(([schoolName, majors], index) => {
           const topMajor = majors[0];
           const scoreDisplay = topMajor.group_min_score_1 || topMajor.min_score || '暂无';
+          const rankDisplay = topMajor.group_min_rank_1 || topMajor.min_rank_1 || '暂无';
           const batchDisplay = topMajor.batch || '本科批';
           
           response += `${index + 1}. 🏫 ${schoolName}\n`;
-          response += `   📈 录取最低分：${scoreDisplay}分 | ${batchDisplay}\n`;
-          response += `   📚 选科要求：${topMajor.subject_require || '不限'}\n`;
+          response += `📈 录取最低分：${scoreDisplay}\n`;
+          response += `📊 最低位次：${rankDisplay}\n`;
+          response += `📋 批次：${batchDisplay}\n`;
+          response += `📚 选科要求：${topMajor.subject_require || '不限'}\n`;
           
           if (majors.length > 1) {
             const majorNames = majors.slice(0, 2).map(m => m.major_name).join('、');
-            response += `   🔧 相关专业：${majorNames}等\n`;
+            response += `🔧 相关专业：${majorNames}等\n`;
           } else if (majors[0].major_name) {
-            response += `   🔧 专业：${majors[0].major_name}\n`;
+            response += `🔧 专业：${majors[0].major_name}\n`;
           }
           response += '\n';
         });
         
-        response += `💡 以上为根据你的分数和选科智能推荐的院校。`;
+        response += `\n💡 以上为根据你的分数和选科推荐的院校，实际录取情况请以招生考试院公布为准`;
       }
       break;
       
@@ -3979,10 +4001,10 @@ function formatEnhancedResponse(intentType, enhancedData, params) {
         response = `🏫 ${school.school_name}\n`;
         response += `📍 地区：${school.province || '未知'}\n`;
         response += `🎓 类型：${school.school_type || '暂无'}\n`;
-        response += `⭐ 层次：${school.school_level || '暂无'}\n\n`;
-        response += `你可以在首页输入分数查询该院校的具体录取数据和匹配专业！`;
+        response += `⭐ 层次：${school.school_level || '暂无'}\n`;
       } else {
-        response = `系统中暂未找到"${params.schoolName}"的相关数据。\n\n建议：\n1. 检查院校名称是否准确\n2. 在"院校名录"中浏览系统收录的所有院校\n3. 该院校可能不在当前数据库收录范围内`;
+        // 查询不到结果，返回null交给DeepSeek AI回答
+        return null;
       }
       break;
       
@@ -3992,10 +4014,10 @@ function formatEnhancedResponse(intentType, enhancedData, params) {
         response = `📚 ${major.major_name}\n`;
         response += `🏷️ 专业类：${major.major_category || '暂无'}\n`;
         response += `📊 录取最低分：${major.min_score_1 || '暂无'}\n`;
-        response += `🏫 开设院校数：${major.school_count || '暂无'}\n\n`;
-        response += `你可以点击"专业名录"查看更多专业详情，或在首页查询开设该专业的院校！`;
+        response += `🏫 开设院校数：${major.school_count || '暂无'}\n`;
       } else {
-        response = `系统中暂未找到"${params.majorName}"的相关数据。\n\n建议：\n1. 检查专业名称是否准确\n2. 在"专业名录"中浏览系统收录的所有专业\n3. 该专业可能不在当前数据库收录范围内`;
+        // 查询不到结果，返回null交给DeepSeek AI回答
+        return null;
       }
       break;
 
@@ -4013,8 +4035,6 @@ function formatEnhancedResponse(intentType, enhancedData, params) {
           });
           response += '\n';
         });
-
-        response += `💡 以上为根据选科智能推荐的专业，你可以点击"专业名录"查看所有专业，或输入具体专业名称了解详情。`;
       } else if (data && data.length > 0 && data[0].majors) {
         // 兼容旧格式
         response = `📚 根据你的选科 ${params.selectedSubjects.join('')}，推荐以下专业方向：\n\n`;
@@ -4028,8 +4048,6 @@ function formatEnhancedResponse(intentType, enhancedData, params) {
           });
           response += '\n';
         });
-
-        response += `💡 以上为根据选科智能推荐的专业，你可以点击"专业名录"查看所有专业，或输入具体专业名称了解详情。`;
       }
       break;
       
@@ -4059,7 +4077,8 @@ function formatEnhancedResponse(intentType, enhancedData, params) {
           response += `   年份：${row.year || '未知'} | 最低分：${row.min_score_1 || '未知'} | 批次：${row.batch || '未知'}\n`;
         });
       } else {
-        response = `系统中暂未找到${params.schoolName ? `"${params.schoolName}"` : '该院校'}的历年分数线数据。\n\n建议：\n1. 检查院校名称是否准确\n2. 该院校可能不在当前数据库收录范围内\n3. 可在首页使用分数查询功能获取推荐结果`;
+        // 查询不到结果，返回null交给DeepSeek AI回答
+        return null;
       }
       break;
   }
@@ -4137,7 +4156,7 @@ async function tryDeepSeek(text, context) {
       body: JSON.stringify({
         model: model,
         messages: messages,
-        max_tokens: 500,
+        max_tokens: 4000,
         temperature: 0.7
       }),
       signal: controller.signal

@@ -295,17 +295,49 @@
         /* 表单标题栏 */
         .form-header-bar {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: var(--space-3);
+            gap: 16px;
             margin-bottom: var(--space-6);
             padding-top: var(--space-10);
+            position: relative;
         }
         .form-header-logo-small {
             height: 113px;
             width: auto;
             object-fit: contain;
         }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            position: fixed;
+            top: 20px;
+            right: 100px;
+        }
+
+        .btn-header {
+            padding: 8px 14px;
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-header:hover {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+            text-decoration: none;
+        }
+
         .form-header-title {
             font-size: 1.5rem;
             font-weight: 600;
@@ -365,29 +397,31 @@
         .score-toggle-wrapper {
             display: flex;
             background: #e5e7eb;
-            border-radius: 20px;
+            border-radius: var(--radius-lg);
             padding: 3px;
             gap: 3px;
             width: fit-content;
         }
         .toggle-btn {
-            padding: 6px 20px;
+            padding: 0 var(--space-6);
+            height: 48px;
+            line-height: 48px;
             border: none;
             background: transparent;
-            color: #6b7280;
-            font-size: 0.85rem;
+            color: var(--text-tertiary);
+            font-size: 0.9375rem;
             font-weight: 500;
-            border-radius: 17px;
+            border-radius: var(--radius-lg);
             cursor: pointer;
             transition: all 0.2s ease;
         }
         .toggle-btn.active {
-            background: #ffffff;
-            color: #4f46e5;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: var(--accent-600);
+            color: white;
+            box-shadow: var(--shadow-md);
         }
         .toggle-btn:hover:not(.active) {
-            color: #4f46e5;
+            color: var(--accent-600);
         }
 
         .form-control, .form-select {
@@ -422,26 +456,59 @@
         
         /* 主要按钮 */
         .btn-primary {
-            background: var(--accent-600);
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #4f46e5 100%);
+            background-size: 200% 200%;
             color: white;
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3), 0 1px 3px rgba(79, 70, 229, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            min-width: 120px;
+            border: none;
+            border-radius: var(--radius-lg);
+            transition: all 0.25s ease;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .form-btn-row {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .mobile-nav-row {
+            display: none;
         }
         .btn-primary:hover {
-            background: var(--accent-500);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
+            background: linear-gradient(135deg, #4338ca 0%, #4f46e5 50%, #4338ca 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4), 0 4px 8px rgba(79, 70, 229, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         /* 次要按钮 */
         .btn-secondary, .btn-warning, .btn-college {
-            background: var(--bg-tertiary);
+            background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
             color: var(--text-secondary);
-            border: 1px solid var(--border-medium);
+            border: none;
+            min-width: 120px;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transition: all 0.25s ease;
+            font-weight: 500;
         }
         .btn-secondary:hover, .btn-warning:hover, .btn-college:hover {
-            background: var(--primary-200);
+            background: linear-gradient(180deg, #ffffff 0%, #f3f4f6 100%);
             color: var(--text-primary);
-            border-color: var(--border-medium);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14), 0 3px 6px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+        }
+        .btn-secondary:active, .btn-warning:active, .btn-college:active {
+            transform: translateY(0);
+            background: linear-gradient(180deg, #f3f4f6 0%, #e5e7eb 100%);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.06);
         }
 
         .loading {
@@ -470,41 +537,52 @@
             margin-top: var(--space-3); 
         }
         .subject-tag {
-            padding: var(--space-2) var(--space-5);
-            height: 40px;
+            padding: 0 var(--space-6);
+            height: 48px;
+            line-height: 48px;
             font-size: 0.9375rem;
-            border: 1px solid var(--border-medium);
-            border-radius: var(--radius-full);
+            border: none;
+            border-radius: var(--radius-lg);
             cursor: pointer;
-            transition: all 0.2s ease;
-            background: var(--bg-card);
+            transition: all 0.25s ease;
+            background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
             font-weight: 500;
             user-select: none;
             color: var(--text-secondary);
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
         }
         .subject-tag:hover { 
-            border-color: var(--accent-400); 
             color: var(--accent-600);
-            background: var(--accent-50);
+            background: linear-gradient(180deg, #ffffff 0%, #eef2ff 100%);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14), 0 3px 6px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
         }
         .subject-tag.selected { 
-            background: var(--accent-600); 
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #4f46e5 100%);
+            background-size: 200% 200%;
             color: white; 
-            border-color: var(--accent-600); 
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35), 0 3px 6px rgba(79, 70, 229, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        }
+        .subject-tag:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.06);
         }
         .subject-tag.disabled { 
-            opacity: 0.4; 
+            opacity: 1; 
             cursor: not-allowed; 
-            background: var(--bg-tertiary);
+            background: var(--bg-card);
+            border: 1px dashed var(--border-light);
+            color: var(--text-muted);
         }
         .subject-tag.disabled:hover { 
-            border-color: var(--border-medium); 
-            color: var(--text-tertiary);
-            background: var(--bg-tertiary);
+            border-color: var(--border-light); 
+            color: var(--text-muted);
+            background: var(--bg-card);
         }
 
         .form-text { color: var(--text-muted) !important; font-size: 0.8125rem; }

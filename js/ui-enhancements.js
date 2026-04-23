@@ -242,13 +242,17 @@
                 console.warn('[ui-enhancements] scrollTo: 元素不存在或无效');
                 return;
             }
-            const elementPosition = element.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - offset;
+            try {
+                const elementPosition = element.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - offset;
 
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: 'smooth'
-            });
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            } catch (e) {
+                console.warn('[ui-enhancements] scrollTo: 获取元素位置失败', e);
+            }
         },
         
         scrollToTop() {

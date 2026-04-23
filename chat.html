@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>权鼎小助手 - 智能高考志愿咨询</title>
+    <!-- 预连接CDN -->
+    <link rel="preconnect" href="https://cdn.bootcdn.net">
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/global-enhancements.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/chat-page.css">
+    <script>
+        (function() {
+            var userId = localStorage.getItem('qd_userId');
+            if (!userId) {
+                window.location.href = 'login.html';
+            }
+        })();
+    </script>
+</head>
+<body>
+    <div class="chat-page-container">
+        <!-- 顶部导航栏 -->
+        <header class="chat-page-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo-area">
+                        <img src="images/权鼎教育.png" alt="权鼎教育" class="header-logo">
+                    </div>
+                    <div class="header-actions">
+                        <a href="index-mysql.html" class="btn-back">
+                            ← 返回查询
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主聊天区域 -->
+        <main class="chat-page-main">
+            <div class="container">
+                <div class="chat-main-wrapper">
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- 消息会在这里动态添加 -->
+                    </div>
+                    <div class="chat-input-wrapper">
+                        <div class="input-box">
+                            <textarea 
+                                class="chat-textarea" 
+                                id="chatInput" 
+                                placeholder="输入你的问题，按 Ctrl+Enter 发送..."
+                                rows="1"
+                                maxlength="500"></textarea>
+                            <div class="input-footer">
+                                <div class="input-buttons">
+                                    <button class="btn-clear-inline" id="btnClearChat" title="清空对话">
+                                        🗑️ 清空
+                                    </button>
+                                    <button class="btn-send" id="btnSend">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                                        </svg>
+                                        发送
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/chat-page.js"></script>
+</body>
+</html>

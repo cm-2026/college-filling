@@ -10,8 +10,6 @@
     <link href="css/index-mysql.css" rel="stylesheet">
     <link href="css/global-enhancements.css" rel="stylesheet">
     <link rel="stylesheet" href="css/index-mysql-mobile.css" media="(max-width: 767.98px)">
-    <link rel="stylesheet" href="css/pet.css">
-    <link rel="stylesheet" href="css/pet-mobile.css" media="(max-width: 767.98px)">
     <script>
         (function() {
             var userId = localStorage.getItem('qd_userId');
@@ -27,10 +25,15 @@
     <div id="viewForm" class="form-view-wrap">
         <div class="container">
             <div class="main-container">
-                <!-- 标题栏：Logo -->
-                <div class="form-header-bar">
-                    <img src="images/权鼎教育.png" alt="权鼎教育" class="form-header-logo-small">
-                </div>
+<!-- 标题栏：Logo -->
+        <div class="form-header-bar">
+            <div class="header-buttons">
+                <a href="chat.html" class="btn-header">智能咨询</a>
+                <a href="college-list.html" class="btn-header">院校名录</a>
+                <a href="major-list.html" class="btn-header">专业名录</a>
+            </div>
+            <img src="images/权鼎教育.png" alt="权鼎教育" class="form-header-logo-small">
+        </div>
 
                 <div class="section-card">
                     <form id="recommendationForm">
@@ -57,10 +60,11 @@
                         <!-- 第二行：选科组合 -->
                         <div class="row">
                             <div class="col-md-12 mb-3">
-                                <label class="form-label">选科组合 *</label>
+
                                 <div id="subjectSelection">
                                     <input type="hidden" id="subjectCombination" required>
-                                    <div class="invalid-feedback" id="subjectError" style="display: none;">请选择必选科目（1门）和再选科目（2门）</div>
+
+
                                     <div class="mb-3">
                                         <label class="form-label">必选科目（物理/历史二选一，100分）</label>
                                         <div class="subject-tags">
@@ -82,11 +86,15 @@
                         </div>
                         
                         <!-- 按钮行 -->
-                        <div class="text-center" style="margin-top:5px;">
-                            <button type="submit" class="btn btn-primary">开始推荐</button>
-                            <button type="button" class="btn btn-warning" onclick="resetForm()">重置</button>
-                            <button type="button" class="btn btn-college" onclick="openCollegeList()">院校名录</button>
-                            <button type="button" class="btn btn-secondary" onclick="window.open('major-list.html','_blank')">专业名录</button>
+                        <div class="form-btn-row" style="margin-top:5px;">
+                            <button type="submit" class="btn btn-primary" style="flex:1;">开始推荐</button>
+                            <button type="button" class="btn btn-warning" style="flex:1;" onclick="resetForm()">重置</button>
+                        </div>
+                        <!-- 手机端导航按钮 -->
+                        <div class="mobile-nav-row">
+                            <a href="chat.html" class="btn btn-mobile-nav">智能咨询</a>
+                            <a href="college-list.html" class="btn btn-mobile-nav">院校名录</a>
+                            <a href="major-list.html" class="btn btn-mobile-nav">专业名录</a>
                         </div>
                     </form>
                 </div>
@@ -332,10 +340,10 @@
         </div>
     </div>
 
+    <script>window.addEventListener('error',function(e){if(e.message&&(e.message.includes('getBoundingClientRect')||e.message.includes('Script error'))){e.preventDefault();}});</script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="js/ui-enhancements.js"></script>
     <script src="js/common.js"></script>
-    <script src="js/pet.js"></script>
     <script src="js/index-mysql.js"></script>
 </body>
 </html>

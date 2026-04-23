@@ -613,20 +613,206 @@
         var div = document.createElement('div');
         div.textContent = str;
         var html = div.innerHTML;
-        // 将 ### 标题 转为 <h4>标题</h4>
-        html = html.replace(/^###\s*(.+)$/gm, '<h4 style="margin:8px 0 4px;font-size:15px;color:#1e293b;">$1</h4>');
-        // 将 ## 标题 转为 <h3>标题</h3>
-        html = html.replace(/^##\s*(.+)$/gm, '<h3 style="margin:10px 0 4px;font-size:16px;color:#1e293b;">$1</h3>');
-        // 将 # 标题 转为 <h2>标题</h2>
-        html = html.replace(/^#\s*(.+)$/gm, '<h2 style="margin:12px 0 4px;font-size:17px;color:#1e293b;">$1</h2>');
-        // 将 **粗体** 转为 <strong>粗体</strong>
+        
+        // 按行分割处理
+        var lines = html.split('\n');
+        var inTable = false;
+        var tableBuffer = [];
+        var listType = ''; // 'ul' | 'ol' | ''
+        var listBuffer = [];
+        var result = [];
+        var paragraph = []; // 收集连续普通行
+        
+        // 将收集的普通行合并为 <p> 段落
+        function flushParagraph() {
+            if (paragraph.length > 0) {
+                result.push('<p>' + paragraph.join('<br>') + '</p>');
+                paragraph = [];
+            }
+        }
+        
+        // 将收集的列表项合并为完整的列表
+        function flushList() {
+            if (listType && listBuffer.length > 0) {
+                result.push('<' + listType + '>' + listBuffer.join('') + '</' + listType + '>');
+            }
+            listType = '';
+            listBuffer = [];
+        }
+        
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            
+            // 处理标题（任何行开头都匹配）
+            if (line.trim().startsWith('### ')) {
+                flushList(); flushParagraph();
+                line = line.replace(/^###\s*(.+)/, '<h4>$1</h4>');
+                result.push(line);
+                continue;
+            } else if (line.trim().startsWith('## ')) {
+                flushList(); flushParagraph();
+                line = line.replace(/^##\s*(.+)/, '<h3>$1</h3>');
+                result.push(line);
+                continue;
+            } else if (line.trim().startsWith('# ')) {
+                flushList(); flushParagraph();
+                line = line.replace(/^#\s*(.+)/, '<h2>$1</h2>');
+                result.push(line);
+                continue;
+            }
+            
+            // 处理表格行
+            if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+                flushList(); flushParagraph();
+                if (!inTable) {
+                    inTable = true;
+                    tableBuffer = [];
+                }
+                tableBuffer.push(line);
+                continue;
+            } else if (inTable) {
+                flushList(); flushParagraph();
+                // 表格结束，处理整个表格
+                if (tableBuffer.length >= 2) {
+                    var headerRow = tableBuffer[0];
+                    var separatorRow = tableBuffer[1];
+                    var bodyRows = tableBuffer.slice(2);
+                    
+                    var headers = headerRow.trim().split('|').filter(function(cell) {
+                        return cell.trim().length > 0;
+                    }).map(function(cell) {
+                        return cell.trim();
+                    });
+                    
+                    var processedBodyRows = bodyRows.filter(function(row) {
+                        return row.trim().length > 0;
+                    }).map(function(row) {
+                        return row.trim().split('|').filter(function(cell) {
+                            return cell.trim().length >= 0;
+                        }).map(function(cell) {
+                            return cell.trim();
+                        }).slice(1, -1);
+                    });
+                    
+                    var tableHtml = '<div><table>';
+                    tableHtml += '<thead><tr>';
+                    headers.forEach(function(h) {
+                        tableHtml += '<th>' + h + '</th>';
+                    });
+                    tableHtml += '</tr></thead><tbody>';
+                    processedBodyRows.forEach(function(r, idx) {
+                        tableHtml += '<tr>';
+                        r.forEach(function(cell) {
+                            tableHtml += '<td>' + cell + '</td>';
+                        });
+                        tableHtml += '</tr>';
+                    });
+                    tableHtml += '</tbody></table></div>';
+                    result.push(tableHtml);
+                }
+                inTable = false;
+                tableBuffer = [];
+                // 当前行不属表格，继续处理
+            }
+            
+            // 处理无序列表
+            var ulMatch = line.match(/^(\s*)[-*+]\s+(.*)/);
+            if (ulMatch) {
+                flushParagraph();
+                if (listType !== 'ul') { flushList(); listType = 'ul'; }
+                listBuffer.push('<li>' + ulMatch[2] + '</li>');
+                continue;
+            }
+            
+            // 处理有序列表
+            var olMatch = line.match(/^(\s*)\d+\.\s+(.*)/);
+            if (olMatch) {
+                flushParagraph();
+                if (listType !== 'ol') { flushList(); listType = 'ol'; }
+                listBuffer.push('<li>' + olMatch[2] + '</li>');
+                continue;
+            }
+            
+            // 处理引用
+            var quoteMatch = line.match(/^>\s+(.*)/);
+            if (quoteMatch) {
+                flushList(); flushParagraph();
+                result.push('<blockquote>' + quoteMatch[1] + '</blockquote>');
+                continue;
+            }
+            
+            // 处理分隔线
+            if (line.trim().match(/^([\-*_])\s*\1\s*\1+$/)) {
+                flushList(); flushParagraph();
+                result.push('<hr>');
+                continue;
+            }
+            
+            // 普通行
+            if (line.trim().length > 0) {
+                flushList();
+                paragraph.push(line);
+            } else {
+                // 空行分段
+                flushList(); flushParagraph();
+            }
+        }
+        // 处理末尾列表和段落
+        flushList();
+        flushParagraph();
+        
+        // 如果文件结束时还在表格
+        if (inTable && tableBuffer.length >= 2) {
+            var headerRow = tableBuffer[0];
+            var separatorRow = tableBuffer[1];
+            var bodyRows = tableBuffer.slice(2);
+            
+            var headers = headerRow.trim().split('|').filter(function(cell) {
+                return cell.trim().length > 0;
+            }).map(function(cell) {
+                return cell.trim();
+            });
+            
+            var processedBodyRows = bodyRows.filter(function(row) {
+                return row.trim().length > 0;
+            }).map(function(row) {
+                return row.trim().split('|').filter(function(cell) {
+                    return cell.trim().length >= 0;
+                }).map(function(cell) {
+                    return cell.trim();
+                }).slice(1, -1);
+            });
+            
+            var tableHtml = '<div><table>';
+            tableHtml += '<thead><tr>';
+            headers.forEach(function(h) {
+                tableHtml += '<th>' + h + '</th>';
+            });
+            tableHtml += '</tr></thead><tbody>';
+            processedBodyRows.forEach(function(r, idx) {
+                tableHtml += '<tr>';
+                r.forEach(function(cell) {
+                    tableHtml += '<td>' + cell + '</td>';
+                });
+                tableHtml += '</tr>';
+            });
+            tableHtml += '</tbody></table></div>';
+            result.push(tableHtml);
+        }
+        
+        html = result.join('');
+        
+        // 处理代码块
+        var codeBlockRegex = /```([\s\S]*?)```/g;
+        html = html.replace(codeBlockRegex, '<pre><code>$1</code></pre>');
+        
+        // 行内元素
         html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        // 将 *斜体* 转为 <em>斜体</em>
         html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-        // 将 `代码` 转为 <code>代码</code>
-        html = html.replace(/`(.+?)`/g, '<code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;font-size:12px;color:#ef4444;">$1</code>');
-        // 将 --- 或 *** 或 ___ 分隔线转为 <hr>
-        html = html.replace(/^[\-*_]\s*[\-*_]\s*[\-*_]+\s*$/gm, '<hr style="border:none;border-top:1px solid #e2e8f0;margin:8px 0;">');
+        html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
+        html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+        html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>');
+        
         return html;
     }
 

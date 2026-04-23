@@ -338,6 +338,27 @@
             text-decoration: none;
         }
 
+        .btn-header .header-icon {
+            width: 20px;
+            height: 20px;
+            display: block;
+        }
+
+        .user-header-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .user-header-btn .header-icon {
+            flex-shrink: 0;
+        }
+
+        .user-name {
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
         .form-header-title {
             font-size: 1.5rem;
             font-weight: 600;
@@ -1947,3 +1968,79 @@
         /* 结果页加载遮罩 */
         #resultLoading { text-align: center; padding: 60px 0; }
         #resultLoading .spinner-border { width: 3rem; height: 3rem; color: var(--accent-cyan); }
+
+/* ========== 用户下拉菜单 ========== */
+.user-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.user-header-btn .dropdown-arrow {
+    margin-left: 4px;
+    transition: transform 0.2s ease;
+}
+
+.user-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background: white;
+    border: 1px solid var(--border-light, #d1d5db);
+    border-radius: var(--radius-md, 8px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 160px;
+    z-index: 1000;
+    display: none;
+    overflow: hidden;
+    animation: fadeIn 0.15s ease;
+}
+
+.user-dropdown-menu.show {
+    display: block;
+}
+
+.user-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    color: var(--text-primary, #1f2937);
+    font-size: 0.875rem;
+}
+
+.user-dropdown-item:hover {
+    background: var(--bg-tertiary, #f3f4f6);
+}
+
+.user-dropdown-item svg {
+    color: var(--accent-500, #3b82f6);
+    flex-shrink: 0;
+}
+
+.user-dropdown-item span {
+    flex: 1;
+}
+
+.user-dropdown-divider {
+    height: 1px;
+    background: var(--border-light, #e5e7eb);
+    margin: 4px 0;
+}
+
+/* 修改用户名模态框 */
+#changeUsernameModal.show {
+    display: flex;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}

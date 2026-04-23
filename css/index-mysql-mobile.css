@@ -73,6 +73,24 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 
+    .btn-mobile-nav .mobile-header-icon {
+        width: 24px;
+        height: 24px;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .mobile-user-name {
+        font-size: 10px;
+        margin-top: 2px;
+        display: block;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 50px;
+    }
+
     .form-header-logo-small {
         height: 80px !important;
         margin: 0 !important;
@@ -1096,4 +1114,77 @@
     .modal-content {
         padding-bottom: max(16px, env(safe-area-inset-bottom));
     }
+}
+
+/* ========== 移动端用户下拉菜单 ========== */
+.mobile-user-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.mobile-user-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.mobile-dropdown-arrow {
+    margin-left: 2px;
+    transition: transform 0.2s ease;
+}
+
+.mobile-user-dropdown-menu {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border-light, #d1d5db);
+    border-radius: var(--radius-md, 8px);
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    display: none;
+    overflow: hidden;
+    animation: fadeInUp 0.15s ease;
+}
+
+.mobile-user-dropdown-menu.show {
+    display: block;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.mobile-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    color: var(--text-primary, #1f2937);
+    font-size: 0.95rem;
+    min-height: 44px;
+}
+
+.mobile-dropdown-item:active {
+    background: var(--bg-tertiary, #f3f4f6);
+}
+
+.mobile-dropdown-item svg {
+    color: var(--accent-500, #3b82f6);
+    flex-shrink: 0;
+}
+
+.mobile-dropdown-item span {
+    flex: 1;
+}
+
+.mobile-dropdown-divider {
+    height: 1px;
+    background: var(--border-light, #e5e7eb);
+    margin: 4px 0;
 }

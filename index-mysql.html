@@ -16,6 +16,18 @@
             if (!userId) {
                 window.location.href = 'login.html';
             }
+            // 显示当前用户名
+            var userName = localStorage.getItem('qd_username') || '用户';
+            document.addEventListener('DOMContentLoaded', function() {
+                var userNameElement = document.getElementById('currentUserName');
+                var mobileUserNameElement = document.getElementById('mobileCurrentUserName');
+                if (userNameElement) {
+                    userNameElement.textContent = userName;
+                }
+                if (mobileUserNameElement) {
+                    mobileUserNameElement.textContent = userName;
+                }
+            });
         })();
     </script>
 </head>
@@ -28,9 +40,34 @@
 <!-- 标题栏：Logo -->
         <div class="form-header-bar">
             <div class="header-buttons">
-                <a href="chat.html" class="btn-header">智能咨询</a>
-                <a href="college-list.html" class="btn-header">院校名录</a>
-                <a href="major-list.html" class="btn-header">专业名录</a>
+                <a href="#" class="btn-header">引流获客</a>
+                <a href="chat.html" class="btn-header" target="_blank">智能咨询</a>
+                <a href="college-list.html" class="btn-header" target="_blank">院校名录</a>
+                <a href="major-list.html" class="btn-header" target="_blank">专业名录</a>
+                <div class="user-dropdown">
+                    <button class="btn-header user-header-btn" onclick="toggleUserDropdown(event)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="header-icon">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span id="currentUserName" class="user-name"></span>
+                        <svg class="dropdown-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="user-dropdown-menu" id="userDropdownMenu">
+                        <div class="user-dropdown-item" onclick="logout()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            <span>退出登录</span>
+                        </div>
+                    </div>
+                </div>
             </div>
             <img src="images/权鼎教育.png" alt="权鼎教育" class="form-header-logo-small">
         </div>
@@ -87,14 +124,15 @@
                         
                         <!-- 按钮行 -->
                         <div class="form-btn-row" style="margin-top:5px;">
-                            <button type="submit" class="btn btn-primary" style="flex:1;">开始推荐</button>
+                            <button type="submit" class="btn btn-primary" style="flex:1;">开始查询</button>
                             <button type="button" class="btn btn-warning" style="flex:1;" onclick="resetForm()">重置</button>
                         </div>
                         <!-- 手机端导航按钮 -->
                         <div class="mobile-nav-row">
-                            <a href="chat.html" class="btn btn-mobile-nav">智能咨询</a>
-                            <a href="college-list.html" class="btn btn-mobile-nav">院校名录</a>
-                            <a href="major-list.html" class="btn btn-mobile-nav">专业名录</a>
+                            <a href="#" class="btn btn-mobile-nav">引流获客</a>
+                            <a href="chat.html" class="btn btn-mobile-nav" target="_blank">智能咨询</a>
+                            <a href="college-list.html" class="btn btn-mobile-nav" target="_blank">院校名录</a>
+                            <a href="major-list.html" class="btn btn-mobile-nav" target="_blank">专业名录</a>
                         </div>
                     </form>
                 </div>
@@ -340,10 +378,133 @@
         </div>
     </div>
 
+    <!-- 修改用户名模态框 -->
+    <div id="changeUsernameModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>修改用户名</h3>
+                <button class="modal-close-btn" onclick="closeChangeUsernameModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">新用户名</label>
+                    <input type="text" class="form-control" id="newUsername" placeholder="请输入新的用户名">
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeChangeUsernameModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveUsername()">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>window.addEventListener('error',function(e){if(e.message&&(e.message.includes('getBoundingClientRect')||e.message.includes('Script error'))){e.preventDefault();}});</script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="js/ui-enhancements.js"></script>
     <script src="js/common.js"></script>
     <script src="js/index-mysql.js"></script>
+    <script>
+        // 用户下拉菜单切换
+        function toggleUserDropdown(event) {
+            event.stopPropagation();
+            var menu = document.getElementById('userDropdownMenu');
+            menu.classList.toggle('show');
+            
+            // 关闭移动端菜单
+            var mobileMenu = document.getElementById('mobileUserDropdownMenu');
+            if (mobileMenu) {
+                mobileMenu.classList.remove('show');
+            }
+        }
+        
+        // 移动端用户下拉菜单切换
+        function toggleMobileUserDropdown(event) {
+            event.stopPropagation();
+            var menu = document.getElementById('mobileUserDropdownMenu');
+            menu.classList.toggle('show');
+            
+            // 关闭桌面端菜单
+            var desktopMenu = document.getElementById('userDropdownMenu');
+            if (desktopMenu) {
+                desktopMenu.classList.remove('show');
+            }
+        }
+        
+        // 点击页面其他地方关闭下拉菜单
+        document.addEventListener('click', function() {
+            var menu = document.getElementById('userDropdownMenu');
+            var mobileMenu = document.getElementById('mobileUserDropdownMenu');
+            if (menu) menu.classList.remove('show');
+            if (mobileMenu) mobileMenu.classList.remove('show');
+        });
+        
+        // 打开修改用户名模态框
+        function changeUsername() {
+            var modal = document.getElementById('changeUsernameModal');
+            modal.classList.add('active');
+            
+            // 预设当前用户名
+            var currentUsername = localStorage.getItem('qd_username') || '';
+            document.getElementById('newUsername').value = currentUsername;
+            setTimeout(function() {
+                document.getElementById('newUsername').focus();
+            }, 300);
+            
+            // 关闭下拉菜单
+            document.getElementById('userDropdownMenu').classList.remove('show');
+            document.getElementById('mobileUserDropdownMenu').classList.remove('show');
+        }
+        
+        // 关闭修改用户名模态框
+        function closeChangeUsernameModal() {
+            var modal = document.getElementById('changeUsernameModal');
+            modal.classList.remove('active');
+        }
+        
+        // 保存新用户名
+        function saveUsername() {
+            var newUsername = document.getElementById('newUsername').value.trim();
+            if (!newUsername) {
+                showToast('请输入用户名', 'warning');
+                return;
+            }
+            
+            // 保存到localStorage
+            localStorage.setItem('qd_username', newUsername);
+            
+            // 更新页面显示
+            var userNameElement = document.getElementById('currentUserName');
+            var mobileUserNameElement = document.getElementById('mobileCurrentUserName');
+            if (userNameElement) {
+                userNameElement.textContent = newUsername;
+            }
+            if (mobileUserNameElement) {
+                mobileUserNameElement.textContent = newUsername;
+            }
+            
+            showToast('用户名修改成功', 'success');
+            closeChangeUsernameModal();
+        }
+        
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                // 清除登录信息
+                localStorage.removeItem('qd_userId');
+                localStorage.removeItem('qd_username');
+                // 跳转到登录页
+                window.location.href = 'login.html';
+            }
+        }
+        
+        // 显示Toast提示
+        function showToast(title, type) {
+            var toastEl = document.getElementById('liveToast');
+            var toastTitle = document.getElementById('toastTitle');
+            toastTitle.textContent = title;
+            var toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+    </script>
 </body>
 </html>
